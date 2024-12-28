@@ -38,14 +38,11 @@ const Register: React.FC = () => {
     }
 
     try {
-      const response = await axios.post(
-        'http://localhost:5001/api/users/register',
-        {
-          name,
-          email,
-          password,
-        }
-      )
+      await axios.post('http://localhost:5001/api/users/register', {
+        name,
+        email,
+        password,
+      })
 
       setModalMessage('Usuario registrado exitosamente.')
       setModalType('success')

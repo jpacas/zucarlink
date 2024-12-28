@@ -28,13 +28,10 @@ const Login: React.FC = () => {
     }
 
     try {
-      const response = await axios.post(
-        'http://localhost:5001/api/users/login',
-        {
-          email,
-          password,
-        }
-      )
+      await axios.post('http://localhost:5001/api/users/login', {
+        email,
+        password,
+      })
 
       // Éxito al validar usuario
       setModalMessage('Inicio de sesión exitoso. Bienvenido!')
