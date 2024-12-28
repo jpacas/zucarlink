@@ -27,7 +27,7 @@ const Navbar: React.FC = () => {
   return (
     <nav className={styles.navbar}>
       <div className={styles.logo}>
-        <Link to='/'>MiLogo</Link>
+        <Link to='/'>Zucarlink</Link>
       </div>
       {/* Icono Hamburguesa */}
       <div className={styles.hamburger} onClick={toggleMenu}>
