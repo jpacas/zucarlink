@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
+import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
 import styles from './Register.module.css'
-import { Link } from 'react-router-dom'
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -10,36 +11,73 @@ const Register: React.FC = () => {
     confirmPassword: '',
   })
 
-  const [errors, setErrors] = useState<string | null>(null)
+  const [modalMessage, setModalMessage] = useState<string | null>(null)
+  const [modalType, setModalType] = useState<'success' | 'error' | null>(null)
+
+  const navigate = useNavigate()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const { name, email, password, confirmPassword } = formData
 
+    // Validación básica
     if (!name || !email || !password || !confirmPassword) {
-      setErrors('Todos los campos son obligatorios.')
+      setModalMessage('Todos los campos son obligatorios.')
+      setModalType('error')
       return
     }
 
     if (password !== confirmPassword) {
-      setErrors('Las contraseñas no coinciden.')
+      setModalMessage('Las contraseñas no coinciden.')
+      setModalType('error')
       return
     }
 
-    // Aquí puedes manejar el envío del formulario (ejemplo: enviar datos al backend)
-    console.log('Registro exitoso:', formData)
-    setErrors(null) // Limpiar errores si todo está bien
+    try {
+      const response = await axios.post(
+        'http://localhost:5001/api/users/register',
+        {
+          name,
+          email,
+          password,
+        }
+      )
+
+      setModalMessage('Usuario registrado exitosamente.')
+      setModalType('success')
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+      })
+
+      // Redirigir después de 2 segundos
+      setTimeout(() => {
+        navigate('/login')
+      }, 2000)
+    } catch (error: any) {
+      setModalMessage(
+        error.response?.data?.message ||
+          'Error al registrar el usuario. Por favor intenta más tarde.'
+      )
+      setModalType('error')
+    }
+  }
+
+  const closeModal = () => {
+    setModalMessage(null)
+    setModalType(null)
   }
 
   return (
     <div className={styles.container}>
       <form onSubmit={handleSubmit} className={styles.form}>
         <h2>Crear una Cuenta</h2>
-        {errors && <div className={styles.error}>{errors}</div>}
         <div className={styles.formGroup}>
           <label htmlFor='name'>Nombre</label>
           <input
@@ -87,15 +125,23 @@ const Register: React.FC = () => {
         <button type='submit' className={styles.submitButton}>
           Registrarse
         </button>
-        <div className={styles.links}>
-          <p>
-            ¿Ya tienes una cuenta?{' '}
-            <Link to='/login' className={styles.link}>
-              Inicia sesión aquí
-            </Link>
-          </p>
-        </div>
       </form>
+
+      {/* Modal de mensajes */}
+      {modalMessage && (
+        <div
+          className={`${styles.modal} ${
+            modalType === 'success' ? styles.success : styles.error
+          }`}
+        >
+          <div className={styles.modalContent}>
+            <p>{modalMessage}</p>
+            <button onClick={closeModal} className={styles.closeButton}>
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

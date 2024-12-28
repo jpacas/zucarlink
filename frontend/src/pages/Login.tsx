@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
+import axios from 'axios'
 import styles from './Login.module.css'
 
 const Login: React.FC = () => {
@@ -8,31 +9,61 @@ const Login: React.FC = () => {
     password: '',
   })
 
-  const [errors, setErrors] = useState<string | null>(null)
+  const [modalMessage, setModalMessage] = useState<string | null>(null)
+  const [modalType, setModalType] = useState<'success' | 'error' | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const { email, password } = formData
 
+    // Validación básica
     if (!email || !password) {
-      setErrors('Todos los campos son obligatorios.')
+      setModalMessage('Todos los campos son obligatorios.')
+      setModalType('error')
       return
     }
 
-    // Aquí puedes manejar el inicio de sesión (ejemplo: enviar datos al backend)
-    console.log('Inicio de sesión exitoso:', formData)
-    setErrors(null) // Limpiar errores si todo está bien
+    try {
+      const response = await axios.post(
+        'http://localhost:5001/api/users/login',
+        {
+          email,
+          password,
+        }
+      )
+
+      // Éxito al validar usuario
+      setModalMessage('Inicio de sesión exitoso. Bienvenido!')
+      setModalType('success')
+
+      // Limpiar el formulario
+      setFormData({ email: '', password: '' })
+
+      // Redirigir después de un tiempo si es necesario
+      // setTimeout(() => { navigate('/dashboard'); }, 2000);
+    } catch (error: any) {
+      // Manejo de errores
+      setModalMessage(
+        error.response?.data?.message ||
+          'Error al iniciar sesión. Por favor, verifica tus credenciales.'
+      )
+      setModalType('error')
+    }
+  }
+
+  const closeModal = () => {
+    setModalMessage(null)
+    setModalType(null)
   }
 
   return (
     <div className={styles.container}>
       <form onSubmit={handleSubmit} className={styles.form}>
         <h2>Inicia Sesión</h2>
-        {errors && <div className={styles.error}>{errors}</div>}
         <div className={styles.formGroup}>
           <label htmlFor='email'>Correo Electrónico</label>
           <input
@@ -67,6 +98,22 @@ const Login: React.FC = () => {
           </p>
         </div>
       </form>
+
+      {/* Modal */}
+      {modalMessage && (
+        <div
+          className={`${styles.modal} ${
+            modalType === 'success' ? styles.success : styles.error
+          }`}
+        >
+          <div className={styles.modalContent}>
+            <p>{modalMessage}</p>
+            <button onClick={closeModal} className={styles.closeButton}>
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
