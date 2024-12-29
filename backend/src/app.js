@@ -11,9 +11,14 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-sequelize.sync({ force: false }).then(() => {
-  console.log('Base de datos sincronizada')
-})
+sequelize
+  .sync({ alter: true }) // Cambia la estructura sin borrar datos (Eliminar esto al estar en produccion)
+  .then(() => {
+    console.log('Base de datos sincronizada.')
+  })
+  .catch((error) => {
+    console.error('Error al sincronizar la base de datos:', error)
+  })
 
 // Rutas
 app.use('/api/users', userRoutes)

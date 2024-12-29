@@ -1,22 +1,34 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
+const { v4: uuidv4 } = require('uuid') // Importa la función para generar IDs únicos
 
 const User = sequelize.define(
   'User',
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING, // Cambiamos a STRING
       primaryKey: true,
-      autoIncrement: true,
+      defaultValue: uuidv4, // Genera un ID único automáticamente
     },
-    name: {
+    nombre: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    apellido: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    pais: {
       type: DataTypes.STRING,
       allowNull: false,
     },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: true, // Evita duplicados
+      validate: {
+        isEmail: true, // Validación para correos electrónicos
+      },
     },
     password: {
       type: DataTypes.STRING,
@@ -24,7 +36,8 @@ const User = sequelize.define(
     },
   },
   {
-    timestamps: true,
+    timestamps: true, // Incluye createdAt y updatedAt
+    tableName: 'Users', // Nombre de la tabla en la base de datos
   }
 )
 

@@ -5,33 +5,40 @@ const User = require('../models/User')
 // Controlador para obtener todos los usuarios
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.findAll({
-      attributes: { exclude: ['password'] }, // Excluir el campo 'password' por seguridad
+    const usuarios = await User.findAll({
+      attributes: ['id', 'nombre', 'apellido', 'pais', 'email'], // Excluye contraseñas
     })
-    res.status(200).json(users)
+    res.status(200).json(usuarios)
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los usuarios', error })
   }
 }
 
-// Registro
+// Registro de usuarios
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body
+    const { nombre, apellido, pais, email, password } = req.body
 
-    // Validar datos
-    if (!name || !email || !password) {
+    // Validación de campos obligatorios
+    if (!nombre || !apellido || !pais || !email || !password) {
       return res
         .status(400)
-        .json({ message: 'Todos los campos son obligatorios' })
+        .json({ message: 'Todos los campos son obligatorios.' })
     }
 
     // Hash de la contraseña
     const hashedPassword = await bcrypt.hash(password, 10)
 
     // Crear usuario
-    const user = await User.create({ name, email, password: hashedPassword })
-    res.status(201).json({ message: 'Usuario creado exitosamente', user })
+    const user = await User.create({
+      nombre,
+      apellido,
+      pais,
+      email,
+      password: hashedPassword,
+    })
+
+    res.status(201).json({ message: 'Usuario registrado exitosamente', user })
   } catch (error) {
     res.status(500).json({ message: 'Error al registrar el usuario', error })
   }
