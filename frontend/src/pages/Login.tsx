@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import { useAuth } from '../context/AuthContext'
 import styles from './Login.module.css'
 
 const Login: React.FC = () => {
@@ -11,6 +12,7 @@ const Login: React.FC = () => {
 
   const [modalMessage, setModalMessage] = useState<string | null>(null)
   const [modalType, setModalType] = useState<'success' | 'error' | null>(null)
+  const { login } = useAuth()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -20,7 +22,6 @@ const Login: React.FC = () => {
     e.preventDefault()
     const { email, password } = formData
 
-    // Validación básica
     if (!email || !password) {
       setModalMessage('Todos los campos son obligatorios.')
       setModalType('error')
@@ -28,22 +29,24 @@ const Login: React.FC = () => {
     }
 
     try {
-      await axios.post('http://localhost:5001/api/users/login', {
-        email,
-        password,
-      })
+      const response = await axios.post(
+        'http://localhost:5001/api/users/login',
+        {
+          email,
+          password,
+        }
+      )
 
-      // Éxito al validar usuario
+      const { token } = response.data
+      const payload = JSON.parse(atob(token.split('.')[1])) // Decodificar el token
+
+      login({ id: payload.id, nombre: payload.nombre })
+      localStorage.setItem('token', token)
+
       setModalMessage('Inicio de sesión exitoso. Bienvenido!')
       setModalType('success')
-
-      // Limpiar el formulario
       setFormData({ email: '', password: '' })
-
-      // Redirigir después de un tiempo si es necesario
-      // setTimeout(() => { navigate('/dashboard'); }, 2000);
     } catch (error: any) {
-      // Manejo de errores
       setModalMessage(
         error.response?.data?.message ||
           'Error al iniciar sesión. Por favor, verifica tus credenciales.'
@@ -96,7 +99,6 @@ const Login: React.FC = () => {
         </div>
       </form>
 
-      {/* Modal */}
       {modalMessage && (
         <div
           className={`${styles.modal} ${

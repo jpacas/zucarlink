@@ -5,7 +5,9 @@ import styles from './Register.module.css'
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
-    name: '',
+    nombre: '',
+    apellido: '',
+    pais: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -22,10 +24,18 @@ const Register: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const { name, email, password, confirmPassword } = formData
+    const { nombre, apellido, pais, email, password, confirmPassword } =
+      formData
 
     // Validación básica
-    if (!name || !email || !password || !confirmPassword) {
+    if (
+      !nombre ||
+      !apellido ||
+      !pais ||
+      !email ||
+      !password ||
+      !confirmPassword
+    ) {
       setModalMessage('Todos los campos son obligatorios.')
       setModalType('error')
       return
@@ -39,15 +49,21 @@ const Register: React.FC = () => {
 
     try {
       await axios.post('http://localhost:5001/api/users/register', {
-        name,
+        nombre,
+        apellido,
+        pais,
         email,
         password,
       })
 
       setModalMessage('Usuario registrado exitosamente.')
       setModalType('success')
+
+      // Limpiar el formulario
       setFormData({
-        name: '',
+        nombre: '',
+        apellido: '',
+        pais: '',
         email: '',
         password: '',
         confirmPassword: '',
@@ -76,14 +92,36 @@ const Register: React.FC = () => {
       <form onSubmit={handleSubmit} className={styles.form}>
         <h2>Crear una Cuenta</h2>
         <div className={styles.formGroup}>
-          <label htmlFor='name'>Nombre</label>
+          <label htmlFor='nombre'>Nombre</label>
           <input
             type='text'
-            id='name'
-            name='name'
-            value={formData.name}
+            id='nombre'
+            name='nombre'
+            value={formData.nombre}
             onChange={handleChange}
             placeholder='Ingresa tu nombre'
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label htmlFor='apellido'>Apellido</label>
+          <input
+            type='text'
+            id='apellido'
+            name='apellido'
+            value={formData.apellido}
+            onChange={handleChange}
+            placeholder='Ingresa tu apellido'
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label htmlFor='pais'>País</label>
+          <input
+            type='text'
+            id='pais'
+            name='pais'
+            value={formData.pais}
+            onChange={handleChange}
+            placeholder='Ingresa tu país'
           />
         </div>
         <div className={styles.formGroup}>
@@ -124,7 +162,7 @@ const Register: React.FC = () => {
         </button>
       </form>
 
-      {/* Modal de mensajes */}
+      {/* Modal */}
       {modalMessage && (
         <div
           className={`${styles.modal} ${

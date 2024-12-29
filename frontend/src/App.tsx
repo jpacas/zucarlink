@@ -6,6 +6,8 @@ import Login from './pages/Login'
 import CallToAction from './components/CallToAction'
 import Benefits from './components/Benefits'
 import Footer from './components/Footer'
+import Directorio from './pages/Directorio'
+import ProtectedRoute from './components/ProtectedRoute'
 
 const App: React.FC = () => {
   return (
@@ -24,6 +26,14 @@ const App: React.FC = () => {
         ></Route>
         <Route path='/register' element={<Register />} />
         <Route path='/login' element={<Login />} />
+        <Route
+          path='/directorio'
+          element={
+            <ProtectedRoute>
+              <Directorio />
+            </ProtectedRoute>
+          }
+        />
         {/* Otras rutas */}
       </Routes>
     </Router>
