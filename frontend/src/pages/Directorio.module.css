@@ -1,8 +1,57 @@
 .container {
   padding: 2rem;
+  margin-top: 2rem;
   text-align: center;
   background-color: #f9f9f9;
   min-height: 100vh;
+}
+
+.wrapper {
+  display: flex;
+  gap: 2rem;
+}
+
+.sidebar {
+  flex: 0 0 30%; /* Sidebar ocupa el 30% del ancho */
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar h2 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #555;
+}
+
+.formGroup input {
+  width: 100%;
+  padding: 0.8rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  transition: border-color 0.3s ease;
+}
+
+.formGroup input:focus {
+  border-color: #ff6347;
+  outline: none;
+}
+
+.main {
+  flex: 1;
 }
 
 h1 {

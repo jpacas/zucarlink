@@ -60,7 +60,7 @@ const Navbar: React.FC = () => {
             <div className={styles.mobileButtons}>
               {isAuthenticated ? (
                 <button className={styles.mobileLogout} onClick={logout}>
-                  Logout
+                  Salir
                 </button>
               ) : (
                 <>
@@ -88,7 +88,7 @@ const Navbar: React.FC = () => {
       <div className={styles.buttons}>
         {isAuthenticated ? (
           <button className={styles.logout} onClick={logout}>
-            Logout
+            Salir
           </button>
         ) : (
           <>

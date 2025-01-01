@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
 import styles from './Login.module.css'
@@ -9,10 +9,9 @@ const Login: React.FC = () => {
     email: '',
     password: '',
   })
-
-  const [modalMessage, setModalMessage] = useState<string | null>(null)
-  const [modalType, setModalType] = useState<'success' | 'error' | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const { login } = useAuth()
+  const navigate = useNavigate()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -23,8 +22,7 @@ const Login: React.FC = () => {
     const { email, password } = formData
 
     if (!email || !password) {
-      setModalMessage('Todos los campos son obligatorios.')
-      setModalType('error')
+      setErrorMessage('Todos los campos son obligatorios.')
       return
     }
 
@@ -43,27 +41,21 @@ const Login: React.FC = () => {
       login({ id: payload.id, nombre: payload.nombre })
       localStorage.setItem('token', token)
 
-      setModalMessage('Inicio de sesión exitoso. Bienvenido!')
-      setModalType('success')
-      setFormData({ email: '', password: '' })
+      // Redirigir al directorio después del inicio de sesión exitoso
+      navigate('/directorio')
     } catch (error: any) {
-      setModalMessage(
+      setErrorMessage(
         error.response?.data?.message ||
           'Error al iniciar sesión. Por favor, verifica tus credenciales.'
       )
-      setModalType('error')
     }
-  }
-
-  const closeModal = () => {
-    setModalMessage(null)
-    setModalType(null)
   }
 
   return (
     <div className={styles.container}>
       <form onSubmit={handleSubmit} className={styles.form}>
         <h2>Inicia Sesión</h2>
+        {errorMessage && <p className={styles.error}>{errorMessage}</p>}
         <div className={styles.formGroup}>
           <label htmlFor='email'>Correo Electrónico</label>
           <input
@@ -98,21 +90,6 @@ const Login: React.FC = () => {
           </p>
         </div>
       </form>
-
-      {modalMessage && (
-        <div
-          className={`${styles.modal} ${
-            modalType === 'success' ? styles.success : styles.error
-          }`}
-        >
-          <div className={styles.modalContent}>
-            <p>{modalMessage}</p>
-            <button onClick={closeModal} className={styles.closeButton}>
-              Cerrar
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
