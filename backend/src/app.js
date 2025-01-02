@@ -4,12 +4,15 @@ const dotenv = require('dotenv')
 const userRoutes = require('./routes/userRoutes')
 const sequelize = require('./config/database')
 const User = require('./models/User')
+const path = require('path')
+const fs = require('fs')
 
 // Configuración
 dotenv.config()
 const app = express()
 app.use(cors())
 app.use(express.json())
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 sequelize
   .sync({ alter: true }) // Cambia la estructura sin borrar datos (Eliminar esto al estar en produccion)
@@ -26,6 +29,12 @@ app.use('/api/users', userRoutes)
 app.get('/', (req, res) => {
   res.send('API de usuarios')
 })
+
+const uploadDir = path.join(__dirname, 'uploads')
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir)
+}
 
 // Puerto de Inicio
 const PORT = process.env.PORT || 5001

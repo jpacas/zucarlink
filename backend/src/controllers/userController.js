@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const User = require('../models/User')
+const upload = require('../middleware/multer') // Importar el middleware
 
 // Controlador para obtener todos los usuarios
 const getAllUsers = async (req, res) => {
@@ -14,7 +15,6 @@ const getAllUsers = async (req, res) => {
   }
 }
 
-// Registro de usuarios
 const registerUser = async (req, res) => {
   try {
     const { nombre, apellido, pais, email, password } = req.body
@@ -29,6 +29,14 @@ const registerUser = async (req, res) => {
     // Hash de la contraseña
     const hashedPassword = await bcrypt.hash(password, 10)
 
+    // Procesar la imagen de perfil si está presente
+    let avatarUrl = null
+    if (req.file) {
+      avatarUrl = `${req.protocol}://${req.get('host')}/uploads/${
+        req.file.filename
+      }`
+    }
+
     // Crear usuario
     const user = await User.create({
       nombre,
@@ -36,6 +44,7 @@ const registerUser = async (req, res) => {
       pais,
       email,
       password: hashedPassword,
+      avatarUrl, // Almacenar la URL de la imagen
     })
 
     res.status(201).json({ message: 'Usuario registrado exitosamente', user })
@@ -96,4 +105,37 @@ const getUserById = async (req, res) => {
   }
 }
 
-module.exports = { registerUser, loginUser, getAllUsers, getUserById }
+// Controlador para actualizar la foto de perfil
+const uploadProfilePicture = async (req, res) => {
+  const { id } = req.params
+  if (!req.file) {
+    return res.status(400).json({ message: 'No se subió ningún archivo' })
+  }
+
+  const avatarUrl = `${req.protocol}://${req.get('host')}/uploads/${
+    req.file.filename
+  }`
+
+  try {
+    const usuario = await User.findByPk(id)
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    // Actualizar el campo avatarUrl
+    usuario.avatarUrl = avatarUrl
+    await usuario.save()
+
+    res.status(200).json({ message: 'Foto de perfil actualizada', avatarUrl })
+  } catch (error) {
+    res.status(500).json({ message: 'Error al subir la foto de perfil', error })
+  }
+}
+
+module.exports = {
+  registerUser,
+  loginUser,
+  getAllUsers,
+  getUserById,
+  uploadProfilePicture,
+}

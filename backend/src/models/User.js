@@ -34,6 +34,10 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    avatarUrl: {
+      type: DataTypes.STRING, // URL de la foto de perfil
+      allowNull: true,
+    },
   },
   {
     timestamps: true, // Incluye createdAt y updatedAt
