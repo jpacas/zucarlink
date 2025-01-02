@@ -78,4 +78,22 @@ const loginUser = async (req, res) => {
   }
 }
 
-module.exports = { registerUser, loginUser, getAllUsers }
+const getUserById = async (req, res) => {
+  const { id } = req.params
+  try {
+    const usuario = await User.findOne({
+      where: { id },
+      attributes: ['id', 'nombre', 'apellido', 'pais', 'email', 'createdAt'], // Excluir contraseña
+    })
+
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    res.status(200).json(usuario)
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener el usuario', error })
+  }
+}
+
+module.exports = { registerUser, loginUser, getAllUsers, getUserById }
