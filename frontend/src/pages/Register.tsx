@@ -9,6 +9,8 @@ import {
   Alert,
   Autocomplete,
 } from '@mui/material'
+import axios from 'axios'
+import placeholder from '../assets/images/avatar-generico.jpg'
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -20,11 +22,14 @@ const Register: React.FC = () => {
     confirmPassword: '',
   })
   const [profilePicture, setProfilePicture] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null) // Vista previa de la imagen
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{
     type: 'success' | 'error'
     text: string
   } | null>(null)
+
+  const placeholderImage = placeholder // Imagen genérica
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -55,6 +60,7 @@ const Register: React.FC = () => {
         return
       }
       setProfilePicture(file)
+      setPreview(URL.createObjectURL(file)) // Generar vista previa
     }
   }
 
@@ -69,8 +75,8 @@ const Register: React.FC = () => {
       return
     }
 
-    if (!profilePicture) {
-      setMessage({ type: 'error', text: 'Por favor sube una foto de perfil.' })
+    if (formData.password !== formData.confirmPassword) {
+      setMessage({ type: 'error', text: 'Las contraseñas no coinciden.' })
       return
     }
 
@@ -83,12 +89,25 @@ const Register: React.FC = () => {
       formDataToSend.append('pais', formData.pais)
       formDataToSend.append('email', formData.email)
       formDataToSend.append('password', formData.password)
-      formDataToSend.append('avatar', profilePicture)
+      if (profilePicture) {
+        formDataToSend.append('avatar', profilePicture)
+      }
 
-      // Simulación de la solicitud al servidor
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      // Llamada al backend
+      const response = await axios.post(
+        'http://localhost:5001/api/users/register',
+        formDataToSend,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
+      )
 
-      setMessage({ type: 'success', text: 'Usuario registrado exitosamente.' })
+      setMessage({
+        type: 'success',
+        text: response.data.message || 'Usuario registrado exitosamente.',
+      })
+
+      // Limpiar formulario
       setFormData({
         nombre: '',
         apellido: '',
@@ -98,8 +117,12 @@ const Register: React.FC = () => {
         confirmPassword: '',
       })
       setProfilePicture(null)
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Error al registrar el usuario.' })
+      setPreview(null)
+    } catch (error: any) {
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.message || 'Error al registrar el usuario.',
+      })
     } finally {
       setLoading(false)
     }
@@ -185,6 +208,26 @@ const Register: React.FC = () => {
         <Typography variant='body1' mt={2} mb={1}>
           Subir Foto de Perfil
         </Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: 2,
+          }}
+        >
+          <img
+            src={preview || placeholderImage}
+            alt='Vista previa'
+            style={{
+              width: '150px',
+              height: '150px',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '1px solid #ccc',
+            }}
+          />
+        </Box>
         <input type='file' accept='image/*' onChange={handleFileChange} />
         <Button
           type='submit'

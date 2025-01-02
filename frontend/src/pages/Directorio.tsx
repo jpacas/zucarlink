@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   Typography,
+  Autocomplete,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 
@@ -24,6 +25,16 @@ const Directorio: React.FC = () => {
   const [filtros, setFiltros] = useState({ nombre: '', pais: '' })
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
+
+  const countries = [
+    'México',
+    'Estados Unidos',
+    'España',
+    'Colombia',
+    'Argentina',
+    'Chile',
+    'Perú',
+  ]
 
   useEffect(() => {
     const fetchUsuarios = async () => {
@@ -43,16 +54,22 @@ const Directorio: React.FC = () => {
   // Filtrar usuarios
   const usuariosFiltrados = usuarios.filter(
     (usuario) =>
-      usuario.nombre
+      (usuario.nombre
         .toLowerCase()
-        .includes(filtros.nombre.toLowerCase().trim()) &&
-      usuario.pais.toLowerCase().includes(filtros.pais.toLowerCase().trim())
+        .includes(filtros.nombre.toLowerCase().trim()) ||
+        usuario.apellido
+          .toLowerCase()
+          .includes(filtros.nombre.toLowerCase().trim())) &&
+      (!filtros.pais ||
+        usuario.pais.toLowerCase() === filtros.pais.toLowerCase())
   )
 
-  const handleFiltroChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleFiltroChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFiltros({ ...filtros, [e.target.name]: e.target.value })
+  }
+
+  const handleCountryChange = (_: any, value: string | null) => {
+    setFiltros({ ...filtros, pais: value || '' })
   }
 
   return (
@@ -72,17 +89,13 @@ const Directorio: React.FC = () => {
       >
         Directorio de Usuarios
       </Typography>
-      <Grid
-        container
-        spacing={4}
-        direction={{ xs: 'column', md: 'row' }} // Cambia la dirección en pantallas pequeñas
-      >
+      <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
         {/* Sidebar de Filtros */}
         <Grid
           item
           sx={{
-            flex: { xs: '1 1 auto', md: '0 0 25%' }, // Ocupa toda la fila en pantallas pequeñas
-            maxWidth: { xs: '100%', md: '25%' }, // Ajusta el ancho según el tamaño de pantalla
+            flex: { xs: '1 1 auto', md: '0 0 25%' },
+            maxWidth: { xs: '100%', md: '25%' },
           }}
         >
           <Box
@@ -98,32 +111,25 @@ const Directorio: React.FC = () => {
             </Typography>
             <TextField
               fullWidth
-              label='Nombre'
+              label='Nombre o Apellido'
               name='nombre'
               value={filtros.nombre}
               onChange={handleFiltroChange}
               variant='outlined'
               margin='normal'
             />
-            <TextField
-              fullWidth
-              label='País'
-              name='pais'
+            <Autocomplete
+              options={countries}
               value={filtros.pais}
-              onChange={handleFiltroChange}
-              variant='outlined'
-              margin='normal'
+              onChange={handleCountryChange}
+              renderInput={(params) => (
+                <TextField {...params} label='País' margin='normal' fullWidth />
+              )}
             />
           </Box>
         </Grid>
         {/* Resultados */}
-        <Grid
-          item
-          sx={{
-            flex: { xs: '1 1 auto', md: '1' }, // Ajusta dinámicamente el ancho
-            maxWidth: '100%',
-          }}
-        >
+        <Grid item sx={{ flex: { xs: '1 1 auto', md: '1' }, maxWidth: '100%' }}>
           {error && (
             <Typography color='error' textAlign='center'>
               {error}
@@ -150,7 +156,6 @@ const Directorio: React.FC = () => {
                       textAlign: 'center',
                     }}
                   >
-                    {/* Mostrar la foto de perfil */}
                     {usuario.avatarUrl ? (
                       <img
                         src={usuario.avatarUrl}
