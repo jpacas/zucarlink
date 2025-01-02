@@ -1,18 +1,18 @@
+const path = require('path')
 const express = require('express')
 const cors = require('cors')
 const dotenv = require('dotenv')
 const userRoutes = require('./routes/userRoutes')
 const sequelize = require('./config/database')
 const User = require('./models/User')
-const path = require('path')
 const fs = require('fs')
 
 // Configuración
 dotenv.config()
 const app = express()
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 app.use(cors())
 app.use(express.json())
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 sequelize
   .sync({ alter: true }) // Cambia la estructura sin borrar datos (Eliminar esto al estar en produccion)

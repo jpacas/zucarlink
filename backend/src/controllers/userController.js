@@ -7,7 +7,7 @@ const upload = require('../middleware/multer') // Importar el middleware
 const getAllUsers = async (req, res) => {
   try {
     const usuarios = await User.findAll({
-      attributes: ['id', 'nombre', 'apellido', 'pais', 'email'], // Excluye contraseñas
+      attributes: ['id', 'nombre', 'apellido', 'pais', 'email', 'avatarUrl'], // Excluye contraseñas
     })
     res.status(200).json(usuarios)
   } catch (error) {
