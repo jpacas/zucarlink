@@ -8,6 +8,7 @@ import Benefits from './components/Benefits'
 import Footer from './components/Footer'
 import Directorio from './pages/Directorio'
 import ProtectedRoute from './components/ProtectedRoute'
+import Perfil from './components/Perfil'
 
 const App: React.FC = () => {
   return (
@@ -31,6 +32,14 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <Directorio />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/perfil/:id'
+          element={
+            <ProtectedRoute>
+              <Perfil />
             </ProtectedRoute>
           }
         />

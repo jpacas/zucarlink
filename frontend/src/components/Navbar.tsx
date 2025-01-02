@@ -1,107 +1,251 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  IconButton,
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemText,
+  Box,
+} from '@mui/material'
+import MenuIcon from '@mui/icons-material/Menu'
+import LoginIcon from '@mui/icons-material/Login'
+import PersonAddIcon from '@mui/icons-material/PersonAdd'
+import ExitToAppIcon from '@mui/icons-material/ExitToApp'
 import { Link } from 'react-router-dom'
-import { FaBars, FaTimes } from 'react-icons/fa'
 import { useAuth } from '../context/AuthContext'
-import styles from './Navbar.module.css'
+import logo from '../assets/images/ZL-Horizontal-sinfondo02.png'
 
 const Navbar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState<boolean>(false)
+  const [drawerOpen, setDrawerOpen] = React.useState(false)
   const { isAuthenticated, logout } = useAuth()
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 768) {
-        setIsOpen(false)
-      }
-    }
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
-  const toggleMenu = (): void => {
-    setIsOpen(!isOpen)
-  }
-
-  const closeMenu = (): void => {
-    setIsOpen(false)
+  const toggleDrawer = (open: boolean) => {
+    setDrawerOpen(open)
   }
 
   return (
-    <nav className={styles.navbar}>
-      <div className={styles.logo}>
-        <Link to='/'>Zucarlink</Link>
-      </div>
-      {/* Icono Hamburguesa */}
-      <div className={styles.hamburger} onClick={toggleMenu}>
-        <FaBars className={`${styles.icon} ${isOpen ? styles.hide : ''}`} />
-      </div>
-      {/* Contenedor del Menú */}
-      <div className={`${styles.navLinks} ${isOpen ? styles.navOpen : ''}`}>
-        {/* Icono para cerrar el menú (visible solo en pantallas menores a 768px) */}
-        <div className={styles.closeIcon} onClick={closeMenu}>
-          <FaTimes className={styles.icon} />
-        </div>
-        <ul>
-          <li onClick={closeMenu}>
-            <Link to='/'>Inicio</Link>
-          </li>
+    <AppBar
+      position='fixed'
+      sx={{
+        backgroundColor: '#fff',
+        boxShadow: 1,
+        color: '#333',
+        px: '5%',
+      }}
+    >
+      <Toolbar
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        {/* Logo y nombre */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            textDecoration: 'none',
+            color: '#333',
+          }}
+          component={Link}
+          to='/'
+        >
+          <img
+            src={logo}
+            alt='Zucarlink Logo'
+            style={{
+              height: '40px', // Ajusta el tamaño del logo
+              marginRight: '10px', // Separación entre el logo y el texto
+            }}
+          />
+        </Box>
+
+        {/* Botones principales */}
+        <Box
+          sx={{
+            display: { xs: 'none', md: 'flex' },
+            gap: 3,
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+          }}
+        >
+          <Button
+            component={Link}
+            to='/'
+            color='inherit'
+            sx={{ fontSize: '1rem' }}
+          >
+            Inicio
+          </Button>
           {isAuthenticated && (
-            <li onClick={closeMenu}>
-              <Link to='/directorio'>Directorio</Link>
-            </li>
+            <Button
+              component={Link}
+              to='/directorio'
+              color='inherit'
+              sx={{ fontSize: '1rem' }}
+            >
+              Directorio
+            </Button>
           )}
-          <li onClick={closeMenu}>
-            <Link to='#services'>Servicios</Link>
-          </li>
-          <li onClick={closeMenu}>
-            <Link to='#contact'>Contacto</Link>
-          </li>
-          {isOpen && (
-            <div className={styles.mobileButtons}>
-              {isAuthenticated ? (
-                <button className={styles.mobileLogout} onClick={logout}>
-                  Salir
-                </button>
-              ) : (
-                <>
-                  <Link
-                    to='/login'
-                    className={styles.mobileLogin}
-                    onClick={closeMenu}
-                  >
-                    Ingreso
-                  </Link>
-                  <Link
-                    to='/register'
-                    className={styles.mobileRegister}
-                    onClick={closeMenu}
-                  >
-                    Registro
-                  </Link>
-                </>
-              )}
-            </div>
+          <Button
+            component={Link}
+            to='#services'
+            color='inherit'
+            sx={{ fontSize: '1rem' }}
+          >
+            Servicios
+          </Button>
+          <Button
+            component={Link}
+            to='#contact'
+            color='inherit'
+            sx={{ fontSize: '1rem' }}
+          >
+            Contacto
+          </Button>
+          {isAuthenticated ? (
+            <Button
+              color='error'
+              variant='contained'
+              onClick={logout}
+              sx={{
+                backgroundColor: '#ff6347',
+                '&:hover': {
+                  backgroundColor: '#e5533f',
+                },
+              }}
+              startIcon={<ExitToAppIcon />}
+            >
+              Salir
+            </Button>
+          ) : (
+            <>
+              <Button
+                component={Link}
+                to='/login'
+                sx={{
+                  color: '#333',
+                  textTransform: 'none',
+                  border: '1px solid #333',
+                  borderRadius: '4px',
+                  padding: '6px 16px',
+                  '&:hover': {
+                    backgroundColor: '#333',
+                    color: '#fff',
+                  },
+                }}
+                startIcon={<LoginIcon />}
+              >
+                Ingreso
+              </Button>
+              <Button
+                component={Link}
+                to='/register'
+                sx={{
+                  backgroundColor: '#ff6347',
+                  color: '#fff',
+                  textTransform: 'none',
+                  borderRadius: '4px',
+                  padding: '6px 16px',
+                  '&:hover': {
+                    backgroundColor: '#e5533f',
+                  },
+                }}
+                startIcon={<PersonAddIcon />}
+              >
+                Registro
+              </Button>
+            </>
           )}
-        </ul>
-      </div>
-      {/* Botones para pantallas grandes */}
-      <div className={styles.buttons}>
-        {isAuthenticated ? (
-          <button className={styles.logout} onClick={logout}>
-            Salir
-          </button>
-        ) : (
-          <>
-            <Link to='/login' className={styles.login}>
-              Ingreso
-            </Link>
-            <Link to='/register' className={styles.register}>
-              Registro
-            </Link>
-          </>
-        )}
-      </div>
-    </nav>
+        </Box>
+
+        {/* Icono del menú para pantallas pequeñas */}
+        <IconButton
+          color='inherit'
+          sx={{ display: { xs: 'block', md: 'none' } }}
+          onClick={() => toggleDrawer(true)}
+        >
+          <MenuIcon />
+        </IconButton>
+      </Toolbar>
+
+      {/* Drawer para pantallas pequeñas */}
+      <Drawer
+        anchor='right'
+        open={drawerOpen}
+        onClose={() => toggleDrawer(false)}
+      >
+        <Box sx={{ width: 250 }} role='presentation'>
+          <List>
+            <ListItemButton
+              component={Link}
+              to='/'
+              onClick={() => toggleDrawer(false)}
+            >
+              <ListItemText primary='Inicio' />
+            </ListItemButton>
+            {isAuthenticated && (
+              <ListItemButton
+                component={Link}
+                to='/directorio'
+                onClick={() => toggleDrawer(false)}
+              >
+                <ListItemText primary='Directorio' />
+              </ListItemButton>
+            )}
+            <ListItemButton
+              component={Link}
+              to='#services'
+              onClick={() => toggleDrawer(false)}
+            >
+              <ListItemText primary='Servicios' />
+            </ListItemButton>
+            <ListItemButton
+              component={Link}
+              to='#contact'
+              onClick={() => toggleDrawer(false)}
+            >
+              <ListItemText primary='Contacto' />
+            </ListItemButton>
+            {isAuthenticated ? (
+              <ListItemButton
+                onClick={() => {
+                  logout()
+                  toggleDrawer(false)
+                }}
+              >
+                <ExitToAppIcon sx={{ marginRight: 1 }} />
+                <ListItemText primary='Salir' />
+              </ListItemButton>
+            ) : (
+              <>
+                <ListItemButton
+                  component={Link}
+                  to='/login'
+                  onClick={() => toggleDrawer(false)}
+                >
+                  <LoginIcon sx={{ marginRight: 1 }} />
+                  <ListItemText primary='Ingreso' />
+                </ListItemButton>
+                <ListItemButton
+                  component={Link}
+                  to='/register'
+                  onClick={() => toggleDrawer(false)}
+                >
+                  <PersonAddIcon sx={{ marginRight: 1 }} />
+                  <ListItemText primary='Registro' />
+                </ListItemButton>
+              </>
+            )}
+          </List>
+        </Box>
+      </Drawer>
+    </AppBar>
   )
 }
 

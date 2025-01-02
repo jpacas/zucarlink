@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
-import styles from './Directorio.module.css'
+import {
+  Box,
+  Grid,
+  TextField,
+  Card,
+  CardContent,
+  Typography,
+} from '@mui/material'
+import { useNavigate } from 'react-router-dom'
 
 interface User {
   id: string
@@ -14,6 +22,7 @@ const Directorio: React.FC = () => {
   const [usuarios, setUsuarios] = useState<User[]>([])
   const [filtros, setFiltros] = useState({ nombre: '', pais: '' })
   const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const fetchUsuarios = async () => {
@@ -30,12 +39,7 @@ const Directorio: React.FC = () => {
     fetchUsuarios()
   }, [])
 
-  const handleFiltroChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    setFiltros({ ...filtros, [e.target.name]: e.target.value })
-  }
-
+  // Filtrar usuarios
   const usuariosFiltrados = usuarios.filter(
     (usuario) =>
       usuario.nombre
@@ -44,57 +48,117 @@ const Directorio: React.FC = () => {
       usuario.pais.toLowerCase().includes(filtros.pais.toLowerCase().trim())
   )
 
+  const handleFiltroChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setFiltros({ ...filtros, [e.target.name]: e.target.value })
+  }
+
   return (
-    <div className={styles.container}>
-      <h1>Directorio de Usuarios</h1>
-      <div className={styles.wrapper}>
+    <Box
+      sx={{
+        backgroundColor: '#f9f9f9',
+        minHeight: '100vh',
+        padding: 3,
+        marginTop: '64px', // Ajustar la distancia para evitar solapamiento con el Navbar
+      }}
+    >
+      <Typography
+        variant='h3'
+        textAlign='center'
+        marginBottom={4}
+        color='primary'
+      >
+        Directorio de Usuarios
+      </Typography>
+      <Grid
+        container
+        spacing={4}
+        direction={{ xs: 'column', md: 'row' }} // Cambia la dirección en pantallas pequeñas
+      >
         {/* Sidebar de Filtros */}
-        <aside className={styles.sidebar}>
-          <h2>Filtros</h2>
-          <div className={styles.formGroup}>
-            <label htmlFor='nombre'>Nombre</label>
-            <input
-              type='text'
-              id='nombre'
+        <Grid
+          item
+          sx={{
+            flex: { xs: '1 1 auto', md: '0 0 25%' }, // Ocupa toda la fila en pantallas pequeñas
+            maxWidth: { xs: '100%', md: '25%' }, // Ajusta el ancho según el tamaño de pantalla
+          }}
+        >
+          <Box
+            sx={{
+              backgroundColor: '#fff',
+              padding: 3,
+              borderRadius: 2,
+              boxShadow: 3,
+            }}
+          >
+            <Typography variant='h5' marginBottom={2} color='primary'>
+              Filtros
+            </Typography>
+            <TextField
+              fullWidth
+              label='Nombre'
               name='nombre'
-              placeholder='Buscar por nombre'
               value={filtros.nombre}
               onChange={handleFiltroChange}
+              variant='outlined'
+              margin='normal'
             />
-          </div>
-          <div className={styles.formGroup}>
-            <label htmlFor='pais'>País</label>
-            <input
-              type='text'
-              id='pais'
+            <TextField
+              fullWidth
+              label='País'
               name='pais'
-              placeholder='Buscar por país'
               value={filtros.pais}
               onChange={handleFiltroChange}
+              variant='outlined'
+              margin='normal'
             />
-          </div>
-        </aside>
+          </Box>
+        </Grid>
         {/* Resultados */}
-        <main className={styles.main}>
-          {error && <p className={styles.error}>{error}</p>}
-          <div className={styles.cards}>
+        <Grid
+          item
+          sx={{
+            flex: { xs: '1 1 auto', md: '1' }, // Ajusta dinámicamente el ancho
+            maxWidth: '100%',
+          }}
+        >
+          {error && (
+            <Typography color='error' textAlign='center'>
+              {error}
+            </Typography>
+          )}
+          <Grid container spacing={3}>
             {usuariosFiltrados.map((usuario) => (
-              <div key={usuario.id} className={styles.card}>
-                <h2>
-                  {usuario.nombre} {usuario.apellido}
-                </h2>
-                <p>
-                  <strong>País:</strong> {usuario.pais}
-                </p>
-                <p>
-                  <strong>Correo:</strong> {usuario.email}
-                </p>
-              </div>
+              <Grid item xs={12} sm={6} md={4} key={usuario.id}>
+                <Card
+                  sx={{
+                    cursor: 'pointer',
+                    transition: 'transform 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-5px)',
+                    },
+                  }}
+                  onClick={() => navigate(`/perfil/${usuario.id}`)}
+                >
+                  <CardContent>
+                    <Typography variant='h6'>
+                      {usuario.nombre} {usuario.apellido}
+                    </Typography>
+                    <Typography variant='body2' color='text.secondary'>
+                      <strong>País:</strong> {usuario.pais}
+                    </Typography>
+                    <Typography variant='body2' color='text.secondary'>
+                      <strong>Correo:</strong> {usuario.email}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
             ))}
-          </div>
-        </main>
-      </div>
-    </div>
+          </Grid>
+        </Grid>
+      </Grid>
+    </Box>
   )
 }
 
