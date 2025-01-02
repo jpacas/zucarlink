@@ -30,7 +30,7 @@ const registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10)
 
     // Procesar la imagen de perfil si está presente
-    let avatarUrl = null
+    let avatarUrl = 'http://localhost:5001/uploads/avatar-generico.jpg'
     if (req.file) {
       avatarUrl = `${req.protocol}://${req.get('host')}/uploads/${
         req.file.filename
@@ -92,7 +92,15 @@ const getUserById = async (req, res) => {
   try {
     const usuario = await User.findOne({
       where: { id },
-      attributes: ['id', 'nombre', 'apellido', 'pais', 'email', 'createdAt'], // Excluir contraseña
+      attributes: [
+        'id',
+        'nombre',
+        'apellido',
+        'pais',
+        'email',
+        'createdAt',
+        'avatarUrl',
+      ], // Excluir contraseña
     })
 
     if (!usuario) {
