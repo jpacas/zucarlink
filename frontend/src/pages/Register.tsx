@@ -1,6 +1,4 @@
 import React, { useState } from 'react'
-import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
 import {
   Box,
   TextField,
@@ -9,6 +7,7 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  Autocomplete,
 } from '@mui/material'
 
 const Register: React.FC = () => {
@@ -27,11 +26,13 @@ const Register: React.FC = () => {
     text: string
   } | null>(null)
 
-  const navigate = useNavigate()
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData({ ...formData, [name]: value })
+  }
+
+  const handleCountryChange = (_: any, value: string | null) => {
+    setFormData({ ...formData, pais: value || '' })
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,7 +42,15 @@ const Register: React.FC = () => {
       if (!allowedTypes.includes(file.type)) {
         setMessage({
           type: 'error',
-          text: 'Tipo de archivo no permitido. Solo se aceptan imágenes.',
+          text: 'Tipo de archivo no permitido. Solo se aceptan imágenes (JPEG/PNG).',
+        })
+        return
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        // Máximo 2 MB
+        setMessage({
+          type: 'error',
+          text: 'El archivo es demasiado grande. Máximo 2 MB.',
         })
         return
       }
@@ -52,51 +61,34 @@ const Register: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    const { nombre, apellido, pais, email, password, confirmPassword } =
-      formData
-
-    // Validación básica
-    if (
-      !nombre ||
-      !apellido ||
-      !pais ||
-      !email ||
-      !password ||
-      !confirmPassword
-    ) {
-      setMessage({ type: 'error', text: 'Todos los campos son obligatorios.' })
+    if (!formData.pais) {
+      setMessage({
+        type: 'error',
+        text: 'Por favor selecciona un país válido.',
+      })
       return
     }
 
-    if (password !== confirmPassword) {
-      setMessage({ type: 'error', text: 'Las contraseñas no coinciden.' })
+    if (!profilePicture) {
+      setMessage({ type: 'error', text: 'Por favor sube una foto de perfil.' })
       return
     }
+
+    setLoading(true)
 
     try {
-      setLoading(true)
-
       const formDataToSend = new FormData()
-      formDataToSend.append('nombre', nombre)
-      formDataToSend.append('apellido', apellido)
-      formDataToSend.append('pais', pais)
-      formDataToSend.append('email', email)
-      formDataToSend.append('password', password)
-      if (profilePicture) {
-        formDataToSend.append('avatar', profilePicture)
-      }
+      formDataToSend.append('nombre', formData.nombre)
+      formDataToSend.append('apellido', formData.apellido)
+      formDataToSend.append('pais', formData.pais)
+      formDataToSend.append('email', formData.email)
+      formDataToSend.append('password', formData.password)
+      formDataToSend.append('avatar', profilePicture)
 
-      await axios.post(
-        'http://localhost:5001/api/users/register',
-        formDataToSend,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        }
-      )
+      // Simulación de la solicitud al servidor
+      await new Promise((resolve) => setTimeout(resolve, 2000))
 
       setMessage({ type: 'success', text: 'Usuario registrado exitosamente.' })
-
-      // Limpiar el formulario
       setFormData({
         nombre: '',
         apellido: '',
@@ -106,18 +98,22 @@ const Register: React.FC = () => {
         confirmPassword: '',
       })
       setProfilePicture(null)
-
-      // Redirigir después de 2 segundos
-      setTimeout(() => navigate('/login'), 2000)
-    } catch (error: any) {
-      setMessage({
-        type: 'error',
-        text: error.response?.data?.message || 'Error al registrar el usuario.',
-      })
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Error al registrar el usuario.' })
     } finally {
       setLoading(false)
     }
   }
+
+  const countries = [
+    'México',
+    'Estados Unidos',
+    'España',
+    'Colombia',
+    'Argentina',
+    'Chile',
+    'Perú',
+  ]
 
   return (
     <Box
@@ -128,7 +124,7 @@ const Register: React.FC = () => {
         backgroundColor: '#fff',
         borderRadius: 2,
         boxShadow: 3,
-        marginTop: '64px', // Ajuste para el Navbar con position: fixed
+        marginTop: '64px',
       }}
     >
       <Typography variant='h4' mb={3} textAlign='center'>
@@ -151,13 +147,13 @@ const Register: React.FC = () => {
           onChange={handleChange}
           margin='normal'
         />
-        <TextField
-          fullWidth
-          label='País'
-          name='pais'
+        <Autocomplete
+          options={countries}
           value={formData.pais}
-          onChange={handleChange}
-          margin='normal'
+          onChange={handleCountryChange}
+          renderInput={(params) => (
+            <TextField {...params} label='País' margin='normal' fullWidth />
+          )}
         />
         <TextField
           fullWidth
@@ -190,7 +186,6 @@ const Register: React.FC = () => {
           Subir Foto de Perfil
         </Typography>
         <input type='file' accept='image/*' onChange={handleFileChange} />
-
         <Button
           type='submit'
           variant='contained'

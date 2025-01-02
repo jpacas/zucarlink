@@ -16,6 +16,7 @@ interface User {
   apellido: string
   pais: string
   email: string
+  avatarUrl?: string // URL de la foto de perfil
 }
 
 const Directorio: React.FC = () => {
@@ -141,7 +142,32 @@ const Directorio: React.FC = () => {
                   }}
                   onClick={() => navigate(`/perfil/${usuario.id}`)}
                 >
-                  <CardContent>
+                  <CardContent
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {/* Mostrar la foto de perfil */}
+                    {usuario.avatarUrl ? (
+                      <img
+                        src={usuario.avatarUrl}
+                        alt={`${usuario.nombre} ${usuario.apellido}`}
+                        style={{
+                          width: '100px',
+                          height: '100px',
+                          borderRadius: '50%',
+                          marginBottom: '1rem',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <Typography variant='body2' color='text.secondary'>
+                        Sin foto
+                      </Typography>
+                    )}
                     <Typography variant='h6'>
                       {usuario.nombre} {usuario.apellido}
                     </Typography>
