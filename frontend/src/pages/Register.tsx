@@ -29,8 +29,6 @@ const Register: React.FC = () => {
     text: string
   } | null>(null)
 
-  const placeholderImage = placeholder // Imagen genérica
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData({ ...formData, [name]: value })
@@ -217,7 +215,7 @@ const Register: React.FC = () => {
           }}
         >
           <img
-            src={preview || placeholderImage}
+            src={preview || placeholder}
             alt='Vista previa'
             style={{
               width: '150px',
