@@ -1,5 +1,18 @@
 const bcrypt = require('bcrypt')
 const User = require('../models/User')
+const s3 = require('../config/s3')
+
+const uploadToS3 = async (file) => {
+  const params = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: `uploads/${Date.now()}-${file.originalname}`, // Ruta dentro del bucket
+    Body: file.buffer,
+    ContentType: file.mimetype,
+  }
+
+  const { Location } = await s3.upload(params).promise()
+  return Location // URL pública del archivo
+}
 
 // Obtener todos los usuarios
 const getAllUsers = async (req, res) => {
@@ -26,13 +39,9 @@ const registerUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    let avatarUrl = 'http://localhost:5001/uploads/avatar-generico.jpg'
-    console.log('Filename:', req.file.filename)
-
+    let avatarUrl = 'https://path.to/default-avatar.jpg' // URL genérica
     if (req.file) {
-      avatarUrl = `${req.protocol}://${req.get('host')}/uploads/${
-        req.file.filename
-      }`
+      avatarUrl = await uploadToS3(req.file) // Subir a S3 y obtener la URL
     }
 
     const user = await User.create({
@@ -46,8 +55,8 @@ const registerUser = async (req, res) => {
 
     res.status(201).json({ message: 'Usuario registrado exitosamente', user })
   } catch (error) {
+    console.error(error)
     res.status(500).json({ message: 'Error al registrar el usuario', error })
-    console.log(error)
   }
 }
 

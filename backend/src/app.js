@@ -13,14 +13,6 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-//Configuracion de carpeta para subir imagenes estaticas
-const uploadDir = path.join(__dirname, '../uploads')
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir)
-}
-app.use('/uploads', express.static(uploadDir))
-
 //Inicio de base de datos
 sequelize
   .sync({ alter: true }) // Cambia la estructura sin borrar datos (Eliminar esto al estar en produccion)
