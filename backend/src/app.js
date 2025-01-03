@@ -31,6 +31,7 @@ app.get('/', (req, res) => {
 })
 
 const uploadDir = path.join(__dirname, 'uploads')
+console.log('uploadDir', uploadDir)
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir)
