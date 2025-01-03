@@ -40,7 +40,7 @@ const Directorio: React.FC = () => {
     const fetchUsuarios = async () => {
       try {
         const response = await axios.get(
-          'http://localhost:5001/api/users/usuarios'
+          `${import.meta.env.VITE_API_URL}/users/usuarios`
         )
         setUsuarios(response.data)
       } catch (err: any) {

@@ -95,7 +95,7 @@ const Register: React.FC = () => {
 
       // Llamada al backend
       const response = await axios.post(
-        'http://localhost:5001/api/users/register',
+        `${import.meta.env.VITE_API_URL}/users/register`,
         formDataToSend,
         {
           headers: { 'Content-Type': 'multipart/form-data' },
