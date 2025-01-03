@@ -9,6 +9,7 @@ import {
   ListItemButton,
   ListItemText,
   Box,
+  Avatar,
 } from '@mui/material'
 import MenuIcon from '@mui/icons-material/Menu'
 import LoginIcon from '@mui/icons-material/Login'
@@ -20,10 +21,18 @@ import logo from '../assets/images/ZL-Horizontal-sinfondo02.png'
 
 const Navbar: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = React.useState(false)
-  const { isAuthenticated, logout } = useAuth()
+  const { isAuthenticated, user, logout } = useAuth() // Asegúrate de que 'user' contiene los datos del usuario
 
   const toggleDrawer = (open: boolean) => {
     setDrawerOpen(open)
+  }
+
+  const getInitials = (name: string): string => {
+    const initials = name
+      .split(' ')
+      .map((word) => word[0])
+      .join('')
+    return initials.toUpperCase()
   }
 
   return (
@@ -58,8 +67,8 @@ const Navbar: React.FC = () => {
             src={logo}
             alt='Zucarlink Logo'
             style={{
-              height: '40px', // Ajusta el tamaño del logo
-              marginRight: '10px', // Separación entre el logo y el texto
+              height: '40px',
+              marginRight: '10px',
             }}
           />
         </Box>
@@ -107,6 +116,29 @@ const Navbar: React.FC = () => {
           >
             Contacto
           </Button>
+          {isAuthenticated && user && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                marginRight: 2,
+              }}
+            >
+              <Avatar
+                src={user.avatar || ''}
+                alt={user.nombre}
+                sx={{
+                  width: 40,
+                  height: 40,
+                  backgroundColor: '#ff6347',
+                  color: '#fff',
+                }}
+              >
+                {!user.avatar && getInitials(`${user.nombre} ${user.apellido}`)}
+              </Avatar>
+            </Box>
+          )}
           {isAuthenticated ? (
             <Button
               color='error'
