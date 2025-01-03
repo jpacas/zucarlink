@@ -40,7 +40,7 @@ const registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10)
 
     let avatarUrl =
-      'http://zucarlink-production.up.railway.app/uploads/avatar-generico.jpg' // URL genérica
+      'https://zucarlink-profiles.s3.us-east-2.amazonaws.com/uploads/avatar-generico.jpg' // URL genérica
     if (req.file) {
       avatarUrl = await uploadToS3(req.file) // Subir a S3 y obtener la URL
     }
