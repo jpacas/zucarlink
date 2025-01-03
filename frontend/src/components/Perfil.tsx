@@ -31,7 +31,7 @@ const Perfil: React.FC = () => {
     const fetchUsuario = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5001/api/users/usuarios/${id}`
+          `${import.meta.env.VITE_API_URL}/users/usuarios/${id}`
         )
         console.log(response.data)
         setUsuario(response.data)
