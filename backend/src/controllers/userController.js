@@ -26,7 +26,9 @@ const registerUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    let avatarUrl = 'http://localhost:5001/uploads/src/avatar-generico.jpg'
+    let avatarUrl = 'http://localhost:5001/uploads/avatar-generico.jpg'
+    console.log('Filename:', req.file.filename)
+
     if (req.file) {
       avatarUrl = `${req.protocol}://${req.get('host')}/uploads/${
         req.file.filename
@@ -45,6 +47,7 @@ const registerUser = async (req, res) => {
     res.status(201).json({ message: 'Usuario registrado exitosamente', user })
   } catch (error) {
     res.status(500).json({ message: 'Error al registrar el usuario', error })
+    console.log(error)
   }
 }
 

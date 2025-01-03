@@ -4,7 +4,7 @@ const path = require('path')
 // Configuración de Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/') // Carpeta donde se almacenarán los archivos subidos
+    cb(null, path.join(__dirname, '../../uploads')) // Carpeta donde se almacenarán los archivos subidos
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname) // Extensión del archivo

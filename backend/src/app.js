@@ -7,13 +7,21 @@ const sequelize = require('./config/database')
 const User = require('./models/User')
 const fs = require('fs')
 
-// Configuración
+// Configuración General
 dotenv.config()
 const app = express()
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 app.use(cors())
 app.use(express.json())
 
+//Configuracion de carpeta para subir imagenes estaticas
+const uploadDir = path.join(__dirname, '../uploads')
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir)
+}
+app.use('/uploads', express.static(uploadDir))
+
+//Inicio de base de datos
 sequelize
   .sync({ alter: true }) // Cambia la estructura sin borrar datos (Eliminar esto al estar en produccion)
   .then(() => {
@@ -25,17 +33,9 @@ sequelize
 
 // Rutas
 app.use('/api/users', userRoutes)
-
 app.get('/', (req, res) => {
   res.send('API de usuarios')
 })
-
-const uploadDir = path.join(__dirname, 'uploads')
-console.log('uploadDir', uploadDir)
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir)
-}
 
 // Puerto de Inicio
 const PORT = process.env.PORT || 5001

@@ -8,6 +8,7 @@ const uploadProfilePicture = async (req, res) => {
     return res.status(400).json({ message: 'No se subió ningún archivo' })
   }
 
+  console.log('HOST: ', req.get('host'))
   const avatarUrl = `${req.protocol}://${req.get('host')}/uploads/${
     req.file.filename
   }`
