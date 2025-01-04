@@ -46,8 +46,8 @@ const Login: React.FC = () => {
       })
       localStorage.setItem('token', token)
 
-      // Redirigir al directorio después del inicio de sesión exitoso
-      navigate('/directorio')
+      // Redirigir al perfil después del inicio de sesión exitoso
+      navigate(`/perfil/${payload.id}`)
     } catch (error: any) {
       setErrorMessage(
         error.response?.data?.message ||

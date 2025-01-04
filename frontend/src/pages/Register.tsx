@@ -9,6 +9,7 @@ import {
   Alert,
   Autocomplete,
 } from '@mui/material'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import placeholder from '../assets/images/avatar-generico.jpg'
 
@@ -28,6 +29,7 @@ const Register: React.FC = () => {
     type: 'success' | 'error'
     text: string
   } | null>(null)
+  const navigate = useNavigate()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -104,6 +106,8 @@ const Register: React.FC = () => {
         type: 'success',
         text: response.data.message || 'Usuario registrado exitosamente.',
       })
+
+      setTimeout(() => navigate('/login'), 3000)
 
       // Limpiar formulario
       setFormData({

@@ -15,13 +15,14 @@ import MenuIcon from '@mui/icons-material/Menu'
 import LoginIcon from '@mui/icons-material/Login'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import ExitToAppIcon from '@mui/icons-material/ExitToApp'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import logo from '../assets/images/ZL-Horizontal-sinfondo02.png'
 
 const Navbar: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = React.useState(false)
   const { isAuthenticated, user, logout } = useAuth() // Asegúrate de que 'user' contiene los datos del usuario
+  const navigate = useNavigate()
 
   const toggleDrawer = (open: boolean) => {
     setDrawerOpen(open)
@@ -128,7 +129,9 @@ const Navbar: React.FC = () => {
               <Avatar
                 src={user.avatar || ''}
                 alt={user.nombre}
+                onClick={() => navigate(`/perfil/${user.id}`)} // Redirigir al perfil
                 sx={{
+                  cursor: 'pointer',
                   width: 40,
                   height: 40,
                   backgroundColor: '#ff6347',
