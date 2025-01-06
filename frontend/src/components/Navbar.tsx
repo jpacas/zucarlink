@@ -15,7 +15,7 @@ import MenuIcon from '@mui/icons-material/Menu'
 import LoginIcon from '@mui/icons-material/Login'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import ExitToAppIcon from '@mui/icons-material/ExitToApp'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import logo from '../assets/images/ZL-Horizontal-sinfondo02.png'
 
@@ -23,6 +23,7 @@ const Navbar: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = React.useState(false)
   const { isAuthenticated, user, logout } = useAuth() // Asegúrate de que 'user' contiene los datos del usuario
   const navigate = useNavigate()
+  const location = useLocation()
 
   const toggleDrawer = (open: boolean) => {
     setDrawerOpen(open)
@@ -35,6 +36,8 @@ const Navbar: React.FC = () => {
       .join('')
     return initials.toUpperCase()
   }
+
+  const isActive = (path: string) => location.pathname === path // Verifica si la ruta coincide con la URL actual
 
   return (
     <AppBar
@@ -53,7 +56,6 @@ const Navbar: React.FC = () => {
           alignItems: 'center',
         }}
       >
-        {/* Logo y nombre */}
         <Box
           sx={{
             display: 'flex',
@@ -74,7 +76,6 @@ const Navbar: React.FC = () => {
           />
         </Box>
 
-        {/* Botones principales */}
         <Box
           sx={{
             display: { xs: 'none', md: 'flex' },
@@ -86,8 +87,11 @@ const Navbar: React.FC = () => {
           <Button
             component={Link}
             to='/'
-            color='inherit'
-            sx={{ fontSize: '1rem' }}
+            color={isActive('/') ? 'primary' : 'inherit'} // Aplica estilo activo
+            sx={{
+              fontSize: '1rem',
+              fontWeight: isActive('/') ? 'bold' : 'normal', // Resalta el enlace activo
+            }}
           >
             Inicio
           </Button>
@@ -95,8 +99,11 @@ const Navbar: React.FC = () => {
             <Button
               component={Link}
               to='/directorio'
-              color='inherit'
-              sx={{ fontSize: '1rem' }}
+              color={isActive('/directorio') ? 'primary' : 'inherit'} // Aplica estilo activo
+              sx={{
+                fontSize: '1rem',
+                fontWeight: isActive('/directorio') ? 'bold' : 'normal',
+              }}
             >
               Directorio
             </Button>
@@ -129,7 +136,7 @@ const Navbar: React.FC = () => {
               <Avatar
                 src={user.avatar || ''}
                 alt={user.nombre}
-                onClick={() => navigate(`/perfil/${user.id}`)} // Redirigir al perfil
+                onClick={() => navigate(`/perfil/${user.id}`)}
                 sx={{
                   cursor: 'pointer',
                   width: 40,
@@ -198,7 +205,6 @@ const Navbar: React.FC = () => {
           )}
         </Box>
 
-        {/* Icono del menú para pantallas pequeñas */}
         <IconButton
           color='inherit'
           sx={{ display: { xs: 'block', md: 'none' } }}
@@ -207,78 +213,6 @@ const Navbar: React.FC = () => {
           <MenuIcon />
         </IconButton>
       </Toolbar>
-
-      {/* Drawer para pantallas pequeñas */}
-      <Drawer
-        anchor='right'
-        open={drawerOpen}
-        onClose={() => toggleDrawer(false)}
-      >
-        <Box sx={{ width: 250 }} role='presentation'>
-          <List>
-            <ListItemButton
-              component={Link}
-              to='/'
-              onClick={() => toggleDrawer(false)}
-            >
-              <ListItemText primary='Inicio' />
-            </ListItemButton>
-            {isAuthenticated && (
-              <ListItemButton
-                component={Link}
-                to='/directorio'
-                onClick={() => toggleDrawer(false)}
-              >
-                <ListItemText primary='Directorio' />
-              </ListItemButton>
-            )}
-            <ListItemButton
-              component={Link}
-              to='#services'
-              onClick={() => toggleDrawer(false)}
-            >
-              <ListItemText primary='Servicios' />
-            </ListItemButton>
-            <ListItemButton
-              component={Link}
-              to='#contact'
-              onClick={() => toggleDrawer(false)}
-            >
-              <ListItemText primary='Contacto' />
-            </ListItemButton>
-            {isAuthenticated ? (
-              <ListItemButton
-                onClick={() => {
-                  logout()
-                  toggleDrawer(false)
-                }}
-              >
-                <ExitToAppIcon sx={{ marginRight: 1 }} />
-                <ListItemText primary='Salir' />
-              </ListItemButton>
-            ) : (
-              <>
-                <ListItemButton
-                  component={Link}
-                  to='/login'
-                  onClick={() => toggleDrawer(false)}
-                >
-                  <LoginIcon sx={{ marginRight: 1 }} />
-                  <ListItemText primary='Ingreso' />
-                </ListItemButton>
-                <ListItemButton
-                  component={Link}
-                  to='/register'
-                  onClick={() => toggleDrawer(false)}
-                >
-                  <PersonAddIcon sx={{ marginRight: 1 }} />
-                  <ListItemText primary='Registro' />
-                </ListItemButton>
-              </>
-            )}
-          </List>
-        </Box>
-      </Drawer>
     </AppBar>
   )
 }
