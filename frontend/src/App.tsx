@@ -9,6 +9,7 @@ import Footer from './components/Footer'
 import Directorio from './pages/Directorio'
 import ProtectedRoute from './components/ProtectedRoute'
 import Perfil from './components/Perfil'
+import Foro from './pages/Foro'
 
 const App: React.FC = () => {
   return (
@@ -40,6 +41,14 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <Perfil />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/foro'
+          element={
+            <ProtectedRoute>
+              <Foro />
             </ProtectedRoute>
           }
         />

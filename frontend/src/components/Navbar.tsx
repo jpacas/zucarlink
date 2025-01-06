@@ -98,17 +98,31 @@ const Navbar: React.FC = () => {
             Inicio
           </Button>
           {isAuthenticated && (
-            <Button
-              component={Link}
-              to='/directorio'
-              color={isActive('/directorio') ? 'primary' : 'inherit'}
-              sx={{
-                fontSize: '1rem',
-                fontWeight: isActive('/directorio') ? 'bold' : 'normal',
-              }}
-            >
-              Directorio
-            </Button>
+            <>
+              <Button
+                component={Link}
+                to='/directorio'
+                color={isActive('/directorio') ? 'primary' : 'inherit'}
+                sx={{
+                  fontSize: '1rem',
+                  fontWeight: isActive('/directorio') ? 'bold' : 'normal',
+                }}
+              >
+                Directorio
+              </Button>
+              {/* CAMBIO: Se agregó el botón para el Foro */}
+              <Button
+                component={Link}
+                to='/foro'
+                color={isActive('/foro') ? 'primary' : 'inherit'}
+                sx={{
+                  fontSize: '1rem',
+                  fontWeight: isActive('/foro') ? 'bold' : 'normal',
+                }}
+              >
+                Foro
+              </Button>
+            </>
           )}
           <Button
             component={Link}
@@ -233,13 +247,23 @@ const Navbar: React.FC = () => {
               <ListItemText primary='Inicio' />
             </ListItemButton>
             {isAuthenticated && (
-              <ListItemButton
-                component={Link}
-                to='/directorio'
-                onClick={() => toggleDrawer(false)}
-              >
-                <ListItemText primary='Directorio' />
-              </ListItemButton>
+              <>
+                <ListItemButton
+                  component={Link}
+                  to='/directorio'
+                  onClick={() => toggleDrawer(false)}
+                >
+                  <ListItemText primary='Directorio' />
+                </ListItemButton>
+                {/* CAMBIO: Se agregó la opción Foro en el Drawer */}
+                <ListItemButton
+                  component={Link}
+                  to='/foro'
+                  onClick={() => toggleDrawer(false)}
+                >
+                  <ListItemText primary='Foro' />
+                </ListItemButton>
+              </>
             )}
             <ListItemButton
               component={Link}
