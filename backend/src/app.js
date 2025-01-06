@@ -3,6 +3,7 @@ const express = require('express')
 const cors = require('cors')
 const dotenv = require('dotenv')
 const userRoutes = require('./routes/userRoutes')
+const postRoutes = require('./routes/postRoutes')
 const sequelize = require('./config/database')
 const User = require('./models/User')
 const fs = require('fs')
@@ -25,6 +26,8 @@ sequelize
 
 // Rutas
 app.use('/api/users', userRoutes)
+app.use('/api/posts', postRoutes)
+
 app.get('/', (req, res) => {
   res.send('API de usuarios')
 })
