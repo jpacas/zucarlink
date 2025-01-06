@@ -56,6 +56,7 @@ const Navbar: React.FC = () => {
           alignItems: 'center',
         }}
       >
+        {/* Logo y nombre */}
         <Box
           sx={{
             display: 'flex',
@@ -76,6 +77,7 @@ const Navbar: React.FC = () => {
           />
         </Box>
 
+        {/* Botones principales */}
         <Box
           sx={{
             display: { xs: 'none', md: 'flex' },
@@ -90,7 +92,7 @@ const Navbar: React.FC = () => {
             color={isActive('/') ? 'primary' : 'inherit'} // Aplica estilo activo
             sx={{
               fontSize: '1rem',
-              fontWeight: isActive('/') ? 'bold' : 'normal', // Resalta el enlace activo
+              fontWeight: isActive('/') ? 'bold' : 'normal',
             }}
           >
             Inicio
@@ -99,7 +101,7 @@ const Navbar: React.FC = () => {
             <Button
               component={Link}
               to='/directorio'
-              color={isActive('/directorio') ? 'primary' : 'inherit'} // Aplica estilo activo
+              color={isActive('/directorio') ? 'primary' : 'inherit'}
               sx={{
                 fontSize: '1rem',
                 fontWeight: isActive('/directorio') ? 'bold' : 'normal',
@@ -136,7 +138,7 @@ const Navbar: React.FC = () => {
               <Avatar
                 src={user.avatar || ''}
                 alt={user.nombre}
-                onClick={() => navigate(`/perfil/${user.id}`)}
+                onClick={() => navigate(`/perfil/${user.id}`)} // Redirigir al perfil
                 sx={{
                   cursor: 'pointer',
                   width: 40,
@@ -205,6 +207,7 @@ const Navbar: React.FC = () => {
           )}
         </Box>
 
+        {/* Icono del menú para pantallas pequeñas */}
         <IconButton
           color='inherit'
           sx={{ display: { xs: 'block', md: 'none' } }}
@@ -213,6 +216,78 @@ const Navbar: React.FC = () => {
           <MenuIcon />
         </IconButton>
       </Toolbar>
+
+      {/* Drawer para pantallas pequeñas */}
+      <Drawer
+        anchor='right'
+        open={drawerOpen}
+        onClose={() => toggleDrawer(false)}
+      >
+        <Box sx={{ width: 250 }} role='presentation'>
+          <List>
+            <ListItemButton
+              component={Link}
+              to='/'
+              onClick={() => toggleDrawer(false)}
+            >
+              <ListItemText primary='Inicio' />
+            </ListItemButton>
+            {isAuthenticated && (
+              <ListItemButton
+                component={Link}
+                to='/directorio'
+                onClick={() => toggleDrawer(false)}
+              >
+                <ListItemText primary='Directorio' />
+              </ListItemButton>
+            )}
+            <ListItemButton
+              component={Link}
+              to='#services'
+              onClick={() => toggleDrawer(false)}
+            >
+              <ListItemText primary='Servicios' />
+            </ListItemButton>
+            <ListItemButton
+              component={Link}
+              to='#contact'
+              onClick={() => toggleDrawer(false)}
+            >
+              <ListItemText primary='Contacto' />
+            </ListItemButton>
+            {isAuthenticated ? (
+              <ListItemButton
+                onClick={() => {
+                  logout()
+                  toggleDrawer(false)
+                }}
+              >
+                <ExitToAppIcon sx={{ marginRight: 1 }} />
+                <ListItemText primary='Salir' />
+              </ListItemButton>
+            ) : (
+              <>
+                <ListItemButton
+                  component={Link}
+                  to='/login'
+                  onClick={() => toggleDrawer(false)}
+                >
+                  <LoginIcon sx={{ marginRight: 1 }} />
+                  <ListItemText primary='Ingreso' />
+                </ListItemButton>
+                <ListItemButton
+                  component={Link}
+                  to='/register'
+                  onClick={() => toggleDrawer(false)}
+                >
+                  <PersonAddIcon sx={{ marginRight: 1 }} />
+                  <ListItemText primary='Registro' />
+                </ListItemButton>
+              </>
+            )}
+          </List>
+        </Box>
+      </Drawer>
     </AppBar>
   )
 }
