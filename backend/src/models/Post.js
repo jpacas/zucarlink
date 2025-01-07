@@ -29,16 +29,13 @@ const Post = sequelize.define(
       ),
       allowNull: false,
     },
-    fechaCreacion: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-    },
   },
   {
-    timestamps: true,
+    timestamps: true, // Sequelize se encarga de createdAt y updatedAt
     tableName: 'Posts',
   }
 )
 
+// Relación con User
 Post.belongsTo(User, { foreignKey: 'usuarioId', as: 'autor' })
 module.exports = Post
