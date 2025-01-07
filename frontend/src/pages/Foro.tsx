@@ -13,16 +13,23 @@ import {
   Alert,
   CircularProgress,
   Modal,
+  Avatar,
+  IconButton,
 } from '@mui/material'
+import ThumbUpIcon from '@mui/icons-material/ThumbUp'
+import CommentIcon from '@mui/icons-material/Comment'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 import { useAuth } from '../context/AuthContext'
+import { formatDistanceToNow } from 'date-fns'
+import { es } from 'date-fns/locale'
 
 interface Post {
   id: number
   titulo: string
   contenido: string
   categoria: string
-  createdAt: string // Usar `createdAt` directamente
-  autor: { nombre: string; apellido: string; avatarUrl?: string }
+  createdAt: string
+  autor: { id: number; nombre: string; apellido: string; avatarUrl?: string }
 }
 
 const Foro: React.FC = () => {
@@ -35,7 +42,7 @@ const Foro: React.FC = () => {
   const [contenido, setContenido] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [modalOpen, setModalOpen] = useState<boolean>(false) // Control del modal
+  const [modalOpen, setModalOpen] = useState<boolean>(false)
 
   const categorias = [
     'Campo',
@@ -88,7 +95,7 @@ const Foro: React.FC = () => {
       setTitulo('')
       setContenido('')
       setCategoria('')
-      setModalOpen(false) // Cierra el modal después de crear el post
+      setModalOpen(false)
       fetchPosts()
       setError(null)
     } catch (err) {
@@ -103,25 +110,21 @@ const Foro: React.FC = () => {
     setCategoria('')
   }
 
+  const formatRelativeDate = (date: string) => {
+    const parsedDate = new Date(date) // Convierte el string a un objeto Date
+    return formatDistanceToNow(parsedDate, { addSuffix: true, locale: es })
+  }
+
   return (
     <Box
       sx={{
         backgroundColor: '#f9f9f9',
         minHeight: '100vh',
         padding: 3,
-        marginTop: '64px', // Ajustar el contenido para evitar solapamiento con el Navbar
+        marginTop: '64px',
       }}
     >
-      <Typography
-        variant='h3'
-        textAlign='center'
-        marginBottom={4}
-        color='primary'
-      >
-        Foro
-      </Typography>
       <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
-        {/* Sidebar de Filtros */}
         <Grid
           item
           sx={{
@@ -163,7 +166,7 @@ const Foro: React.FC = () => {
               ))}
             </Select>
             <Button
-              onClick={() => setModalOpen(true)} // Abre el modal
+              onClick={() => setModalOpen(true)}
               variant='contained'
               color='primary'
               fullWidth
@@ -173,8 +176,7 @@ const Foro: React.FC = () => {
             </Button>
           </Box>
         </Grid>
-        {/* Posts */}
-        <Grid item sx={{ flex: { xs: '1 1 auto', md: '1' }, maxWidth: '100%' }}>
+        <Grid item sx={{ flex: { xs: '1 1 auto', md: '1' } }}>
           {error && (
             <Alert severity='error' sx={{ marginBottom: 3 }}>
               {error}
@@ -187,19 +189,100 @@ const Foro: React.FC = () => {
           ) : posts.length > 0 ? (
             <Grid container spacing={3}>
               {posts.map((post) => (
-                <Grid item xs={12} md={6} key={post.id}>
-                  <Card>
+                <Grid item xs={12} key={post.id}>
+                  <Card
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      padding: 2,
+                      boxShadow: 3,
+                    }}
+                  >
                     <CardContent>
-                      <Typography variant='h5'>{post.titulo}</Typography>
-                      <Typography variant='body2' color='textSecondary'>
-                        {post.categoria} -{' '}
-                        {new Date(post.createdAt).toLocaleDateString()}
-                      </Typography>
-                      <Typography variant='body1'>{post.contenido}</Typography>
-                      <Typography variant='caption'>
-                        Publicado por {post.autor.nombre} {post.autor.apellido}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Typography variant='h5' sx={{ flex: 1 }}>
+                          {post.titulo}
+                        </Typography>
+                        {/* CAMBIO: Agrupamos nombre y avatar en la esquina superior derecha */}
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
+                          <Typography variant='body1'>
+                            {post.autor.nombre} {post.autor.apellido}
+                          </Typography>
+                          <Avatar
+                            src={post.autor.avatarUrl || ''}
+                            alt={`${post.autor.nombre} ${post.autor.apellido}`}
+                            sx={{ width: 40, height: 40, cursor: 'pointer' }}
+                            onClick={() =>
+                              (window.location.href = `/perfil/${post.autor.id}`)
+                            }
+                          />
+                        </Box>
+                      </Box>
+                      <Typography variant='body1' sx={{ marginTop: 2 }}>
+                        {post.contenido}
                       </Typography>
                     </CardContent>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginTop: 2,
+                      }}
+                    >
+                      <Typography variant='body2' color='textSecondary'>
+                        {post.categoria} - {formatRelativeDate(post.createdAt)}
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 3 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
+                          <Typography variant='body2'>10</Typography>
+                          <IconButton color='primary'>
+                            <ThumbUpIcon />
+                          </IconButton>
+                        </Box>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
+                          <Typography variant='body2'>5</Typography>
+                          <IconButton color='primary'>
+                            <CommentIcon />
+                          </IconButton>
+                        </Box>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
+                          <Typography variant='body2'>20</Typography>
+                          <VisibilityIcon color='primary' />
+                        </Box>
+                      </Box>
+                    </Box>
                   </Card>
                 </Grid>
               ))}
@@ -212,7 +295,7 @@ const Foro: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* Modal para crear un nuevo post */}
+      {/* Modal para Crear Post */}
       <Modal
         open={modalOpen}
         onClose={handleModalClose}
