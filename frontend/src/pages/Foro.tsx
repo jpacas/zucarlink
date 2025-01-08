@@ -30,6 +30,7 @@ interface Post {
   categoria: string
   createdAt: string
   autor: { id: number; nombre: string; apellido: string; avatarUrl?: string }
+  likes: string[] // NUEVO: Campo para los likes.
 }
 
 const Foro: React.FC = () => {
@@ -78,6 +79,31 @@ const Foro: React.FC = () => {
   useEffect(() => {
     fetchPosts()
   }, [categoriaFiltro, temaFiltro])
+
+  // NUEVO: Función para manejar los likes
+  const handleLikeToggle = async (postId: number) => {
+    if (!user?.id) {
+      alert('Por favor, inicia sesión para dar like.')
+      return
+    }
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/posts/${postId}/like`,
+        {
+          userId: user.id,
+        }
+      )
+
+      // Actualizar el estado de los posts con los nuevos likes
+      const updatedPosts = posts.map((post) =>
+        post.id === postId ? { ...post, likes: response.data.likes } : post
+      )
+      setPosts(updatedPosts)
+    } catch (err) {
+      setError('Error al actualizar el like.')
+    }
+  }
 
   const handlePostSubmit = async () => {
     if (!titulo || !contenido || !categoria) {
@@ -254,8 +280,15 @@ const Foro: React.FC = () => {
                             gap: 1,
                           }}
                         >
-                          <Typography variant='body2'>10</Typography>
-                          <IconButton color='primary'>
+                          <Typography>{post.likes.length}</Typography>
+                          <IconButton
+                            color={
+                              post.likes.includes(user?.id ?? '')
+                                ? 'primary'
+                                : 'default'
+                            }
+                            onClick={() => handleLikeToggle(post.id)}
+                          >
                             <ThumbUpIcon />
                           </IconButton>
                         </Box>
