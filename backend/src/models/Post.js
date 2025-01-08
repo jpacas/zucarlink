@@ -29,9 +29,28 @@ const Post = sequelize.define(
       ),
       allowNull: false,
     },
+    likes: {
+      type: DataTypes.JSON,
+      defaultValue: [],
+      validate: {
+        isArray(value) {
+          if (!Array.isArray(value)) {
+            throw new Error('Likes must be an array')
+          }
+        },
+      },
+    },
+    comments: {
+      type: DataTypes.JSON, // Lista de comentarios
+      defaultValue: [],
+    },
+    views: {
+      type: DataTypes.INTEGER, // Contador de vistas
+      defaultValue: 0,
+    },
   },
   {
-    timestamps: true, // Sequelize se encarga de createdAt y updatedAt
+    timestamps: true,
     tableName: 'Posts',
   }
 )
