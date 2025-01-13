@@ -6,6 +6,7 @@ const userRoutes = require('./routes/userRoutes')
 const postRoutes = require('./routes/postRoutes')
 const maquinariaRoutes = require('./routes/maquinariaRoutes')
 const empleoRoutes = require('./routes/empleoRoutes')
+const contactRoutes = require('./routes/contactRoutes')
 const sequelize = require('./config/database')
 const User = require('./models/User')
 const fs = require('fs')
@@ -18,7 +19,7 @@ app.use(express.json())
 
 //Inicio de base de datos
 sequelize
-  .sync({ alter: true }) // Cambia la estructura sin borrar datos (Eliminar esto al estar en produccion)
+  .sync({ alter: false }) // Cambia la estructura sin borrar datos (Eliminar esto al estar en produccion)
   .then(() => {
     console.log('Base de datos sincronizada.')
   })
@@ -31,6 +32,7 @@ app.use('/api/users', userRoutes)
 app.use('/api/posts', postRoutes)
 app.use('/api/maquinaria', maquinariaRoutes)
 app.use('/api/empleos', empleoRoutes)
+app.use('/api/contact', contactRoutes)
 
 app.get('/', (req, res) => {
   res.send('API de usuarios')
