@@ -134,9 +134,12 @@ const Navbar: React.FC = () => {
           </Button>
           <Button
             component={Link}
-            to='#contact'
-            color='inherit'
-            sx={{ fontSize: '1rem' }}
+            to='/contact'
+            color={isActive('/contact') ? 'primary' : 'inherit'}
+            sx={{
+              fontSize: '1rem',
+              fontWeight: isActive('/contact') ? 'bold' : 'normal',
+            }}
           >
             Contacto
           </Button>
@@ -274,7 +277,7 @@ const Navbar: React.FC = () => {
             </ListItemButton>
             <ListItemButton
               component={Link}
-              to='#contact'
+              to='/contact'
               onClick={() => toggleDrawer(false)}
             >
               <ListItemText primary='Contacto' />

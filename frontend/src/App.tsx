@@ -10,6 +10,7 @@ import Directorio from './pages/Directorio'
 import ProtectedRoute from './components/ProtectedRoute'
 import Perfil from './components/Perfil'
 import Foro from './pages/Foro'
+import Contact from './components/Contact'
 
 const App: React.FC = () => {
   return (
@@ -28,6 +29,7 @@ const App: React.FC = () => {
         ></Route>
         <Route path='/register' element={<Register />} />
         <Route path='/login' element={<Login />} />
+        <Route path='/contact' element={<Contact />} />
         <Route
           path='/directorio'
           element={
