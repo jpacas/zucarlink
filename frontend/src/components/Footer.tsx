@@ -8,8 +8,8 @@ const Footer: React.FC = () => {
       <div className={styles.container}>
         <div className={styles.section}>
           <h4 className={styles.title}>Contáctanos</h4>
-          <p>Email: contacto@tuapp.com</p>
-          <p>Teléfono: +1 (234) 567-890</p>
+          <p>Email: zucarlink@gmail.com</p>
+          <p>Teléfono: (503) 7069-4907</p>
         </div>
         <div className={styles.section}>
           <h4 className={styles.title}>Enlaces</h4>
@@ -26,28 +26,28 @@ const Footer: React.FC = () => {
           <h4 className={styles.title}>Síguenos</h4>
           <div className={styles.socialLinks}>
             <a
-              href='https://facebook.com'
+              href='https://www.facebook.com/ZucarLink'
               target='_blank'
               rel='noopener noreferrer'
             >
               <FaFacebook className={styles.icon} />
             </a>
             <a
-              href='https://twitter.com'
+              href='https://x.com/ZucarLink'
               target='_blank'
               rel='noopener noreferrer'
             >
               <FaTwitter className={styles.icon} />
             </a>
             <a
-              href='https://instagram.com'
+              href='https://www.instagram.com/zucarlink'
               target='_blank'
               rel='noopener noreferrer'
             >
               <FaInstagram className={styles.icon} />
             </a>
             <a
-              href='https://linkedin.com'
+              href='https://www.linkedin.com/company/zucarlink'
               target='_blank'
               rel='noopener noreferrer'
             >
@@ -58,7 +58,7 @@ const Footer: React.FC = () => {
       </div>
       <div className={styles.copy}>
         <p>
-          © {new Date().getFullYear()} Tu App. Todos los derechos reservados.
+          © {new Date().getFullYear()} Zucarlink. Todos los derechos reservados.
         </p>
       </div>
     </footer>
