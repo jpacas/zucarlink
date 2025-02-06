@@ -25,7 +25,14 @@ const Post = sequelize.define(
         'Fabrica',
         'Calderas',
         'Energia',
-        'Alcohol'
+        'Alcohol',
+        'Laboratorio',
+        'Instrumentacion',
+        'Mantenimiento',
+        'Seguridad',
+        'Medio Ambiente',
+        'Recursos Humanos',
+        'Otros'
       ),
       allowNull: false,
     },
