@@ -11,7 +11,7 @@ module.exports = {
     dialectOptions: {
       ssl: {
         require: true,
-        rejectUnauthorized: false,
+        rejectUnauthorized: false, // Para conexiones seguras en Railway
       },
     },
   },
@@ -28,5 +28,6 @@ module.exports = {
         rejectUnauthorized: false,
       },
     },
+    logging: false, // Evita mostrar consultas SQL en logs
   },
 }
