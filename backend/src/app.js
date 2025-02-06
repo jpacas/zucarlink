@@ -1,4 +1,3 @@
-const path = require('path')
 const express = require('express')
 const cors = require('cors')
 const dotenv = require('dotenv')
@@ -9,8 +8,6 @@ const empleoRoutes = require('./routes/empleoRoutes')
 const contactRoutes = require('./routes/contactRoutes')
 const zucariaRoutes = require('./routes/zucariaRoutes')
 const sequelize = require('./config/database')
-const User = require('./models/User')
-const fs = require('fs')
 
 // Configuración General
 dotenv.config()
@@ -19,14 +16,19 @@ app.use(cors())
 app.use(express.json())
 
 //Inicio de base de datos
+// sequelize
+//   .sync({ alter: false }) // Cambia la estructura sin borrar datos (Eliminar esto al estar en produccion)
+//   .then(() => {
+//     console.log('Base de datos sincronizada.')
+//   })
+//   .catch((error) => {
+//     console.error('Error al sincronizar la base de datos:', error)
+//   })
+
 sequelize
-  .sync({ alter: false }) // Cambia la estructura sin borrar datos (Eliminar esto al estar en produccion)
-  .then(() => {
-    console.log('Base de datos sincronizada.')
-  })
-  .catch((error) => {
-    console.error('Error al sincronizar la base de datos:', error)
-  })
+  .authenticate()
+  .then(() => console.log('Conexión a la base de datos exitosa'))
+  .catch((err) => console.error('Error al conectar la base de datos:', err))
 
 // Rutas
 app.use('/api/users', userRoutes)

@@ -1,20 +1,17 @@
 const { Sequelize } = require('sequelize')
-require('dotenv').config()
+const config = require('../../config/config')[
+  process.env.NODE_ENV || 'development'
+]
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
+  config.database,
+  config.username,
+  config.password,
   {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT || 3306,
-    dialect: 'mysql',
-    dialectOptions: {
-      ssl: {
-        require: true, // Para Railway y conexiones seguras
-        rejectUnauthorized: false, // Ajustar según la configuración del servidor
-      },
-    },
+    host: config.host,
+    port: config.port,
+    dialect: config.dialect,
+    dialectOptions: config.dialectOptions,
   }
 )
 
