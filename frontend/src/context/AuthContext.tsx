@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuthenticated(false)
     setUser(null)
     localStorage.removeItem('token')
+    localStorage.removeItem('zucarIA_conversation')
   }
 
   return (
