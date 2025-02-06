@@ -89,13 +89,17 @@ const toggleLike = async (req, res) => {
 
 const addComment = async (req, res) => {
   const { postId } = req.params
-  const { userId, comment } = req.body
+  const { userId, comment, nombre, apellido } = req.body
 
   try {
     const post = await Post.findByPk(postId)
     if (!post) return res.status(404).json({ message: 'Post no encontrado.' })
 
-    post.comments.push({ userId, comment, createdAt: new Date() })
+    post.comments = [
+      ...post.comments,
+      { user: userId, nombre, apellido, value: comment, createdAt: new Date() },
+    ]
+
     await post.save()
 
     res
@@ -103,6 +107,33 @@ const addComment = async (req, res) => {
       .json({ message: 'Comentario añadido.', comments: post.comments })
   } catch (error) {
     res.status(500).json({ message: 'Error al añadir comentario.', error })
+  }
+}
+
+const deleteComment = async (req, res) => {
+  const { postId, commentIndex } = req.params // Se espera el índice del comentario a eliminar
+
+  try {
+    const post = await Post.findByPk(postId)
+    if (!post) return res.status(404).json({ message: 'Post no encontrado.' })
+
+    if (commentIndex < 0 || commentIndex >= post.comments.length) {
+      return res
+        .status(400)
+        .json({ message: 'Índice de comentario no válido.' })
+    }
+
+    // Eliminar el comentario por índice
+    const updatedComments = [...post.comments]
+    updatedComments.splice(commentIndex, 1)
+    post.comments = updatedComments
+    await post.save()
+
+    res
+      .status(200)
+      .json({ message: 'Comentario eliminado.', comments: post.comments })
+  } catch (error) {
+    res.status(500).json({ message: 'Error al eliminar comentario.', error })
   }
 }
 
@@ -130,4 +161,5 @@ module.exports = {
   toggleLike,
   addComment,
   incrementViews,
+  deleteComment,
 }
