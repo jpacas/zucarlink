@@ -27,13 +27,13 @@ const Directorio: React.FC = () => {
   const navigate = useNavigate()
 
   const countries = [
-    'México',
-    'Estados Unidos',
-    'España',
-    'Colombia',
-    'Argentina',
-    'Chile',
-    'Perú',
+    'El Salvador',
+    'Guatemala',
+    'Nicaragua',
+    'Honduras',
+    'Costa Rica',
+    'Panama',
+    'Belice',
   ]
 
   useEffect(() => {
@@ -81,14 +81,14 @@ const Directorio: React.FC = () => {
         marginTop: '64px', // Ajustar la distancia para evitar solapamiento con el Navbar
       }}
     >
-      <Typography
+      {/* <Typography
         variant='h3'
         textAlign='center'
         marginBottom={4}
         color='primary'
       >
         Directorio de Usuarios
-      </Typography>
+      </Typography> */}
       <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
         {/* Sidebar de Filtros */}
         <Grid
@@ -104,6 +104,8 @@ const Directorio: React.FC = () => {
               padding: 3,
               borderRadius: 2,
               boxShadow: 3,
+              position: 'sticky',
+              top: '80px', // Mantiene la caja de filtros fija al hacer scroll
             }}
           >
             <Typography variant='h5' marginBottom={2} color='primary'>

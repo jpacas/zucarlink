@@ -9,16 +9,15 @@ const Footer: React.FC = () => {
         <div className={styles.section}>
           <h4 className={styles.title}>Contáctanos</h4>
           <p>Email: zucarlink@gmail.com</p>
-          <p>Teléfono: (503) 7069-4907</p>
         </div>
         <div className={styles.section}>
           <h4 className={styles.title}>Enlaces</h4>
           <ul className={styles.links}>
             <li>
-              <a href='/privacy-policy'>Política de Privacidad</a>
+              <a href='/privacidad'>Política de Privacidad</a>
             </li>
             <li>
-              <a href='/terms-of-use'>Términos de Uso</a>
+              <a href='/uso'>Términos de Uso</a>
             </li>
           </ul>
         </div>

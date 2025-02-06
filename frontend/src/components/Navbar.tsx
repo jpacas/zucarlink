@@ -110,7 +110,7 @@ const Navbar: React.FC = () => {
               >
                 Directorio
               </Button>
-              {/* CAMBIO: Se agregó el botón para el Foro */}
+
               <Button
                 component={Link}
                 to='/foro'
@@ -122,11 +122,23 @@ const Navbar: React.FC = () => {
               >
                 Foro
               </Button>
+
+              <Button
+                component={Link}
+                to='/zucaria'
+                color={isActive('/zucaria') ? 'primary' : 'inherit'}
+                sx={{
+                  fontSize: '1rem',
+                  fontWeight: isActive('/zucaria') ? 'bold' : 'normal',
+                }}
+              >
+                ZucarIA
+              </Button>
             </>
           )}
           <Button
             component={Link}
-            to='#services'
+            to='/services'
             color='inherit'
             sx={{ fontSize: '1rem' }}
           >
@@ -258,7 +270,7 @@ const Navbar: React.FC = () => {
                 >
                   <ListItemText primary='Directorio' />
                 </ListItemButton>
-                {/* CAMBIO: Se agregó la opción Foro en el Drawer */}
+
                 <ListItemButton
                   component={Link}
                   to='/foro'
@@ -266,11 +278,19 @@ const Navbar: React.FC = () => {
                 >
                   <ListItemText primary='Foro' />
                 </ListItemButton>
+
+                <ListItemButton
+                  component={Link}
+                  to='/zucaria'
+                  onClick={() => toggleDrawer(false)}
+                >
+                  <ListItemText primary='ZucarIA' />
+                </ListItemButton>
               </>
             )}
             <ListItemButton
               component={Link}
-              to='#services'
+              to='/services'
               onClick={() => toggleDrawer(false)}
             >
               <ListItemText primary='Servicios' />

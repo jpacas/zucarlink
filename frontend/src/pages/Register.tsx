@@ -8,6 +8,11 @@ import {
   Snackbar,
   Alert,
   Autocomplete,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  SelectChangeEvent,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -21,9 +26,10 @@ const Register: React.FC = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    tipoUsuario: '', // Nuevo campo para el tipo de usuario
   })
   const [profilePicture, setProfilePicture] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string | null>(null) // Vista previa de la imagen
+  const [preview, setPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{
     type: 'success' | 'error'
@@ -31,9 +37,15 @@ const Register: React.FC = () => {
   } | null>(null)
   const navigate = useNavigate()
 
+  // Manejar cambios en los TextField
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData({ ...formData, [name]: value })
+  }
+
+  // Manejar cambios en el Select
+  const handleSelectChange = (event: SelectChangeEvent<string>) => {
+    setFormData({ ...formData, tipoUsuario: event.target.value })
   }
 
   const handleCountryChange = (_: any, value: string | null) => {
@@ -67,10 +79,10 @@ const Register: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.pais) {
+    if (!formData.pais || !formData.tipoUsuario) {
       setMessage({
         type: 'error',
-        text: 'Por favor selecciona un país válido.',
+        text: 'Por favor completa todos los campos obligatorios.',
       })
       return
     }
@@ -84,17 +96,14 @@ const Register: React.FC = () => {
 
     try {
       const formDataToSend = new FormData()
-      formDataToSend.append('nombre', formData.nombre)
-      formDataToSend.append('apellido', formData.apellido)
-      formDataToSend.append('pais', formData.pais)
-      formDataToSend.append('email', formData.email)
-      formDataToSend.append('password', formData.password)
+      Object.keys(formData).forEach((key) =>
+        formDataToSend.append(key, (formData as any)[key])
+      )
       if (profilePicture) {
         formDataToSend.append('avatar', profilePicture)
       }
 
-      // Llamada al backend
-      const response = await axios.post(
+      await axios.post(
         `${import.meta.env.VITE_API_URL}/users/register`,
         formDataToSend,
         {
@@ -102,11 +111,7 @@ const Register: React.FC = () => {
         }
       )
 
-      setMessage({
-        type: 'success',
-        text: response.data.message || 'Usuario registrado exitosamente.',
-      })
-
+      setMessage({ type: 'success', text: 'Usuario registrado exitosamente.' })
       setTimeout(() => navigate('/login'), 3000)
 
       // Limpiar formulario
@@ -117,6 +122,7 @@ const Register: React.FC = () => {
         email: '',
         password: '',
         confirmPassword: '',
+        tipoUsuario: '',
       })
       setProfilePicture(null)
       setPreview(null)
@@ -129,16 +135,6 @@ const Register: React.FC = () => {
       setLoading(false)
     }
   }
-
-  const countries = [
-    'México',
-    'Estados Unidos',
-    'España',
-    'Colombia',
-    'Argentina',
-    'Chile',
-    'Perú',
-  ]
 
   return (
     <Box
@@ -173,13 +169,34 @@ const Register: React.FC = () => {
           margin='normal'
         />
         <Autocomplete
-          options={countries}
+          options={[
+            'México',
+            'Estados Unidos',
+            'España',
+            'Colombia',
+            'Argentina',
+            'Chile',
+            'Perú',
+          ]}
           value={formData.pais}
           onChange={handleCountryChange}
           renderInput={(params) => (
             <TextField {...params} label='País' margin='normal' fullWidth />
           )}
         />
+
+        <FormControl fullWidth margin='normal'>
+          <InputLabel>Tipo de Usuario</InputLabel>
+          <Select
+            name='tipoUsuario'
+            value={formData.tipoUsuario}
+            onChange={handleSelectChange}
+          >
+            <MenuItem value='empleado'>Empleado de Ingenio</MenuItem>
+            <MenuItem value='proveedor'>Proveedor</MenuItem>
+          </Select>
+        </FormControl>
+
         <TextField
           fullWidth
           label='Correo Electrónico'
@@ -207,6 +224,7 @@ const Register: React.FC = () => {
           onChange={handleChange}
           margin='normal'
         />
+
         <Typography variant='body1' mt={2} mb={1}>
           Subir Foto de Perfil
         </Typography>
@@ -231,6 +249,7 @@ const Register: React.FC = () => {
           />
         </Box>
         <input type='file' accept='image/*' onChange={handleFileChange} />
+
         <Button
           type='submit'
           variant='contained'
@@ -244,11 +263,7 @@ const Register: React.FC = () => {
       </form>
 
       {message && (
-        <Snackbar
-          open={Boolean(message)}
-          autoHideDuration={6000}
-          onClose={() => setMessage(null)}
-        >
+        <Snackbar open autoHideDuration={6000} onClose={() => setMessage(null)}>
           <Alert
             onClose={() => setMessage(null)}
             severity={message.type}

@@ -11,6 +11,10 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Perfil from './components/Perfil'
 import Foro from './pages/Foro'
 import Contact from './components/Contact'
+import Servicios from './pages/Servicios'
+import ZucarIA from './pages/ZucarIA'
+import PolPrivacidad from './pages/PolPrivacidad'
+import TerminosUso from './pages/TerminosUso'
 
 const App: React.FC = () => {
   return (
@@ -30,6 +34,9 @@ const App: React.FC = () => {
         <Route path='/register' element={<Register />} />
         <Route path='/login' element={<Login />} />
         <Route path='/contact' element={<Contact />} />
+        <Route path='/services' element={<Servicios />} />
+        <Route path='/privacidad' element={<PolPrivacidad />} />
+        <Route path='/uso' element={<TerminosUso />} />
         <Route
           path='/directorio'
           element={
@@ -51,6 +58,14 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute>
               <Foro />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/zucaria'
+          element={
+            <ProtectedRoute>
+              <ZucarIA />
             </ProtectedRoute>
           }
         />

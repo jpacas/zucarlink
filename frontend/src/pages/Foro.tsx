@@ -15,13 +15,17 @@ import {
   Modal,
   Avatar,
   IconButton,
+  Collapse,
 } from '@mui/material'
 import ThumbUpIcon from '@mui/icons-material/ThumbUp'
 import CommentIcon from '@mui/icons-material/Comment'
-import VisibilityIcon from '@mui/icons-material/Visibility'
+import DeleteIcon from '@mui/icons-material/Delete'
+import SendIcon from '@mui/icons-material/Send'
+import InputAdornment from '@mui/material/InputAdornment'
 import { useAuth } from '../context/AuthContext'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { Comment } from '@mui/icons-material'
 
 interface Post {
   id: number
@@ -30,7 +34,15 @@ interface Post {
   categoria: string
   createdAt: string
   autor: { id: number; nombre: string; apellido: string; avatarUrl?: string }
-  likes: string[] // NUEVO: Campo para los likes.
+  comments: Comment[]
+  likes: string[]
+}
+
+interface Comment {
+  user: string
+  nombre: string
+  apellido: string
+  value: string
 }
 
 const Foro: React.FC = () => {
@@ -44,6 +56,11 @@ const Foro: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [modalOpen, setModalOpen] = useState<boolean>(false)
+  const [modalError, setModalError] = useState<string | null>(null)
+  const [expandedComments, setExpandedComments] = useState<{
+    [postId: number]: boolean
+  }>({})
+  const [newComment, setNewComment] = useState<{ [postId: number]: string }>({})
 
   const categorias = [
     'Campo',
@@ -52,6 +69,13 @@ const Foro: React.FC = () => {
     'Calderas',
     'Energia',
     'Alcohol',
+    'Laboratorio',
+    'Instrumentacion',
+    'Mantenimiento',
+    'Seguridad',
+    'Medio Ambiente',
+    'Recursos Humanos',
+    'Otros',
   ]
 
   const fetchPosts = async () => {
@@ -80,7 +104,6 @@ const Foro: React.FC = () => {
     fetchPosts()
   }, [categoriaFiltro, temaFiltro])
 
-  // NUEVO: Función para manejar los likes
   const handleLikeToggle = async (postId: number) => {
     if (!user?.id) {
       alert('Por favor, inicia sesión para dar like.')
@@ -94,8 +117,6 @@ const Foro: React.FC = () => {
           userId: user.id,
         }
       )
-
-      // Actualizar el estado de los posts con los nuevos likes
       const updatedPosts = posts.map((post) =>
         post.id === postId ? { ...post, likes: response.data.likes } : post
       )
@@ -107,7 +128,7 @@ const Foro: React.FC = () => {
 
   const handlePostSubmit = async () => {
     if (!titulo || !contenido || !categoria) {
-      setError('Todos los campos son obligatorios.')
+      setModalError('Todos los campos son obligatorios.')
       return
     }
 
@@ -121,11 +142,84 @@ const Foro: React.FC = () => {
       setTitulo('')
       setContenido('')
       setCategoria('')
+      setModalError(null)
       setModalOpen(false)
       fetchPosts()
-      setError(null)
     } catch (err) {
-      setError('Error al crear el post.')
+      setModalError('Error al crear el post.')
+    }
+  }
+
+  const toggleComments = (postId: number) => {
+    setExpandedComments((prev) => ({ ...prev, [postId]: !prev[postId] }))
+  }
+
+  const handleCommentChange = (postId: number, value: string) => {
+    setNewComment((prev) => ({ ...prev, [postId]: value }))
+  }
+
+  const handleCommentSubmit = async (postId: number) => {
+    if (!user?.id) {
+      console.error('Error: Usuario no autenticado.')
+      return
+    }
+
+    if (!newComment[postId]?.trim()) {
+      console.error('Error: El comentario está vacío.')
+      return
+    }
+
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/posts/${postId}/comment`,
+        {
+          comment: newComment[postId],
+          userId: user.id,
+          nombre: user.nombre, // Agregamos el nombre del usuario
+          apellido: user.apellido, // Agregamos el apellido del usuario
+        }
+      )
+
+      const newCommentData = {
+        user: user.id,
+        nombre: user.nombre, // Mostramos el nombre en lugar del ID
+        apellido: user.apellido,
+        value: newComment[postId],
+      }
+
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === postId
+            ? { ...post, comments: [...post.comments, newCommentData] }
+            : post
+        )
+      )
+
+      setNewComment((prev) => ({ ...prev, [postId]: '' }))
+    } catch (err: any) {
+      console.error('Error al enviar comentario:', err.response?.data || err)
+    }
+  }
+
+  const handleDeleteComment = async (postId: number, commentIndex: number) => {
+    try {
+      const response = await axios.delete(
+        `${
+          import.meta.env.VITE_API_URL
+        }/posts/${postId}/comment/${commentIndex}`
+      )
+
+      console.log(commentIndex)
+
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === postId
+            ? { ...post, comments: response.data.comments }
+            : post
+        )
+      )
+    } catch (err) {
+      console.error('Error al eliminar comentario:', err)
     }
   }
 
@@ -134,6 +228,7 @@ const Foro: React.FC = () => {
     setTitulo('')
     setContenido('')
     setCategoria('')
+    setModalError(null) // Resetea el error cuando el modal se cierra
   }
 
   const formatRelativeDate = (date: string) => {
@@ -164,6 +259,8 @@ const Foro: React.FC = () => {
               padding: 3,
               borderRadius: 2,
               boxShadow: 3,
+              position: 'sticky',
+              top: '80px', // Mantiene la caja de filtros fija al hacer scroll
             }}
           >
             <Typography variant='h5' marginBottom={2} color='primary'>
@@ -261,6 +358,7 @@ const Foro: React.FC = () => {
                         {post.contenido}
                       </Typography>
                     </CardContent>
+
                     <Box
                       sx={{
                         display: 'flex',
@@ -272,6 +370,7 @@ const Foro: React.FC = () => {
                       <Typography variant='body2' color='textSecondary'>
                         {post.categoria} - {formatRelativeDate(post.createdAt)}
                       </Typography>
+
                       <Box sx={{ display: 'flex', gap: 3 }}>
                         <Box
                           sx={{
@@ -292,6 +391,7 @@ const Foro: React.FC = () => {
                             <ThumbUpIcon />
                           </IconButton>
                         </Box>
+
                         <Box
                           sx={{
                             display: 'flex',
@@ -299,23 +399,90 @@ const Foro: React.FC = () => {
                             gap: 1,
                           }}
                         >
-                          <Typography variant='body2'>5</Typography>
-                          <IconButton color='primary'>
+                          <Typography variant='body2'>
+                            {post.comments.length}
+                          </Typography>
+                          <IconButton
+                            onClick={() => toggleComments(post.id)}
+                            color={
+                              post.comments?.some(
+                                (comment) => comment.user == user?.id
+                              )
+                                ? 'primary'
+                                : 'default'
+                            }
+                          >
                             <CommentIcon />
                           </IconButton>
                         </Box>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                          }}
-                        >
-                          <Typography variant='body2'>20</Typography>
-                          <VisibilityIcon color='primary' />
-                        </Box>
                       </Box>
                     </Box>
+                    <Collapse in={expandedComments[post.id]}>
+                      <Box sx={{ padding: 2 }}>
+                        {post.comments.map((comment, index) => (
+                          <Box
+                            key={index}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              backgroundColor: '#f5f5f5',
+                              padding: 1,
+                              marginBottom: 1,
+                              borderRadius: 1,
+                            }}
+                          >
+                            <Typography sx={{ flexGrow: 1 }}>
+                              <strong>
+                                {`${comment.nombre} ${comment.apellido}`}:{' '}
+                              </strong>{' '}
+                              {comment.value}
+                            </Typography>
+                            {user?.id === comment.user && (
+                              <IconButton
+                                color='error'
+                                size='small'
+                                onClick={() =>
+                                  handleDeleteComment(post.id, index)
+                                }
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            )}
+                          </Box>
+                        ))}
+                        <TextField
+                          fullWidth
+                          multiline
+                          minRows={1} // Altura mínima de 1 línea
+                          maxRows={8} // Altura máxima de 8 líneas
+                          placeholder='Escribe un comentario'
+                          value={newComment[post.id] || ''}
+                          onChange={(e) =>
+                            handleCommentChange(post.id, e.target.value)
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault()
+                              handleCommentSubmit(post.id)
+                            }
+                          }}
+                          sx={{ marginTop: 2 }}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position='end'>
+                                <IconButton
+                                  onClick={() => handleCommentSubmit(post.id)}
+                                  color='primary'
+                                >
+                                  <SendIcon />
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                      </Box>
+                    </Collapse>
                   </Card>
                 </Grid>
               ))}
@@ -346,6 +513,11 @@ const Foro: React.FC = () => {
             boxShadow: 24,
           }}
         >
+          {modalError && (
+            <Alert severity='error' sx={{ marginBottom: 2 }}>
+              {modalError}
+            </Alert>
+          )}
           <Typography id='crear-post-modal' variant='h5' marginBottom={2}>
             Crear Nuevo Post
           </Typography>
@@ -356,6 +528,7 @@ const Foro: React.FC = () => {
             onChange={(e) => setTitulo(e.target.value)}
             margin='normal'
           />
+
           <TextField
             label='Contenido'
             fullWidth
@@ -381,6 +554,7 @@ const Foro: React.FC = () => {
               </MenuItem>
             ))}
           </Select>
+
           <Box
             sx={{
               display: 'flex',
