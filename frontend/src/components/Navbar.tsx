@@ -21,7 +21,7 @@ import logo from '../assets/images/ZL-Horizontal-sinfondo02.png'
 
 const Navbar: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = React.useState(false)
-  const { isAuthenticated, user, logout } = useAuth() // Asegúrate de que 'user' contiene los datos del usuario
+  const { isAuthenticated, user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -56,7 +56,6 @@ const Navbar: React.FC = () => {
           alignItems: 'center',
         }}
       >
-        {/* Logo y nombre */}
         <Box
           sx={{
             display: 'flex',
@@ -88,14 +87,22 @@ const Navbar: React.FC = () => {
         >
           <Button
             component={Link}
-            to='/'
-            color={isActive('/') ? 'primary' : 'inherit'} // Aplica estilo activo
+            to={isAuthenticated && user ? `/perfil/${user.id}` : '/'}
+            color={
+              isActive(isAuthenticated && user ? `/perfil/${user.id}` : '/')
+                ? 'primary'
+                : 'inherit'
+            }
             sx={{
               fontSize: '1rem',
-              fontWeight: isActive('/') ? 'bold' : 'normal',
+              fontWeight: isActive(
+                isAuthenticated && user ? `/perfil/${user.id}` : '/'
+              )
+                ? 'bold'
+                : 'normal',
             }}
           >
-            Inicio
+            {isAuthenticated ? 'Perfil' : 'Inicio'}
           </Button>
           {isAuthenticated && (
             <>
@@ -136,14 +143,16 @@ const Navbar: React.FC = () => {
               </Button>
             </>
           )}
-          <Button
-            component={Link}
-            to='/services'
-            color='inherit'
-            sx={{ fontSize: '1rem' }}
-          >
-            Servicios
-          </Button>
+          {!isAuthenticated && (
+            <Button
+              component={Link}
+              to='/services'
+              color='inherit'
+              sx={{ fontSize: '1rem' }}
+            >
+              Servicios
+            </Button>
+          )}
           <Button
             component={Link}
             to='/contact'

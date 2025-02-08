@@ -18,7 +18,17 @@ const uploadToS3 = async (file) => {
 const getAllUsers = async (req, res) => {
   try {
     const usuarios = await User.findAll({
-      attributes: ['id', 'nombre', 'apellido', 'pais', 'email', 'avatarUrl'],
+      attributes: [
+        'id',
+        'nombre',
+        'apellido',
+        'pais',
+        'email',
+        'avatarUrl',
+        'area',
+        'acercaDe',
+        'tipoUsuario',
+      ],
     })
     res.status(200).json(usuarios)
   } catch (error) {
@@ -29,9 +39,10 @@ const getAllUsers = async (req, res) => {
 // Registrar usuario
 const registerUser = async (req, res) => {
   try {
-    const { nombre, apellido, pais, email, password } = req.body
+    const { nombre, apellido, pais, email, password, tipoUsuario, area } =
+      req.body
 
-    if (!nombre || !apellido || !pais || !email || !password) {
+    if (!nombre || !apellido || !pais || !email || !password || !tipoUsuario) {
       return res
         .status(400)
         .json({ message: 'Todos los campos son obligatorios.' })
@@ -50,6 +61,8 @@ const registerUser = async (req, res) => {
       apellido,
       pais,
       email,
+      tipoUsuario,
+      area,
       password: hashedPassword,
       avatarUrl,
     })
@@ -76,6 +89,8 @@ const getUserById = async (req, res) => {
         'email',
         'createdAt',
         'avatarUrl',
+        'area',
+        'acercaDe',
       ],
     })
 

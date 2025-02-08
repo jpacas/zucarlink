@@ -17,20 +17,26 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
-  const [user, setUser] = useState<User | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('user') !== null
+  })
+  const [user, setUser] = useState<User | null>(() => {
+    const storedUser = localStorage.getItem('user')
+    return storedUser ? JSON.parse(storedUser) : null
+  })
 
   const login = (user: User) => {
-    // Recibe un objeto `User`
     setIsAuthenticated(true)
     setUser(user)
+    localStorage.setItem('user', JSON.stringify(user)) // Guarda el usuario en localStorage
   }
 
   const logout = () => {
     setIsAuthenticated(false)
     setUser(null)
+    localStorage.removeItem('user')
     localStorage.removeItem('token')
-    localStorage.removeItem('zucarIA_conversation')
+    localStorage.removeItem('zucarIA_conversation') // Borra la conversación de ZucarIA al salir
   }
 
   return (

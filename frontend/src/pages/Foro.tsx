@@ -23,6 +23,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import SendIcon from '@mui/icons-material/Send'
 import InputAdornment from '@mui/material/InputAdornment'
 import { useAuth } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Comment } from '@mui/icons-material'
@@ -33,6 +34,7 @@ interface Post {
   contenido: string
   categoria: string
   createdAt: string
+  usuarioId: number
   autor: { id: number; nombre: string; apellido: string; avatarUrl?: string }
   comments: Comment[]
   likes: string[]
@@ -61,6 +63,7 @@ const Foro: React.FC = () => {
     [postId: number]: boolean
   }>({})
   const [newComment, setNewComment] = useState<{ [postId: number]: string }>({})
+  const navigate = useNavigate()
 
   const categorias = [
     'Campo',
@@ -349,7 +352,7 @@ const Foro: React.FC = () => {
                             alt={`${post.autor.nombre} ${post.autor.apellido}`}
                             sx={{ width: 40, height: 40, cursor: 'pointer' }}
                             onClick={() =>
-                              (window.location.href = `/perfil/${post.autor.id}`)
+                              navigate(`/perfil/${post.usuarioId}`)
                             }
                           />
                         </Box>

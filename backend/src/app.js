@@ -7,6 +7,7 @@ const maquinariaRoutes = require('./routes/maquinariaRoutes')
 const empleoRoutes = require('./routes/empleoRoutes')
 const contactRoutes = require('./routes/contactRoutes')
 const zucariaRoutes = require('./routes/zucariaRoutes')
+const experienciaRoutes = require('./routes/experienciaRoutes')
 const sequelize = require('./config/database')
 
 // Configuración General
@@ -14,9 +15,9 @@ dotenv.config()
 const app = express()
 app.use(
   cors({
-    origin: 'https://zucarlink.com',
-    methods: 'GET,POST,PUT,DELETE',
-    allowedHeaders: 'Content-Type,Authorization',
+    origin: ['https://zucarlink.com', 'http://localhost:5173'], // Lista de orígenes permitidos
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos HTTP permitidos
+    allowedHeaders: ['Content-Type', 'Authorization'], // Cabeceras permitidas
   })
 )
 app.use(express.json())
@@ -32,7 +33,8 @@ app.use(express.json())
 //   })
 
 sequelize
-  .authenticate()
+  //.authenticate()
+  .sync({ alter: false })
   .then(() => console.log('Conexión a la base de datos exitosa'))
   .catch((err) => console.error('Error al conectar la base de datos:', err))
 
@@ -43,6 +45,7 @@ app.use('/api/maquinaria', maquinariaRoutes)
 app.use('/api/empleos', empleoRoutes)
 app.use('/api/contact', contactRoutes)
 app.use('/api/conversations', zucariaRoutes)
+app.use('/api/experiencias', experienciaRoutes)
 
 app.get('/', (req, res) => {
   res.send('API de usuarios')

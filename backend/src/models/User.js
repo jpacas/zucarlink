@@ -1,14 +1,14 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
-const { v4: uuidv4 } = require('uuid') // Importa la función para generar IDs únicos
+const { v4: uuidv4 } = require('uuid')
 
 const User = sequelize.define(
   'User',
   {
     id: {
-      type: DataTypes.STRING, // Cambiamos a STRING
+      type: DataTypes.STRING,
       primaryKey: true,
-      defaultValue: uuidv4, // Genera un ID único automáticamente
+      defaultValue: uuidv4,
     },
     nombre: {
       type: DataTypes.STRING,
@@ -25,9 +25,9 @@ const User = sequelize.define(
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true, // Evita duplicados
+      unique: true,
       validate: {
-        isEmail: true, // Validación para correos electrónicos
+        isEmail: true,
       },
     },
     password: {
@@ -35,14 +35,44 @@ const User = sequelize.define(
       allowNull: false,
     },
     avatarUrl: {
-      type: DataTypes.STRING, // URL de la foto de perfil
+      type: DataTypes.STRING,
       allowNull: true,
+    },
+    area: {
+      type: DataTypes.ENUM(
+        'Campo',
+        'Molinos',
+        'Fabrica',
+        'Calderas',
+        'Energia',
+        'Alcohol',
+        'Laboratorio',
+        'Instrumentacion',
+        'Mantenimiento',
+        'Seguridad',
+        'Medio Ambiente',
+        'Recursos Humanos',
+        'Otros'
+      ),
+      allowNull: true,
+    },
+    acercaDe: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    tipoUsuario: {
+      type: DataTypes.ENUM('Empleado de Ingenio', 'Proveedor'),
+      allowNull: false,
     },
   },
   {
-    timestamps: true, // Incluye createdAt y updatedAt
-    tableName: 'Users', // Nombre de la tabla en la base de datos
+    timestamps: true,
+    tableName: 'Users',
   }
 )
 
 module.exports = User
+
+// ✅ IMPORTA `Experiencia` DESPUÉS DE EXPORTAR `User`
+const Experiencia = require('./Experiencia')
+User.hasMany(Experiencia, { foreignKey: 'userId', as: 'experiencias' })

@@ -19,14 +19,24 @@ import axios from 'axios'
 import placeholder from '../assets/images/avatar-generico.jpg'
 
 const Register: React.FC = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    nombre: string
+    apellido: string
+    pais: string
+    email: string
+    password: string
+    confirmPassword: string
+    tipoUsuario: string
+    area: string | null // Permitir null o string
+  }>({
     nombre: '',
     apellido: '',
     pais: '',
     email: '',
     password: '',
     confirmPassword: '',
-    tipoUsuario: '', // Nuevo campo para el tipo de usuario
+    tipoUsuario: '',
+    area: null, // Iniciar con null
   })
   const [profilePicture, setProfilePicture] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -36,6 +46,22 @@ const Register: React.FC = () => {
     text: string
   } | null>(null)
   const navigate = useNavigate()
+
+  const areasTrabajo = [
+    'Campo',
+    'Molinos',
+    'Fabrica',
+    'Calderas',
+    'Energia',
+    'Alcohol',
+    'Laboratorio',
+    'Instrumentacion',
+    'Mantenimiento',
+    'Seguridad',
+    'Medio Ambiente',
+    'Recursos Humanos',
+    'Otros',
+  ]
 
   // Manejar cambios en los TextField
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,6 +129,8 @@ const Register: React.FC = () => {
         formDataToSend.append('avatar', profilePicture)
       }
 
+      console.log('formDataToSend', formData)
+
       await axios.post(
         `${import.meta.env.VITE_API_URL}/users/register`,
         formDataToSend,
@@ -123,6 +151,7 @@ const Register: React.FC = () => {
         password: '',
         confirmPassword: '',
         tipoUsuario: '',
+        area: null, // Nuevo campo para área de trabajo
       })
       setProfilePicture(null)
       setPreview(null)
@@ -134,6 +163,10 @@ const Register: React.FC = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleAreaChange = (event: SelectChangeEvent<string>) => {
+    setFormData({ ...formData, area: event.target.value })
   }
 
   return (
@@ -170,13 +203,13 @@ const Register: React.FC = () => {
         />
         <Autocomplete
           options={[
-            'México',
-            'Estados Unidos',
-            'España',
-            'Colombia',
-            'Argentina',
-            'Chile',
-            'Perú',
+            'El Salvador',
+            'Guatemala',
+            'Nicaragua',
+            'Honduras',
+            'Costa Rica',
+            'Panama',
+            'Belice',
           ]}
           value={formData.pais}
           onChange={handleCountryChange}
@@ -184,7 +217,6 @@ const Register: React.FC = () => {
             <TextField {...params} label='País' margin='normal' fullWidth />
           )}
         />
-
         <FormControl fullWidth margin='normal'>
           <InputLabel>Tipo de Usuario</InputLabel>
           <Select
@@ -196,6 +228,23 @@ const Register: React.FC = () => {
             <MenuItem value='proveedor'>Proveedor</MenuItem>
           </Select>
         </FormControl>
+
+        {formData.tipoUsuario === 'empleado' && (
+          <FormControl fullWidth margin='normal'>
+            <InputLabel>Área de Trabajo</InputLabel>
+            <Select
+              name='area'
+              value={formData.area || ''}
+              onChange={handleAreaChange}
+            >
+              {areasTrabajo.map((area) => (
+                <MenuItem key={area} value={area}>
+                  {area}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
 
         <TextField
           fullWidth

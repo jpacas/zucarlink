@@ -21,6 +21,7 @@ if (config.use_env_variable) {
   )
 }
 
+// Cargar todos los modelos
 fs.readdirSync(__dirname)
   .filter((file) => {
     return (
@@ -38,11 +39,13 @@ fs.readdirSync(__dirname)
     db[model.name] = model
   })
 
-Object.keys(db).forEach((modelName) => {
-  if (db[modelName].associate) {
-    db[modelName].associate(db)
-  }
-})
+// Definir relaciones después de cargar los modelos
+const { User, Experiencia } = db
+
+if (User && Experiencia) {
+  User.hasMany(Experiencia, { foreignKey: 'userId', as: 'experiencias' })
+  Experiencia.belongsTo(User, { foreignKey: 'userId', as: 'usuario' })
+}
 
 db.sequelize = sequelize
 db.Sequelize = Sequelize
