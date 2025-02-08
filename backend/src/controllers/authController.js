@@ -29,6 +29,11 @@ const loginUser = async (req, res) => {
         nombre: user.nombre,
         apellido: user.apellido,
         avatar: user.avatarUrl,
+        email: user.email,
+        tipoUsuario: user.tipoUsuario,
+        area: user.area,
+        pais: user.pais,
+        acercaDe: user.acercaDe,
       },
       process.env.JWT_SECRET,
       {

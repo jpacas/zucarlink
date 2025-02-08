@@ -43,6 +43,9 @@ const Login: React.FC = () => {
         nombre: payload.nombre,
         apellido: payload.apellido,
         avatar: payload.avatar,
+        pais: payload.pais,
+        area: payload.area,
+        acercaDe: payload.acercaDe,
       })
       localStorage.setItem('token', token)
 

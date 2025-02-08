@@ -104,8 +104,74 @@ const getUserById = async (req, res) => {
   }
 }
 
+// 🔹 ACTUALIZAR PERFIL DEL USUARIO
+const updateUserProfile = async (req, res) => {
+  const { id } = req.params
+  const { nombre, apellido, pais, acercaDe } = req.body
+
+  try {
+    const usuario = await User.findByPk(id)
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    // Si el usuario sube una nueva imagen
+    let avatarUrl = usuario.avatarUrl
+    if (req.file) {
+      avatarUrl = await uploadToS3(req.file)
+    }
+
+    // Actualizar datos del usuario
+    usuario.nombre = nombre || usuario.nombre
+    usuario.apellido = apellido || usuario.apellido
+    usuario.pais = pais || usuario.pais
+    usuario.acercaDe = acercaDe || usuario.acercaDe
+    usuario.avatarUrl = avatarUrl
+
+    await usuario.save()
+
+    res
+      .status(200)
+      .json({ message: 'Perfil actualizado exitosamente', usuario })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Error al actualizar el perfil', error })
+  }
+}
+
+// 🔹 CAMBIAR CONTRASEÑA DEL USUARIO
+const changeUserPassword = async (req, res) => {
+  const { id } = req.params
+  const { oldPassword, newPassword } = req.body
+
+  try {
+    const usuario = await User.findByPk(id)
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    // Verificar si la contraseña actual es correcta
+    const isMatch = await bcrypt.compare(oldPassword, usuario.password)
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Contraseña actual incorrecta' })
+    }
+
+    // Encriptar la nueva contraseña
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    usuario.password = hashedPassword
+    await usuario.save()
+
+    res.status(200).json({ message: 'Contraseña actualizada exitosamente' })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: 'Error al cambiar la contraseña', error })
+  }
+}
+
 module.exports = {
   getAllUsers,
   registerUser,
   getUserById,
+  updateUserProfile,
+  changeUserPassword,
 }

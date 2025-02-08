@@ -15,6 +15,7 @@ import Servicios from './pages/Servicios'
 import ZucarIA from './pages/ZucarIA'
 import PolPrivacidad from './pages/PolPrivacidad'
 import TerminosUso from './pages/TerminosUso'
+import EditarPerfil from './components/EditarPerfil'
 
 const App: React.FC = () => {
   return (
@@ -53,6 +54,16 @@ const App: React.FC = () => {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path='/editar-perfil/:id'
+          element={
+            <ProtectedRoute>
+              <EditarPerfil />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path='/foro'
           element={

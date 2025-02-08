@@ -27,7 +27,6 @@ interface User {
   apellido: string
   pais: string
   email: string
-  bio?: string
   avatarUrl?: string
   area: string
   acercaDe: string
@@ -206,8 +205,12 @@ const Perfil: React.FC = () => {
                   <strong>País:</strong> {usuario.pais}
                 </Typography>
                 <Typography variant='body1' gutterBottom>
-                  <strong>Área:</strong> {usuario.area}
+                  <strong>Área:</strong>{' '}
+                  {usuario.area === 'null' || usuario.area.trim() === ''
+                    ? 'Proveedor'
+                    : usuario.area}
                 </Typography>
+
                 {usuario.acercaDe && (
                   <Typography variant='body1' gutterBottom>
                     <strong>Acerca De:</strong> {usuario.acercaDe}
@@ -216,14 +219,16 @@ const Perfil: React.FC = () => {
               </Grid>
             </Grid>
           </CardContent>
-          <CardActions>
-            <Button
-              size='small'
-              onClick={() => navigate(`/editar-perfil/${id}`)}
-            >
-              Editar Perfil
-            </Button>
-          </CardActions>
+          {user?.id === id && (
+            <CardActions>
+              <Button
+                size='small'
+                onClick={() => navigate(`/editar-perfil/${id}`)}
+              >
+                Editar Perfil
+              </Button>
+            </CardActions>
+          )}
         </Card>
       )}
       <Typography variant='h5' sx={{ mt: 4, mb: 2, fontWeight: 'bold' }}>

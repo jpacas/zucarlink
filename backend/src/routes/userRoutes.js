@@ -3,6 +3,8 @@ const {
   registerUser,
   getAllUsers,
   getUserById,
+  updateUserProfile,
+  changeUserPassword,
 } = require('../controllers/userController')
 const { loginUser, logout } = require('../controllers/authController')
 const { uploadProfilePicture } = require('../controllers/profileController')
@@ -19,5 +21,7 @@ router.post(
   upload.single('avatar'),
   uploadProfilePicture
 )
+router.put('/:id', upload.single('avatar'), updateUserProfile)
+router.put('/:id/password', changeUserPassword)
 
 module.exports = router

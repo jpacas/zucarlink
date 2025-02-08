@@ -5,6 +5,9 @@ interface User {
   nombre: string
   apellido: string
   avatar: string
+  pais: string
+  area: string
+  acercaDe: string
 }
 
 interface AuthContextType {
