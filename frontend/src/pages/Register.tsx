@@ -13,6 +13,7 @@ import {
   FormControl,
   InputLabel,
   SelectChangeEvent,
+  Avatar,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -277,27 +278,42 @@ const Register: React.FC = () => {
         <Typography variant='body1' mt={2} mb={1}>
           Subir Foto de Perfil
         </Typography>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: 2,
-          }}
-        >
-          <img
+        <Box sx={{ textAlign: 'center', marginBottom: 2 }}>
+          <Avatar
             src={preview || placeholder}
-            alt='Vista previa'
-            style={{
-              width: '150px',
-              height: '150px',
-              borderRadius: '50%',
-              objectFit: 'cover',
-              border: '1px solid #ccc',
-            }}
+            alt='Foto de perfil'
+            sx={{ width: 100, height: 100, margin: 'auto' }}
           />
+          <Typography variant='body1' sx={{ marginTop: 1 }}>
+            Selecciona una nueva foto de perfil:
+          </Typography>
+
+          {/* Input de archivo oculto */}
+          <input
+            type='file'
+            accept='image/*'
+            id='file-upload'
+            onChange={handleFileChange}
+            style={{ display: 'none' }} // Oculta el input original
+          />
+
+          {/* Botón estilizado para seleccionar archivo */}
+          <label htmlFor='file-upload'>
+            <Button variant='contained' component='span'>
+              Seleccionar archivo
+            </Button>
+          </label>
+
+          {/* Mostrar el nombre del archivo seleccionado */}
+          {profilePicture && (
+            <Typography
+              variant='body2'
+              sx={{ marginTop: 1, fontStyle: 'italic' }}
+            >
+              Archivo seleccionado: {profilePicture.name}
+            </Typography>
+          )}
         </Box>
-        <input type='file' accept='image/*' onChange={handleFileChange} />
 
         <Button
           type='submit'

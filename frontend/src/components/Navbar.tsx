@@ -193,7 +193,10 @@ const Navbar: React.FC = () => {
             <Button
               color='error'
               variant='contained'
-              onClick={logout}
+              onClick={() => {
+                logout() // Cierra sesión
+                navigate('/') // Redirige a la página de inicio después de cerrar sesión
+              }}
               sx={{
                 backgroundColor: '#ff6347',
                 '&:hover': {
@@ -315,6 +318,7 @@ const Navbar: React.FC = () => {
               <ListItemButton
                 onClick={() => {
                   logout()
+                  navigate('/')
                   toggleDrawer(false)
                 }}
               >
