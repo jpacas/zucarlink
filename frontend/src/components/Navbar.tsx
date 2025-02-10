@@ -266,13 +266,15 @@ const Navbar: React.FC = () => {
       >
         <Box sx={{ width: 250 }} role='presentation'>
           <List>
+            {/* Si el usuario está autenticado, muestra "Perfil" en lugar de "Inicio" */}
             <ListItemButton
               component={Link}
-              to='/'
+              to={isAuthenticated && user ? `/perfil/${user.id}` : '/'}
               onClick={() => toggleDrawer(false)}
             >
-              <ListItemText primary='Inicio' />
+              <ListItemText primary={isAuthenticated ? 'Perfil' : 'Inicio'} />
             </ListItemButton>
+
             {isAuthenticated && (
               <>
                 <ListItemButton
@@ -300,13 +302,18 @@ const Navbar: React.FC = () => {
                 </ListItemButton>
               </>
             )}
-            <ListItemButton
-              component={Link}
-              to='/services'
-              onClick={() => toggleDrawer(false)}
-            >
-              <ListItemText primary='Servicios' />
-            </ListItemButton>
+
+            {/* Solo mostrar "Servicios" si el usuario NO está autenticado */}
+            {!isAuthenticated && (
+              <ListItemButton
+                component={Link}
+                to='/services'
+                onClick={() => toggleDrawer(false)}
+              >
+                <ListItemText primary='Servicios' />
+              </ListItemButton>
+            )}
+
             <ListItemButton
               component={Link}
               to='/contact'
@@ -314,11 +321,11 @@ const Navbar: React.FC = () => {
             >
               <ListItemText primary='Contacto' />
             </ListItemButton>
+
             {isAuthenticated ? (
               <ListItemButton
                 onClick={() => {
                   logout()
-                  navigate('/')
                   toggleDrawer(false)
                 }}
               >
