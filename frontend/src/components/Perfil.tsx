@@ -19,6 +19,8 @@ import {
   TextField,
   Select,
   MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import IconButton from '@mui/material/IconButton'
@@ -377,21 +379,24 @@ const Perfil: React.FC = () => {
               setExperienceData({ ...experienceData, cargo: e.target.value })
             }
           />
-          <Select
-            value={experienceData.area}
-            onChange={(e) =>
-              setExperienceData({
-                ...experienceData,
-                area: e.target.value,
-              })
-            }
-          >
-            {areas.map((area) => (
-              <MenuItem key={area} value={area}>
-                {area}
-              </MenuItem>
-            ))}
-          </Select>
+          <FormControl fullWidth margin='dense'>
+            <InputLabel>Área de Trabajo</InputLabel>
+            <Select
+              value={experienceData.area}
+              onChange={(e) =>
+                setExperienceData({
+                  ...experienceData,
+                  area: e.target.value,
+                })
+              }
+            >
+              {areas.map((area) => (
+                <MenuItem key={area} value={area}>
+                  {area}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <TextField
             fullWidth
             label='Descripción'
