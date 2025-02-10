@@ -142,18 +142,12 @@ const updateUserProfile = async (req, res) => {
 // 🔹 CAMBIAR CONTRASEÑA DEL USUARIO
 const changeUserPassword = async (req, res) => {
   const { id } = req.params
-  const { oldPassword, newPassword } = req.body
+  const { newPassword } = req.body
 
   try {
     const usuario = await User.findByPk(id)
     if (!usuario) {
       return res.status(404).json({ message: 'Usuario no encontrado' })
-    }
-
-    // Verificar si la contraseña actual es correcta
-    const isMatch = await bcrypt.compare(oldPassword, usuario.password)
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Contraseña actual incorrecta' })
     }
 
     // Encriptar la nueva contraseña

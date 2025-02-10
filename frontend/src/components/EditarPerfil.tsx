@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import {
   Box,
@@ -13,8 +14,9 @@ import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
 
 const EditarPerfil: React.FC = () => {
-  const { user } = useAuth()
-  console.log('USER: ', user)
+  const { user, login } = useAuth()
+  const navigate = useNavigate()
+
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -101,6 +103,45 @@ const EditarPerfil: React.FC = () => {
     return true
   }
 
+  const handlePasswordChange = async () => {
+    if (passwordData.newPassword.length < 6) {
+      setMessage({
+        type: 'error',
+        text: 'La nueva contraseña debe tener al menos 6 caracteres.',
+      })
+      return
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmNewPassword) {
+      setMessage({ type: 'error', text: 'Las contraseñas no coinciden.' })
+      return
+    }
+
+    try {
+      await axios.put(
+        `${import.meta.env.VITE_API_URL}/users/${user?.id}/password`,
+        {
+          newPassword: passwordData.newPassword,
+        }
+      )
+
+      setMessage({
+        type: 'success',
+        text: 'Contraseña actualizada exitosamente.',
+      })
+    } catch (error: any) {
+      console.error(
+        'Error al cambiar la contraseña:',
+        error.response?.data || error
+      )
+      setMessage({
+        type: 'error',
+        text:
+          error.response?.data?.message || 'Error al cambiar la contraseña.',
+      })
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validarFormulario()) return
@@ -117,24 +158,32 @@ const EditarPerfil: React.FC = () => {
         formDataToSend.append('avatar', avatar)
       }
 
-      await axios.put(
+      const response = await axios.put(
         `${import.meta.env.VITE_API_URL}/users/${user?.id}`,
         formDataToSend,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        }
+        { headers: { 'Content-Type': 'multipart/form-data' } }
       )
 
-      // Si el usuario quiere cambiar la contraseña
-      if (passwordData.newPassword) {
-        await axios.put(
-          `${import.meta.env.VITE_API_URL}/users/${user?.id}/password`,
-          {
-            oldPassword: passwordData.oldPassword,
-            newPassword: passwordData.newPassword,
-          }
-        )
+      // Extraer el usuario correctamente desde la API
+      const userActualizado = response.data.usuario
+
+      // Mapeamos `avatarUrl` a `avatar` para que sea compatible con `AuthContext.tsx`
+      const userFinal = {
+        ...userActualizado,
+        avatar: userActualizado.avatarUrl,
       }
+
+      // Actualizamos `AuthContext` con la nueva información
+      login(userFinal)
+
+      setMessage({ type: 'success', text: 'Perfil actualizado exitosamente.' })
+
+      setTimeout(() => {
+        navigate(`/perfil/${userFinal.id}`)
+      }, 2000)
+
+      // Si el usuario quiere cambiar la contraseña
+      handlePasswordChange()
 
       setMessage({ type: 'success', text: 'Perfil actualizado exitosamente.' })
     } catch (error) {
@@ -162,10 +211,38 @@ const EditarPerfil: React.FC = () => {
       <Box sx={{ textAlign: 'center', marginBottom: 2 }}>
         <Avatar
           src={avatarPreview || formData.avatarUrl}
-          alt='Avatar'
+          alt='Foto de perfil'
           sx={{ width: 100, height: 100, margin: 'auto' }}
         />
-        <input type='file' accept='image/*' onChange={handleFileChange} />
+        <Typography variant='body1' sx={{ marginTop: 1 }}>
+          Selecciona una nueva foto de perfil:
+        </Typography>
+
+        {/* Input de archivo oculto */}
+        <input
+          type='file'
+          accept='image/*'
+          id='file-upload'
+          onChange={handleFileChange}
+          style={{ display: 'none' }} // Oculta el input original
+        />
+
+        {/* Botón estilizado para seleccionar archivo */}
+        <label htmlFor='file-upload'>
+          <Button variant='contained' component='span'>
+            Seleccionar archivo
+          </Button>
+        </label>
+
+        {/* Mostrar el nombre del archivo seleccionado */}
+        {avatar && (
+          <Typography
+            variant='body2'
+            sx={{ marginTop: 1, fontStyle: 'italic' }}
+          >
+            Archivo seleccionado: {avatar.name}
+          </Typography>
+        )}
       </Box>
       <form onSubmit={handleSubmit}>
         <TextField

@@ -29,6 +29,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   })
 
   const login = (user: User) => {
+    if (!user || !user.id) {
+      console.error('Error: usuario inválido al hacer login', user)
+      return
+    }
     setIsAuthenticated(true)
     setUser(user)
     localStorage.setItem('user', JSON.stringify(user)) // Guarda el usuario en localStorage
