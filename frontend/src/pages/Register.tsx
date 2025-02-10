@@ -161,6 +161,7 @@ const Register: React.FC = () => {
         type: 'error',
         text: error.response?.data?.message || 'Error al registrar el usuario.',
       })
+      console.error(error)
     } finally {
       setLoading(false)
     }
