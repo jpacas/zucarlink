@@ -13,17 +13,7 @@ const sequelize = require('./config/database')
 // Configuración General
 dotenv.config()
 const app = express()
-app.use(
-  cors({
-    origin: [
-      'https://zucarlink.com',
-      'http://localhost:5173',
-      'https://zucarlink-git-pruebas-jose-pacas-projects.vercel.app',
-    ], // Lista de orígenes permitidos
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Métodos HTTP permitidos
-    allowedHeaders: ['Content-Type', 'Authorization'], // Cabeceras permitidas
-  })
-)
+app.use(cors({ origin: '*', credentials: true }))
 app.use(express.json())
 
 //Inicio de base de datos
