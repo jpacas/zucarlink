@@ -17,6 +17,8 @@ import {
   Modal,
   Chip,
   TextField,
+  Select,
+  MenuItem,
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import IconButton from '@mui/material/IconButton'
@@ -62,6 +64,22 @@ const Perfil: React.FC = () => {
 
   const { user } = useAuth() // Usuario autenticado
   const esPropietario = user?.id === id // Verifica si es su propio perfil
+
+  const areas = [
+    'Campo',
+    'Molinos',
+    'Fabrica',
+    'Calderas',
+    'Energia',
+    'Alcohol',
+    'Laboratorio',
+    'Instrumentacion',
+    'Mantenimiento',
+    'Seguridad',
+    'Medio Ambiente',
+    'Recursos Humanos',
+    'Otros',
+  ]
 
   const formatearFecha = (fecha: string) => {
     return format(new Date(fecha), 'MMM yyyy', { locale: es }) // Ejemplo: "Feb 2025"
@@ -359,11 +377,7 @@ const Perfil: React.FC = () => {
               setExperienceData({ ...experienceData, cargo: e.target.value })
             }
           />
-          <TextField
-            fullWidth
-            label='Área de Trabajo'
-            margin='dense'
-            variant='outlined'
+          <Select
             value={experienceData.area}
             onChange={(e) =>
               setExperienceData({
@@ -371,7 +385,13 @@ const Perfil: React.FC = () => {
                 area: e.target.value,
               })
             }
-          />
+          >
+            {areas.map((area) => (
+              <MenuItem key={area} value={area}>
+                {area}
+              </MenuItem>
+            ))}
+          </Select>
           <TextField
             fullWidth
             label='Descripción'

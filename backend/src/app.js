@@ -27,8 +27,8 @@ app.use(express.json())
 //   })
 
 sequelize
-  //.authenticate()
-  .sync({ force: true }) // Borra la base de datos y la vuelve a crear
+  .authenticate()
+  //.sync({ force: true }) // Borra la base de datos y la vuelve a crear
   .then(() => console.log('Conexión a la base de datos exitosa'))
   .catch((err) => console.error('Error al conectar la base de datos:', err))
 
