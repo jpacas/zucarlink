@@ -225,12 +225,12 @@ const Register: React.FC = () => {
             value={formData.tipoUsuario}
             onChange={handleSelectChange}
           >
-            <MenuItem value='empleado'>Empleado de Ingenio</MenuItem>
-            <MenuItem value='proveedor'>Proveedor</MenuItem>
+            <MenuItem value='Ingenio'>Empleado de Ingenio</MenuItem>
+            <MenuItem value='Proveedor'>Proveedor</MenuItem>
           </Select>
         </FormControl>
 
-        {formData.tipoUsuario === 'empleado' && (
+        {formData.tipoUsuario === 'Ingenio' && (
           <FormControl fullWidth margin='normal'>
             <InputLabel>Área de Trabajo</InputLabel>
             <Select

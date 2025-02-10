@@ -61,7 +61,7 @@ const User = sequelize.define(
       allowNull: true,
     },
     tipoUsuario: {
-      type: DataTypes.ENUM('Empleado de Ingenio', 'Proveedor'),
+      type: DataTypes.ENUM('Ingenio', 'Proveedor'),
       allowNull: false,
     },
   },
