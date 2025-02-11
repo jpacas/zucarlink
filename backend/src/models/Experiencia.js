@@ -23,7 +23,12 @@ const Experiencia = sequelize.define(
     },
     fechaFin: {
       type: DataTypes.DATE,
-      allowNull: true,
+      allowNull: true, // Permitir valores nulos
+    },
+    actualmenteTrabaja: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false, // Falso por defecto
     },
     cargo: {
       type: DataTypes.STRING,

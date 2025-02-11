@@ -32,22 +32,31 @@ exports.getExperiencias = async (req, res) => {
 // Crear una nueva experiencia
 exports.createExperiencia = async (req, res) => {
   try {
-    const { ingenio, fechaInicio, fechaFin, cargo, area, acercaDe } = req.body
-
+    const {
+      ingenio,
+      fechaInicio,
+      fechaFin,
+      cargo,
+      area,
+      acercaDe,
+      actualmenteTrabaja,
+    } = req.body
     const { userId } = req.params
 
-    // Validar que todos los campos necesarios están presentes
+    // Validación de entrada
     if (!userId || !ingenio || !fechaInicio || !cargo || !area || !acercaDe) {
       return res.status(400).json({
         message: 'Todos los campos necesarios deben ser proporcionados.',
       })
     }
 
+    // Validar que fechaFin solo se almacene si actualmenteTrabaja es false
     const experiencia = await Experiencia.create({
       userId,
       ingenio,
       fechaInicio,
-      fechaFin,
+      fechaFin: actualmenteTrabaja ? null : fechaFin, // Si trabaja actualmente, fechaFin es null
+      actualmenteTrabaja,
       cargo,
       area,
       acercaDe,
@@ -55,6 +64,7 @@ exports.createExperiencia = async (req, res) => {
 
     res.status(201).json(experiencia)
   } catch (error) {
+    console.error(error)
     res
       .status(500)
       .json({ message: 'Error al crear la experiencia.', error: error.message })

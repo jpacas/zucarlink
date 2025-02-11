@@ -21,6 +21,8 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import IconButton from '@mui/material/IconButton'
@@ -44,6 +46,7 @@ interface Experience {
   area: string
   fechaInicio: string
   fechaFin: string
+  actualmenteTrabaja: boolean
 }
 
 const Perfil: React.FC = () => {
@@ -62,6 +65,7 @@ const Perfil: React.FC = () => {
     cargo: '',
     area: '',
     acercaDe: '',
+    actualmenteTrabaja: false,
   })
 
   const { user } = useAuth() // Usuario autenticado
@@ -142,6 +146,7 @@ const Perfil: React.FC = () => {
         cargo: '',
         area: '',
         acercaDe: '',
+        actualmenteTrabaja: false,
       })
     } catch (error) {
       console.error('Error al guardar la experiencia', error)
@@ -270,7 +275,9 @@ const Perfil: React.FC = () => {
                 </Typography>
                 <Typography variant='body2' color='text.secondary'>
                   {formatearFecha(exp.fechaInicio)} -{' '}
-                  {formatearFecha(exp.fechaFin)}
+                  {exp.actualmenteTrabaja
+                    ? 'Actual'
+                    : formatearFecha(exp.fechaFin)}
                 </Typography>
               </Grid>
               <Grid item xs={12} sm={5} sx={{ textAlign: 'right' }}>
@@ -348,7 +355,6 @@ const Perfil: React.FC = () => {
             label='Fecha de Inicio'
             InputLabelProps={{ shrink: true }}
             margin='dense'
-            variant='outlined'
             value={experienceData.fechaInicio}
             onChange={(e) =>
               setExperienceData({
@@ -357,17 +363,32 @@ const Perfil: React.FC = () => {
               })
             }
           />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={experienceData.actualmenteTrabaja}
+                onChange={(e) =>
+                  setExperienceData({
+                    ...experienceData,
+                    actualmenteTrabaja: e.target.checked,
+                    fechaFin: '',
+                  })
+                }
+              />
+            }
+            label='Actualmente trabajo aquí'
+          />
           <TextField
             fullWidth
             type='date'
             label='Fecha de Fin'
             InputLabelProps={{ shrink: true }}
             margin='dense'
-            variant='outlined'
             value={experienceData.fechaFin}
             onChange={(e) =>
               setExperienceData({ ...experienceData, fechaFin: e.target.value })
             }
+            disabled={experienceData.actualmenteTrabaja}
           />
           <TextField
             fullWidth
@@ -380,9 +401,12 @@ const Perfil: React.FC = () => {
             }
           />
           <FormControl fullWidth margin='dense'>
-            <InputLabel>Área de Trabajo</InputLabel>
+            <InputLabel id='area-label'>Área de Trabajo</InputLabel>
             <Select
+              labelId='area-label'
+              id='area'
               value={experienceData.area}
+              label='Área de Trabajo'
               onChange={(e) =>
                 setExperienceData({
                   ...experienceData,

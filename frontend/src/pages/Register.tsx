@@ -219,11 +219,15 @@ const Register: React.FC = () => {
             <TextField {...params} label='País' margin='normal' fullWidth />
           )}
         />
+
         <FormControl fullWidth margin='normal'>
-          <InputLabel>Tipo de Usuario</InputLabel>
+          <InputLabel id='tipoUsuario-label'>Tipo de Usuario</InputLabel>
           <Select
+            labelId='tipoUsuario-label'
+            id='tipoUsuario'
             name='tipoUsuario'
             value={formData.tipoUsuario}
+            label='Tipo de Usuario'
             onChange={handleSelectChange}
           >
             <MenuItem value='Ingenio'>Empleado de Ingenio</MenuItem>
@@ -233,8 +237,10 @@ const Register: React.FC = () => {
 
         {formData.tipoUsuario === 'Ingenio' && (
           <FormControl fullWidth margin='normal'>
-            <InputLabel>Área de Trabajo</InputLabel>
+            <InputLabel id='area-label'>Área de Trabajo</InputLabel>
             <Select
+              labelId='area-label'
+              id='area'
               name='area'
               value={formData.area || ''}
               onChange={handleAreaChange}
