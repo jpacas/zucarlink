@@ -24,8 +24,9 @@ import {
   FormControlLabel,
   Checkbox,
 } from '@mui/material'
-import DeleteIcon from '@mui/icons-material/Delete'
+import EditIcon from '@mui/icons-material/Edit'
 import IconButton from '@mui/material/IconButton'
+import DeleteIcon from '@mui/icons-material/Delete'
 
 interface User {
   id: string
@@ -39,7 +40,7 @@ interface User {
 }
 
 interface Experience {
-  id: string
+  id: string | null
   cargo: string
   acercaDe: string
   ingenio: string
@@ -57,8 +58,8 @@ const Perfil: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
-  const [experienceData, setExperienceData] = useState({
-    // Definir estado para datos de formulario
+  const [experienceData, setExperienceData] = useState<Experience>({
+    id: null,
     ingenio: '',
     fechaInicio: '',
     fechaFin: '',
@@ -91,6 +92,10 @@ const Perfil: React.FC = () => {
     return format(new Date(fecha), 'MMM yyyy', { locale: es }) // Ejemplo: "Feb 2025"
   }
 
+  const formatDate = (isoString: string) => {
+    return isoString.split('T')[0] // Extrae solo la parte de la fecha (YYYY-MM-DD)
+  }
+
   useEffect(() => {
     const fetchUsuarioYExperiencias = async () => {
       setLoading(true)
@@ -118,12 +123,36 @@ const Perfil: React.FC = () => {
     fetchUsuarioYExperiencias()
   }, [id])
 
-  const handleOpenModal = () => {
-    setModalOpen(true)
+  const handleOpenModal = (experience: Experience | null = null) => {
+    return () => {
+      setExperienceData(
+        experience || {
+          id: null,
+          ingenio: '',
+          fechaInicio: '',
+          fechaFin: '',
+          cargo: '',
+          area: '',
+          acercaDe: '',
+          actualmenteTrabaja: false,
+        }
+      )
+      setModalOpen(true)
+    }
   }
 
   const handleCloseModal = () => {
     setModalOpen(false)
+    setExperienceData({
+      id: null,
+      ingenio: '',
+      fechaInicio: '',
+      fechaFin: '',
+      cargo: '',
+      area: '',
+      acercaDe: '',
+      actualmenteTrabaja: false,
+    })
   }
 
   const handleSaveExperience = async () => {
@@ -131,23 +160,27 @@ const Perfil: React.FC = () => {
       console.error('Error: Usuario no autenticado.')
       return
     }
-
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/experiencias/${usuario?.id}`,
-        experienceData
-      )
-      setExperiencias([...experiencias, response.data]) // Suponiendo que la API devuelve la experiencia creada
+      if (experienceData.id) {
+        await axios.put(
+          `${import.meta.env.VITE_API_URL}/experiencias/${experienceData.id}`,
+          experienceData
+        )
+        setExperiencias(
+          experiencias.map((exp) =>
+            exp.id === experienceData.id ? experienceData : exp
+          )
+        )
+      } else {
+        const { id, ...dataWithoutId } = experienceData // Extraer id y guardar el resto en dataWithoutId
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/experiencias/${user.id}`,
+          dataWithoutId
+        )
+
+        setExperiencias([...experiencias, response.data])
+      }
       handleCloseModal()
-      setExperienceData({
-        ingenio: '',
-        fechaInicio: '',
-        fechaFin: '',
-        cargo: '',
-        area: '',
-        acercaDe: '',
-        actualmenteTrabaja: false,
-      })
     } catch (error) {
       console.error('Error al guardar la experiencia', error)
     }
@@ -183,15 +216,22 @@ const Perfil: React.FC = () => {
     )
   }
 
-  const handleDeleteExperience = async (expId: string) => {
+  const handleDeleteExperience = async (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    event.preventDefault()
+    if (!experienceData.id) return
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API_URL}/experiencias/${expId}`,
+        `${import.meta.env.VITE_API_URL}/experiencias/${experienceData.id}`,
         {
           data: { userId: user?.id },
         }
       )
-      setExperiencias(experiencias.filter((exp) => exp.id !== expId)) // Remover de la lista local
+      setExperiencias(
+        experiencias.filter((exp) => exp.id !== experienceData.id)
+      )
+      handleCloseModal()
     } catch (error) {
       console.error('Error al eliminar la experiencia', error)
     }
@@ -302,22 +342,20 @@ const Perfil: React.FC = () => {
 
           {esPropietario && (
             <IconButton
-              aria-label='delete'
-              sx={{
-                color: 'gray',
-                position: 'absolute',
-                bottom: 8,
-                right: 8,
-              }}
-              onClick={() => handleDeleteExperience(exp.id)}
+              onClick={handleOpenModal(exp)}
+              sx={{ position: 'absolute', bottom: 8, right: 8 }}
             >
-              <DeleteIcon />
+              <EditIcon />
             </IconButton>
           )}
         </Card>
       ))}
       {esPropietario && (
-        <Button variant='contained' onClick={handleOpenModal} sx={{ mt: 2 }}>
+        <Button
+          variant='contained'
+          onClick={handleOpenModal(null)}
+          sx={{ mt: 2 }}
+        >
           Agregar Experiencia
         </Button>
       )}
@@ -329,19 +367,17 @@ const Perfil: React.FC = () => {
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: 400,
+            width: 600,
             bgcolor: 'background.paper',
             border: '2px solid #000',
             boxShadow: 24,
             p: 4,
           }}
         >
-          <Typography id='modal-title' variant='h6' component='h2'>
-            Añadir Nueva Experiencia
-          </Typography>
           <TextField
             fullWidth
             label='Ingenio'
+            name='ingenio'
             margin='dense'
             variant='outlined'
             value={experienceData.ingenio}
@@ -353,9 +389,14 @@ const Perfil: React.FC = () => {
             fullWidth
             type='date'
             label='Fecha de Inicio'
+            name='fechaInicio'
             InputLabelProps={{ shrink: true }}
             margin='dense'
-            value={experienceData.fechaInicio}
+            value={
+              experienceData.fechaInicio
+                ? formatDate(experienceData.fechaInicio)
+                : ''
+            }
             onChange={(e) =>
               setExperienceData({
                 ...experienceData,
@@ -366,6 +407,8 @@ const Perfil: React.FC = () => {
           <FormControlLabel
             control={
               <Checkbox
+                id='actualmenteTrabaja'
+                name='actualmenteTrabaja'
                 checked={experienceData.actualmenteTrabaja}
                 onChange={(e) =>
                   setExperienceData({
@@ -381,10 +424,13 @@ const Perfil: React.FC = () => {
           <TextField
             fullWidth
             type='date'
+            name='fechaFin'
             label='Fecha de Fin'
             InputLabelProps={{ shrink: true }}
             margin='dense'
-            value={experienceData.fechaFin}
+            value={
+              experienceData.fechaFin ? formatDate(experienceData.fechaFin) : ''
+            }
             onChange={(e) =>
               setExperienceData({ ...experienceData, fechaFin: e.target.value })
             }
@@ -393,6 +439,7 @@ const Perfil: React.FC = () => {
           <TextField
             fullWidth
             label='Cargo'
+            name='cargo'
             margin='dense'
             variant='outlined'
             value={experienceData.cargo}
@@ -405,6 +452,7 @@ const Perfil: React.FC = () => {
             <Select
               labelId='area-label'
               id='area'
+              name='area'
               value={experienceData.area}
               label='Área de Trabajo'
               onChange={(e) =>
@@ -424,6 +472,7 @@ const Perfil: React.FC = () => {
           <TextField
             fullWidth
             label='Descripción'
+            name='acercaDe'
             margin='dense'
             variant='outlined'
             multiline
@@ -438,11 +487,25 @@ const Perfil: React.FC = () => {
           />
           <Button
             variant='contained'
-            sx={{ mt: 2 }}
+            color='primary'
+            sx={{ mt: 3 }}
             onClick={handleSaveExperience}
           >
-            Guardar
+            Guardar Cambios
           </Button>
+          {experienceData.id && (
+            <IconButton
+              sx={{
+                position: 'absolute',
+                bottom: 16,
+                right: 16,
+                color: 'error.main',
+              }}
+              onClick={handleDeleteExperience}
+            >
+              <DeleteIcon />
+            </IconButton>
+          )}
         </Box>
       </Modal>
     </Box>

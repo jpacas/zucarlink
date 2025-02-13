@@ -71,6 +71,60 @@ exports.createExperiencia = async (req, res) => {
   }
 }
 
+exports.updateExperiencia = async (req, res) => {
+  const { expId } = req.params
+  const {
+    userId,
+    ingenio,
+    fechaInicio,
+    fechaFin,
+    cargo,
+    area,
+    acercaDe,
+    actualmenteTrabaja,
+  } = req.body
+
+  try {
+    // Buscar la experiencia por ID
+    const experiencia = await Experiencia.findOne({ where: { id: expId } })
+
+    if (!experiencia) {
+      return res.status(404).json({ message: 'Experiencia no encontrada' })
+    }
+
+    // Verificar que el usuario autenticado sea el dueño de la experiencia
+    if (experiencia.userId !== userId) {
+      return res
+        .status(403)
+        .json({ message: 'No tienes permiso para editar esta experiencia' })
+    }
+
+    // Preparar datos a actualizar, asegurando que no se pierdan valores si no son enviados
+    const updatedData = {
+      ingenio: ingenio ?? experiencia.ingenio,
+      fechaInicio: fechaInicio ?? experiencia.fechaInicio,
+      fechaFin: actualmenteTrabaja ? null : fechaFin ?? experiencia.fechaFin,
+      cargo: cargo ?? experiencia.cargo,
+      area: area ?? experiencia.area,
+      acercaDe: acercaDe ?? experiencia.acercaDe,
+      actualmenteTrabaja: actualmenteTrabaja ?? experiencia.actualmenteTrabaja,
+    }
+
+    // Actualizar la experiencia
+    await experiencia.update(updatedData)
+
+    res.status(200).json({
+      message: 'Experiencia actualizada exitosamente',
+      experiencia: updatedData,
+    })
+  } catch (error) {
+    console.error('Error al actualizar la experiencia:', error)
+    res
+      .status(500)
+      .json({ message: 'Error interno del servidor', error: error.message })
+  }
+}
+
 exports.deleteExperience = async (req, res) => {
   const { expId } = req.params
   const { userId } = req.body

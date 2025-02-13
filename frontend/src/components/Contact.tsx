@@ -41,9 +41,12 @@ const Contact: React.FC = () => {
   }
 
   return (
-    <Box sx={{ maxWidth: 600, margin: 'auto', padding: 2, marginTop: '64px' }}>
+    <Box sx={{ maxWidth: 750, margin: 'auto', padding: 2, marginTop: '80px' }}>
       <Typography variant='h4' component='h1' gutterBottom>
-        Contacto
+        Tienes alguna pregunta o retroalimentación?
+      </Typography>
+      <Typography variant='h5' component='h1' gutterBottom>
+        Contáctanos mediante el siguiente formulario:
       </Typography>
       <form onSubmit={handleSubmit}>
         <TextField
