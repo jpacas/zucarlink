@@ -229,7 +229,7 @@ const Navbar: React.FC = () => {
               </Button>
               <Button
                 component={Link}
-                to='/register'
+                to='/contact'
                 sx={{
                   backgroundColor: '#ff6347',
                   color: '#fff',
@@ -344,7 +344,7 @@ const Navbar: React.FC = () => {
                 </ListItemButton>
                 <ListItemButton
                   component={Link}
-                  to='/register'
+                  to='/contact'
                   onClick={() => toggleDrawer(false)}
                 >
                   <PersonAddIcon sx={{ marginRight: 1 }} />
