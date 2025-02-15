@@ -1,7 +1,5 @@
 const { Sequelize } = require('sequelize')
-const config = require('../../config/config')[
-  process.env.NODE_ENV || 'production'
-]
+const config = require('../../config/config')[process.env.NODE_ENV]
 
 const sequelize = new Sequelize(
   config.database,

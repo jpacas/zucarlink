@@ -7,6 +7,8 @@ interface User {
   avatar: string
   pais: string
   area: string
+  ingenio: string
+  empleador: string
   acercaDe: string
 }
 

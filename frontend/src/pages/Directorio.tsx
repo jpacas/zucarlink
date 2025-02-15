@@ -17,6 +17,8 @@ interface User {
   apellido: string
   pais: string
   email: string
+  ingenio: string
+  area: string
   avatarUrl?: string // URL de la foto de perfil
 }
 
@@ -182,7 +184,10 @@ const Directorio: React.FC = () => {
                       <strong>País:</strong> {usuario.pais}
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
-                      <strong>Correo:</strong> {usuario.email}
+                      <strong>Ingenio:</strong> {usuario.ingenio}
+                    </Typography>
+                    <Typography variant='body2' color='text.secondary'>
+                      <strong>Area:</strong> {usuario.area}
                     </Typography>
                   </CardContent>
                 </Card>

@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
 const { v4: uuidv4 } = require('uuid')
+const Ingenio = require('./Ingenio')
 
 const User = sequelize.define(
   'User',
@@ -56,6 +57,14 @@ const User = sequelize.define(
       ),
       allowNull: true,
     },
+    ingenio: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    empleador: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     acercaDe: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -76,3 +85,4 @@ module.exports = User
 // ✅ IMPORTA `Experiencia` DESPUÉS DE EXPORTAR `User`
 const Experiencia = require('./Experiencia')
 User.hasMany(Experiencia, { foreignKey: 'userId', as: 'experiencias' })
+Ingenio.hasMany(User, { foreignKey: 'ingenioId', as: 'usuarios' })

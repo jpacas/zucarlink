@@ -21,6 +21,8 @@ const EditarPerfil: React.FC = () => {
     nombre: '',
     apellido: '',
     pais: '',
+    ingenio: '',
+    empleador: '',
     acercaDe: '',
     area: '',
     avatarUrl: '',
@@ -47,6 +49,8 @@ const EditarPerfil: React.FC = () => {
         nombre: user.nombre || '',
         apellido: user.apellido || '',
         pais: user.pais || '',
+        ingenio: user.ingenio || '',
+        empleador: user.empleador || '',
         area: user.area || '',
         acercaDe: user.acercaDe || '',
         avatarUrl: user.avatar || '',
@@ -153,6 +157,8 @@ const EditarPerfil: React.FC = () => {
       formDataToSend.append('apellido', formData.apellido)
       formDataToSend.append('pais', formData.pais)
       formDataToSend.append('area', formData.area)
+      formDataToSend.append('ingenio', formData.ingenio)
+      formDataToSend.append('proveedor', formData.empleador)
       formDataToSend.append('acercaDe', formData.acercaDe)
       if (avatar) {
         formDataToSend.append('avatar', avatar)
@@ -269,6 +275,17 @@ const EditarPerfil: React.FC = () => {
           onChange={handleChange}
           margin='normal'
         />
+
+        {user?.ingenio !== 'null' && (
+          <TextField
+            fullWidth
+            label='Ingenio'
+            name='ingenio'
+            value={formData.ingenio}
+            onChange={handleChange}
+            margin='normal'
+          />
+        )}
         <TextField
           fullWidth
           label='Área de Trabajo'

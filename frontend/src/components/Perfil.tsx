@@ -37,6 +37,8 @@ interface User {
   avatarUrl?: string
   area: string
   acercaDe: string
+  ingenio: string
+  empleador: string
 }
 
 interface Experience {
@@ -270,6 +272,9 @@ const Perfil: React.FC = () => {
                   <strong>País:</strong> {usuario.pais}
                 </Typography>
                 <Typography variant='body1' gutterBottom>
+                  <strong>Ingenio:</strong> {usuario.ingenio}
+                </Typography>
+                <Typography variant='body1' gutterBottom>
                   <strong>Área:</strong>{' '}
                   {usuario.area === 'null' || usuario.area.trim() === ''
                     ? 'Proveedor'
@@ -297,7 +302,7 @@ const Perfil: React.FC = () => {
         </Card>
       )}
       <Typography variant='h5' sx={{ mt: 4, mb: 2, fontWeight: 'bold' }}>
-        Experiencias
+        Experiencia Azucarera
       </Typography>
       {experiencias.map((exp) => (
         <Card key={exp.id} sx={{ mb: 2, position: 'relative', minHeight: 120 }}>
@@ -431,9 +436,22 @@ const Perfil: React.FC = () => {
             value={
               experienceData.fechaFin ? formatDate(experienceData.fechaFin) : ''
             }
-            onChange={(e) =>
-              setExperienceData({ ...experienceData, fechaFin: e.target.value })
-            }
+            onChange={(e) => {
+              const nuevaFechaFin = e.target.value
+              if (
+                experienceData.fechaInicio &&
+                nuevaFechaFin < experienceData.fechaInicio
+              ) {
+                alert(
+                  'La fecha de fin no puede ser anterior a la fecha de inicio.'
+                )
+              } else {
+                setExperienceData({
+                  ...experienceData,
+                  fechaFin: nuevaFechaFin,
+                })
+              }
+            }}
             disabled={experienceData.actualmenteTrabaja}
           />
           <TextField

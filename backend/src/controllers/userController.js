@@ -28,6 +28,8 @@ const getAllUsers = async (req, res) => {
         'area',
         'acercaDe',
         'tipoUsuario',
+        'ingenio',
+        'empleador',
       ],
     })
     res.status(200).json(usuarios)
@@ -91,6 +93,8 @@ const getUserById = async (req, res) => {
         'avatarUrl',
         'area',
         'acercaDe',
+        'ingenio',
+        'empleador',
       ],
     })
 
@@ -107,7 +111,7 @@ const getUserById = async (req, res) => {
 // 🔹 ACTUALIZAR PERFIL DEL USUARIO
 const updateUserProfile = async (req, res) => {
   const { id } = req.params
-  const { nombre, apellido, pais, acercaDe } = req.body
+  const { nombre, apellido, pais, acercaDe, ingenio } = req.body
 
   try {
     const usuario = await User.findByPk(id)
@@ -125,6 +129,7 @@ const updateUserProfile = async (req, res) => {
     usuario.nombre = nombre || usuario.nombre
     usuario.apellido = apellido || usuario.apellido
     usuario.pais = pais || usuario.pais
+    usuario.ingenio = ingenio || usuario.ingenio
     usuario.acercaDe = acercaDe || usuario.acercaDe
     usuario.avatarUrl = avatarUrl
 

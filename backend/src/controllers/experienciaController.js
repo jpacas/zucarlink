@@ -15,9 +15,13 @@ exports.getExperiencias = async (req, res) => {
     })
 
     if (experiencias.length === 0) {
-      return res
-        .status(404)
-        .json({ message: 'No se encontraron experiencias para este usuario.' })
+      return (
+        res
+          //.status(404)
+          .json({
+            message: 'No se encontraron experiencias para este usuario.',
+          })
+      )
     }
 
     res.json(experiencias)

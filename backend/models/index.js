@@ -40,11 +40,13 @@ fs.readdirSync(__dirname)
   })
 
 // Definir relaciones después de cargar los modelos
-const { User, Experiencia } = db
+const { User, Experiencia, Ingenio } = db
 
 if (User && Experiencia) {
   User.hasMany(Experiencia, { foreignKey: 'userId', as: 'experiencias' })
   Experiencia.belongsTo(User, { foreignKey: 'userId', as: 'usuario' })
+  Ingenio.hasMany(User, { foreignKey: 'ingenioId', as: 'miembros' })
+  User.belongsTo(Ingenio, { foreignKey: 'ingenioId', as: 'ingenio' })
 }
 
 db.sequelize = sequelize

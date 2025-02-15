@@ -16,19 +16,9 @@ const app = express()
 app.use(cors({ origin: '*', credentials: true }))
 app.use(express.json())
 
-//Inicio de base de datos
-// sequelize
-//   .sync({ alter: false }) // Cambia la estructura sin borrar datos (Eliminar esto al estar en produccion)
-//   .then(() => {
-//     console.log('Base de datos sincronizada.')
-//   })
-//   .catch((error) => {
-//     console.error('Error al sincronizar la base de datos:', error)
-//   })
-
+//Inicializando la base de datos
 sequelize
   .authenticate()
-  //.sync({ force: true }) // Borra la base de datos y la vuelve a crear
   .then(() => console.log('Conexión a la base de datos exitosa'))
   .catch((err) => console.error('Error al conectar la base de datos:', err))
 
@@ -42,7 +32,7 @@ app.use('/api/conversations', zucariaRoutes)
 app.use('/api/experiencias', experienciaRoutes)
 
 app.get('/', (req, res) => {
-  res.send('API de usuarios')
+  res.send('API de Zucarlink')
 })
 
 // Puerto de Inicio
