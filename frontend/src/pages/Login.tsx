@@ -46,6 +46,8 @@ const Login: React.FC = () => {
         pais: payload.pais,
         area: payload.area,
         acercaDe: payload.acercaDe,
+        ingenio: payload.ingenio,
+        empleador: payload.empleador,
       })
       localStorage.setItem('token', token)
 
