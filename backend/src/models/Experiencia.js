@@ -1,22 +1,12 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
+const Ingenio = require('./Ingenio')
+const User = require('./User')
+const Area = require('./Area')
 
 const Experiencia = sequelize.define(
   'Experiencia',
   {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    userId: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    ingenio: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
     fechaInicio: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -34,24 +24,6 @@ const Experiencia = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    area: {
-      type: DataTypes.ENUM(
-        'Campo',
-        'Molinos',
-        'Fabrica',
-        'Calderas',
-        'Energia',
-        'Alcohol',
-        'Laboratorio',
-        'Instrumentacion',
-        'Mantenimiento',
-        'Seguridad',
-        'Medio Ambiente',
-        'Recursos Humanos',
-        'Otros'
-      ),
-      allowNull: false,
-    },
     acercaDe: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -59,8 +31,14 @@ const Experiencia = sequelize.define(
   },
   {
     timestamps: true,
-    tableName: 'Experiencias',
   }
 )
+
+Experiencia.belongsTo(User, { foreignKey: 'userId' })
+User.hasMany(Experiencia, { foreignKey: 'userId' })
+Experiencia.belongsTo(Ingenio, { foreignKey: 'ingenioId' })
+Ingenio.hasMany(Experiencia, { foreignKey: 'ingenioId' })
+Experiencia.belongsTo(Area, { foreignKey: 'areaId' })
+Area.hasMany(Experiencia, { foreignKey: 'areaId' })
 
 module.exports = Experiencia

@@ -1,5 +1,8 @@
 const bcrypt = require('bcrypt')
 const User = require('../models/User')
+const Pais = require('../models/Pais')
+const Ingenio = require('../models/Ingenio')
+const Area = require('../models/Area')
 const s3 = require('../config/s3')
 
 const uploadToS3 = async (file) => {
@@ -22,14 +25,26 @@ const getAllUsers = async (req, res) => {
         'id',
         'nombre',
         'apellido',
-        'pais',
         'email',
         'avatarUrl',
-        'area',
         'acercaDe',
-        'tipoUsuario',
-        'ingenio',
-        'empleador',
+      ],
+      include: [
+        {
+          model: Pais,
+          as: 'pais',
+          attributes: ['nombre'],
+        },
+        {
+          model: Ingenio,
+          as: 'ingenio',
+          attributes: ['nombre'],
+        },
+        {
+          model: Area,
+          as: 'area',
+          attributes: ['nombre'],
+        },
       ],
     })
     res.status(200).json(usuarios)
@@ -41,14 +56,66 @@ const getAllUsers = async (req, res) => {
 // Registrar usuario
 const registerUser = async (req, res) => {
   try {
-    const { nombre, apellido, pais, email, password, tipoUsuario, area } =
-      req.body
+    const {
+      nombre,
+      apellido,
+      paisId,
+      email,
+      password,
+      areaId,
+      ingenioId,
+      proveedorId,
+      fecha_nacimiento,
+    } = req.body
 
-    if (!nombre || !apellido || !pais || !email || !password || !tipoUsuario) {
-      return res
-        .status(400)
-        .json({ message: 'Todos los campos son obligatorios.' })
+    const requiredFields = {
+      nombre,
+      apellido,
+      paisId,
+      email,
+      password,
+      areaId,
+      ingenioId,
+      proveedorId,
+      fecha_nacimiento,
     }
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(
+        ([key, value]) =>
+          value === undefined ||
+          value === null ||
+          value === '' ||
+          value === 'null'
+      ) // Considera vacío si es undefined, null o ''
+      .map(([key]) => key) // Solo nos interesa el nombre del campo
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        message: `Los siguientes campos son obligatorios: ${missingFields.join(
+          ', '
+        )}`,
+      })
+    }
+
+    // 📌 Validar que solo uno de los dos sea enviado
+    if (ingenioId && proveedorId) {
+      return res.status(400).json({
+        message:
+          'Un usuario no puede tener un ingenioId y un proveedorId al mismo tiempo. Debe elegir solo uno.',
+      })
+    }
+
+    // 📌 Si no se envía ninguno, error
+    if (!ingenioId && !proveedorId) {
+      return res.status(400).json({
+        message: 'Debe proporcionar ingenioId o proveedorId, pero no ambos.',
+      })
+    }
+
+    // 📌 Si `ingenioId` se envía, `proveedorId` debe ser NULL, y viceversa
+    const ingenioValue = ingenioId || null
+    const proveedorValue = proveedorId || null
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
@@ -61,12 +128,14 @@ const registerUser = async (req, res) => {
     const user = await User.create({
       nombre,
       apellido,
-      pais,
+      paisId,
       email,
-      tipoUsuario,
-      area,
       password: hashedPassword,
       avatarUrl,
+      areaId,
+      ingenioId: ingenioValue,
+      proveedorId: proveedorValue,
+      fecha_nacimiento,
     })
 
     res.status(201).json({ message: 'Usuario registrado exitosamente', user })

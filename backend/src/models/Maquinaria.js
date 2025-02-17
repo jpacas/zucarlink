@@ -1,23 +1,11 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
 const User = require('./User')
+const Pais = require('./Pais')
 
 const Maquinaria = sequelize.define(
   'Maquinaria',
   {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    user_id: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      references: {
-        model: User,
-        key: 'id',
-      },
-    },
     nombre: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -31,44 +19,26 @@ const Maquinaria = sequelize.define(
       allowNull: false,
     },
     precio: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.FLOAT,
       allowNull: false,
     },
     contacto: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    likes: {
-      type: DataTypes.JSON,
-      defaultValue: [],
-    },
-    comentarios: {
-      type: DataTypes.JSON,
-      defaultValue: [],
-    },
     vistas: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
-    categoria: {
-      type: DataTypes.ENUM(
-        'Campo',
-        'Molinos',
-        'Fabrica',
-        'Calderas',
-        'Energia',
-        'Alcohol'
-      ),
-      allowNull: false,
-    },
   },
   {
     timestamps: true,
-    tableName: 'Maquinaria',
   }
 )
 
-// Relación con User
-Maquinaria.belongsTo(User, { foreignKey: 'user_id', as: 'usuario' })
+Maquinaria.belongsTo(User, { foreignKey: 'usuarioid', as: 'usuario' })
+User.hasMany(Maquinaria, { foreignKey: 'usuarioid', as: 'maquinaria' })
+Maquinaria.belongsTo(Pais, { foreignKey: 'paisid', as: 'pais' })
+Pais.hasMany(Maquinaria, { foreignKey: 'paisid', as: 'maquinaria' })
 
 module.exports = Maquinaria

@@ -2,6 +2,9 @@ const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
 const { v4: uuidv4 } = require('uuid')
 const Ingenio = require('./Ingenio')
+const Pais = require('./Pais')
+const Area = require('./Area')
+const Proveedor = require('./Proveedor')
 
 const User = sequelize.define(
   'User',
@@ -16,10 +19,6 @@ const User = sequelize.define(
       allowNull: false,
     },
     apellido: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    pais: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -39,50 +38,35 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    area: {
-      type: DataTypes.ENUM(
-        'Campo',
-        'Molinos',
-        'Fabrica',
-        'Calderas',
-        'Energia',
-        'Alcohol',
-        'Laboratorio',
-        'Instrumentacion',
-        'Mantenimiento',
-        'Seguridad',
-        'Medio Ambiente',
-        'Recursos Humanos',
-        'Otros'
-      ),
-      allowNull: true,
-    },
-    ingenio: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    empleador: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
     acercaDe: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    tipoUsuario: {
-      type: DataTypes.ENUM('Ingenio', 'Proveedor'),
-      allowNull: false,
+    fecha_nacimiento: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    ingenioId: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // ✅ Debe permitir valores nulos
+    },
+    proveedorId: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // ✅ Debe permitir valores nulos
     },
   },
   {
     timestamps: true,
-    tableName: 'Users',
   }
 )
 
-module.exports = User
+User.belongsTo(Pais, { foreignKey: 'paisId', as: 'pais' })
+Pais.hasMany(User, { foreignKey: 'paisId' })
+User.belongsTo(Ingenio, { foreignKey: 'ingenioId', as: 'ingenio' })
+Ingenio.hasMany(User, { foreignKey: 'ingenioId' })
+User.belongsTo(Area, { foreignKey: 'areaId', as: 'area' })
+Area.hasMany(User, { foreignKey: 'areaId' })
+User.belongsTo(Proveedor, { foreignKey: 'proveedorId', as: 'proveedor' })
+Proveedor.hasMany(User, { foreignKey: 'proveedorId' })
 
-// ✅ IMPORTA `Experiencia` DESPUÉS DE EXPORTAR `User`
-const Experiencia = require('./Experiencia')
-User.hasMany(Experiencia, { foreignKey: 'userId', as: 'experiencias' })
-Ingenio.hasMany(User, { foreignKey: 'ingenioId', as: 'usuarios' })
+module.exports = User

@@ -2,8 +2,8 @@ const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
 const Pais = require('./Pais')
 
-const Ingenio = sequelize.define(
-  'Ingenio',
+const Proveedor = sequelize.define(
+  'Proveedor',
   {
     nombre: {
       type: DataTypes.STRING,
@@ -21,14 +21,25 @@ const Ingenio = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    descripcion: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    meses_pagados: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    fecha_vencimiento: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,
-    tableName: 'Ingenios',
   }
 )
 
-Ingenio.belongsTo(Pais, { foreignKey: 'paisId' })
-Pais.hasMany(Ingenio, { foreignKey: 'paisId' })
+Proveedor.belongsTo(Pais, { foreignKey: 'paisId' })
+Pais.hasMany(Proveedor, { foreignKey: 'paisId' })
 
-module.exports = Ingenio
+module.exports = Proveedor

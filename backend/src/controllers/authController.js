@@ -15,25 +15,24 @@ const loginUser = async (req, res) => {
 
     const user = await User.findOne({ where: { email } })
     if (!user) {
-      return res.status(404).json({ message: 'Usuario no encontrado' })
+      return res.status(404).json({ message: 'Credenciales inválidas' })
     }
 
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) {
-      return res.status(401).json({ message: 'Credenciales incorrectas' })
+      return res.status(401).json({ message: 'Credenciales inválidas' })
+    }
+
+    if (!process.env.JWT_SECRET) {
+      return res
+        .status(500)
+        .json({ message: 'Error del servidor: JWT_SECRET no definido' })
     }
 
     const token = jwt.sign(
       {
         id: user.id,
-        nombre: user.nombre,
-        apellido: user.apellido,
-        avatar: user.avatarUrl,
         email: user.email,
-        tipoUsuario: user.tipoUsuario,
-        area: user.area,
-        pais: user.pais,
-        acercaDe: user.acercaDe,
       },
       process.env.JWT_SECRET,
       {
@@ -46,9 +45,16 @@ const loginUser = async (req, res) => {
   }
 }
 
+// Logout
 const logout = (req, res) => {
-  // Opcional: limpia la sesión o token si tienes lógica en el servidor
-  res.status(200).json({ message: 'Logout exitoso' })
+  try {
+    res.status(200).json({
+      message: 'Logout exitoso, elimina el token en el frontend',
+    })
+  } catch (error) {
+    console.error('Error en logout:', error)
+    res.status(500).json({ message: 'Error al cerrar sesión' })
+  }
 }
 
 module.exports = { loginUser, logout }
