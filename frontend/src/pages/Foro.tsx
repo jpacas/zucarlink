@@ -26,33 +26,15 @@ import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Comment } from '@mui/icons-material'
-
-interface Post {
-  id: number
-  titulo: string
-  contenido: string
-  categoria: string
-  createdAt: string
-  usuarioId: number
-  autor: { id: number; nombre: string; apellido: string; avatarUrl?: string }
-  comments: Comment[]
-  likes: string[]
-}
-
-interface Comment {
-  user: string
-  nombre: string
-  apellido: string
-  value: string
-}
+import { Post, Area } from '../types/interfaces'
 
 const Foro: React.FC = () => {
   const { user } = useAuth()
   const [posts, setPosts] = useState<Post[]>([])
-  const [categoriaFiltro, setCategoriaFiltro] = useState<string>('')
+  const [areaFiltro, setAreaFiltro] = useState<string>('')
   const [temaFiltro, setTemaFiltro] = useState<string>('')
-  const [categoria, setCategoria] = useState<string>('')
+  const [area, setArea] = useState<string>('')
+  const [areas, setAreas] = useState<Area[]>([])
   const [titulo, setTitulo] = useState<string>('')
   const [contenido, setContenido] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
@@ -65,29 +47,13 @@ const Foro: React.FC = () => {
   const [newComment, setNewComment] = useState<{ [postId: number]: string }>({})
   const navigate = useNavigate()
 
-  const categorias = [
-    'Campo',
-    'Molinos',
-    'Fabrica',
-    'Calderas',
-    'Energia',
-    'Alcohol',
-    'Laboratorio',
-    'Instrumentacion',
-    'Mantenimiento',
-    'Seguridad',
-    'Medio Ambiente',
-    'Recursos Humanos',
-    'Otros',
-  ]
-
   const fetchPosts = async () => {
     try {
       setIsLoading(true)
       const response = await axios.get(
         `${import.meta.env.VITE_API_URL}/posts`,
         {
-          params: { tema: temaFiltro, categoria: categoriaFiltro },
+          params: { tema: temaFiltro, area: areaFiltro },
         }
       )
       if (Array.isArray(response.data)) {
@@ -103,9 +69,30 @@ const Foro: React.FC = () => {
     }
   }
 
+  const fetchAreas = async () => {
+    try {
+      const response = await axios.get<{ nombre: string }[]>(
+        `${import.meta.env.VITE_API_URL}/helper/areas`
+      )
+      setAreas(response.data.map((area) => area.nombre))
+      console.log(areas)
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || 'Error al cargar los datos.')
+      } else {
+        setError('Error desconocido.')
+      }
+    }
+  }
+
+  useEffect(() => {
+    fetchAreas()
+    console.log(areas)
+  }, [])
+
   useEffect(() => {
     fetchPosts()
-  }, [categoriaFiltro, temaFiltro])
+  }, [areaFiltro, temaFiltro])
 
   const handleLikeToggle = async (postId: number) => {
     if (!user?.id) {
@@ -130,7 +117,7 @@ const Foro: React.FC = () => {
   }
 
   const handlePostSubmit = async () => {
-    if (!titulo || !contenido || !categoria) {
+    if (!titulo || !contenido || !area) {
       setModalError('Todos los campos son obligatorios.')
       return
     }
@@ -139,12 +126,12 @@ const Foro: React.FC = () => {
       await axios.post(`${import.meta.env.VITE_API_URL}/posts`, {
         titulo,
         contenido,
-        categoria,
+        area,
         usuarioId: user?.id,
       })
       setTitulo('')
       setContenido('')
-      setCategoria('')
+      setArea('')
       setModalError(null)
       setModalOpen(false)
       fetchPosts()
@@ -230,7 +217,7 @@ const Foro: React.FC = () => {
     setModalOpen(false)
     setTitulo('')
     setContenido('')
-    setCategoria('')
+    setArea('')
     setModalError(null) // Resetea el error cuando el modal se cierra
   }
 
@@ -278,14 +265,14 @@ const Foro: React.FC = () => {
               margin='normal'
             />
             <Select
-              value={categoriaFiltro}
-              onChange={(e) => setCategoriaFiltro(e.target.value)}
+              value={areaFiltro}
+              onChange={(e) => setAreaFiltro(e.target.value)}
               displayEmpty
               fullWidth
               sx={{ marginTop: 2 }}
             >
               <MenuItem value=''>Todas las categorías</MenuItem>
-              {categorias.map((cat) => (
+              {areas.map((cat) => (
                 <MenuItem key={cat} value={cat}>
                   {cat}
                 </MenuItem>
@@ -371,7 +358,7 @@ const Foro: React.FC = () => {
                       }}
                     >
                       <Typography variant='body2' color='textSecondary'>
-                        {post.categoria} - {formatRelativeDate(post.createdAt)}
+                        {post.area} - {formatRelativeDate(post.createdAt)}
                       </Typography>
 
                       <Box sx={{ display: 'flex', gap: 3 }}>
@@ -542,8 +529,8 @@ const Foro: React.FC = () => {
             margin='normal'
           />
           <Select
-            value={categoria}
-            onChange={(e) => setCategoria(e.target.value)}
+            value={area}
+            onChange={(e) => setArea(e.target.value)}
             displayEmpty
             fullWidth
             sx={{ marginTop: 2 }}
@@ -551,7 +538,7 @@ const Foro: React.FC = () => {
             <MenuItem value='' disabled>
               Selecciona una categoría
             </MenuItem>
-            {categorias.map((cat) => (
+            {areas.map((cat) => (
               <MenuItem key={cat} value={cat}>
                 {cat}
               </MenuItem>

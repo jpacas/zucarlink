@@ -1,3 +1,4 @@
+const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
 const User = require('./User')
 const Post = require('./Post')
@@ -6,9 +7,15 @@ const Empleo = require('./Empleo')
 
 const Like = sequelize.define(
   'Like',
-  {},
+  {
+    activo: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+    },
+  },
   {
     timestamps: true,
+    tableName: 'Likes',
   }
 )
 

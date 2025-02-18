@@ -1,5 +1,6 @@
 const Post = require('../models/Post')
 const User = require('../models/User')
+const Like = require('../models/Like')
 const { Op } = require('sequelize')
 
 // Obtener todos los posts (con filtrado por tema o categoría)
@@ -69,20 +70,34 @@ const toggleLike = async (req, res) => {
     const post = await Post.findByPk(postId)
     if (!post) return res.status(404).json({ message: 'Post no encontrado.' })
 
-    if (post.likes.includes(userId)) {
-      // Si el usuario ya dio like, lo removemos
-      post.likes = post.likes.filter((id) => id !== userId)
-      await post.save()
-      return res
-        .status(200)
-        .json({ message: 'Like removido.', likes: post.likes })
+    console.log(post)
+
+    // Buscar si el usuario ya ha interactuado con el post
+    let existingLike = await Like.findOne({
+      where: { postId, usuarioId: userId },
+    })
+
+    if (existingLike) {
+      // Si el like existe, solo cambiamos el estado de "activo"
+      existingLike.activo = !existingLike.activo
+      await existingLike.save()
+    } else {
+      // Si no existe, creamos un nuevo registro con "activo" en true
+      await Like.create({ postId, usuarioId: userId, activo: true })
     }
 
-    // Si no dio like, lo añadimos
-    post.likes = [...post.likes, userId]
-    await post.save()
-    res.status(200).json({ message: 'Like añadido.', likes: post.likes })
+    // Contar la cantidad de likes activos
+    const totalLikes = await Like.count({ where: { postId, activo: true } })
+
+    res.status(200).json({
+      message:
+        existingLike && !existingLike.activo
+          ? 'Like removido.'
+          : 'Like añadido.',
+      likes: totalLikes,
+    })
   } catch (error) {
+    console.error('Error al procesar el like:', error)
     res.status(500).json({ message: 'Error al procesar el like.', error })
   }
 }

@@ -24,6 +24,23 @@ export interface Experience {
 
 export type Pais = string
 
-export interface Area {
+export type Area = string
+
+export interface Post {
+  id: number
+  titulo: string
+  contenido: string
+  area: string
+  createdAt: string
+  usuarioId: number
+  autor: { id: number; nombre: string; apellido: string; avatarUrl?: string }
+  comments: Comment[]
+  likes: string[]
+}
+
+export interface Comment {
+  user: string
   nombre: string
+  apellido: string
+  value: string
 }
