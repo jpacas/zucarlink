@@ -9,48 +9,50 @@ import {
   Typography,
   Autocomplete,
 } from '@mui/material'
+import { User } from '../types/interfaces'
+import { Pais } from '../types/interfaces'
 import { useNavigate } from 'react-router-dom'
-
-interface User {
-  id: string
-  nombre: string
-  apellido: string
-  pais: string
-  email: string
-  ingenio: string
-  area: string
-  avatarUrl?: string // URL de la foto de perfil
-}
 
 const Directorio: React.FC = () => {
   const [usuarios, setUsuarios] = useState<User[]>([])
   const [filtros, setFiltros] = useState({ nombre: '', pais: '' })
   const [error, setError] = useState<string | null>(null)
+  const [paises, setPaises] = useState<Pais[]>([])
   const navigate = useNavigate()
-
-  const countries = [
-    'El Salvador',
-    'Guatemala',
-    'Nicaragua',
-    'Honduras',
-    'Costa Rica',
-    'Panama',
-    'Belice',
-  ]
 
   useEffect(() => {
     const fetchUsuarios = async () => {
       try {
-        const response = await axios.get(
+        const response = await axios.get<User[]>(
           `${import.meta.env.VITE_API_URL}/users/usuarios`
         )
         setUsuarios(response.data)
-      } catch (err: any) {
-        setError(err.response?.data?.message || 'Error al cargar los usuarios.')
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.message || 'Error al cargar los datos.')
+        } else {
+          setError('Error desconocido.')
+        }
+      }
+    }
+
+    const fetchPaises = async () => {
+      try {
+        const response = await axios.get<{ nombre: string }[]>(
+          `${import.meta.env.VITE_API_URL}/helper/paises`
+        )
+        setPaises(response.data.map((pais) => pais.nombre))
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.message || 'Error al cargar los datos.')
+        } else {
+          setError('Error desconocido.')
+        }
       }
     }
 
     fetchUsuarios()
+    fetchPaises()
   }, [])
 
   // Filtrar usuarios
@@ -63,7 +65,7 @@ const Directorio: React.FC = () => {
           .toLowerCase()
           .includes(filtros.nombre.toLowerCase().trim())) &&
       (!filtros.pais ||
-        usuario.pais.toLowerCase() === filtros.pais.toLowerCase())
+        usuario.pais?.nombre.toLowerCase() === filtros.pais?.toLowerCase())
   )
 
   const handleFiltroChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,17 +82,9 @@ const Directorio: React.FC = () => {
         backgroundColor: '#f9f9f9',
         minHeight: '100vh',
         padding: 3,
-        marginTop: '64px', // Ajustar la distancia para evitar solapamiento con el Navbar
+        marginTop: '64px',
       }}
     >
-      {/* <Typography
-        variant='h3'
-        textAlign='center'
-        marginBottom={4}
-        color='primary'
-      >
-        Directorio de Usuarios
-      </Typography> */}
       <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
         {/* Sidebar de Filtros */}
         <Grid
@@ -123,8 +117,8 @@ const Directorio: React.FC = () => {
               margin='normal'
             />
             <Autocomplete
-              options={countries}
-              value={filtros.pais}
+              options={paises}
+              value={filtros.pais || null}
               onChange={handleCountryChange}
               renderInput={(params) => (
                 <TextField {...params} label='País' margin='normal' fullWidth />
@@ -140,15 +134,14 @@ const Directorio: React.FC = () => {
             </Typography>
           )}
           <Grid container spacing={3}>
-            {usuariosFiltrados.map((usuario) => (
-              <Grid item xs={12} sm={6} md={4} key={usuario.id}>
+            {usuariosFiltrados.map((usuario, index) => (
+              <Grid item xs={12} sm={6} md={4} key={usuario.id || index}>
                 <Card
                   sx={{
                     cursor: 'pointer',
                     transition: 'transform 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-5px)',
-                    },
+                    willChange: 'transform',
+                    '&:hover': { transform: 'translateY(-5px)' },
                   }}
                   onClick={() => navigate(`/perfil/${usuario.id}`)}
                 >
@@ -181,13 +174,13 @@ const Directorio: React.FC = () => {
                       {usuario.nombre} {usuario.apellido}
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
-                      <strong>País:</strong> {usuario.pais}
+                      <strong>País:</strong> {usuario.pais.nombre}
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
-                      <strong>Ingenio:</strong> {usuario.ingenio}
+                      <strong>Ingenio:</strong> {usuario.ingenio.nombre}
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
-                      <strong>Area:</strong> {usuario.area}
+                      <strong>Area:</strong> {usuario.area.nombre}
                     </Typography>
                   </CardContent>
                 </Card>

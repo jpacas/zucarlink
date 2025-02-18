@@ -27,30 +27,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit'
 import IconButton from '@mui/material/IconButton'
 import DeleteIcon from '@mui/icons-material/Delete'
-
-interface User {
-  id: string
-  nombre: string
-  apellido: string
-  pais: string
-  email: string
-  avatarUrl?: string
-  area: string
-  acercaDe: string
-  ingenio: string
-  empleador: string
-}
-
-interface Experience {
-  id: string | null
-  cargo: string
-  acercaDe: string
-  ingenio: string
-  area: string
-  fechaInicio: string
-  fechaFin: string
-  actualmenteTrabaja: boolean
-}
+import { User, Experience, Area } from '../types/interfaces'
 
 const Perfil: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -60,6 +37,7 @@ const Perfil: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [areas, setAreas] = useState<Area[]>([])
   const [experienceData, setExperienceData] = useState<Experience>({
     id: null,
     ingenio: '',
@@ -74,22 +52,6 @@ const Perfil: React.FC = () => {
   const { user } = useAuth() // Usuario autenticado
   const esPropietario = user?.id === id // Verifica si es su propio perfil
 
-  const areas = [
-    'Campo',
-    'Molinos',
-    'Fabrica',
-    'Calderas',
-    'Energia',
-    'Alcohol',
-    'Laboratorio',
-    'Instrumentacion',
-    'Mantenimiento',
-    'Seguridad',
-    'Medio Ambiente',
-    'Recursos Humanos',
-    'Otros',
-  ]
-
   const formatearFecha = (fecha: string) => {
     return format(new Date(fecha), 'MMM yyyy', { locale: es }) // Ejemplo: "Feb 2025"
   }
@@ -97,6 +59,25 @@ const Perfil: React.FC = () => {
   const formatDate = (isoString: string) => {
     return isoString.split('T')[0] // Extrae solo la parte de la fecha (YYYY-MM-DD)
   }
+
+  useEffect(() => {
+    const fetchAreas = async () => {
+      try {
+        const response = await axios.get<{ nombre: string }[]>(
+          `${import.meta.env.VITE_API_URL}/helper/areas`
+        )
+        setAreas(response.data.map((area) => area.nombre))
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.message || 'Error al cargar los datos.')
+        } else {
+          setError('Error desconocido.')
+        }
+      }
+    }
+
+    fetchAreas()
+  }, [])
 
   useEffect(() => {
     const fetchUsuarioYExperiencias = async () => {
@@ -269,16 +250,17 @@ const Perfil: React.FC = () => {
                   {usuario.nombre} {usuario.apellido}
                 </Typography>
                 <Typography variant='body1' gutterBottom>
-                  <strong>País:</strong> {usuario.pais}
+                  <strong>País:</strong> {usuario.pais.nombre}
                 </Typography>
                 <Typography variant='body1' gutterBottom>
-                  <strong>Ingenio:</strong> {usuario.ingenio}
+                  <strong>Ingenio:</strong> {usuario.ingenio.nombre}
                 </Typography>
                 <Typography variant='body1' gutterBottom>
                   <strong>Área:</strong>{' '}
-                  {usuario.area === 'null' || usuario.area.trim() === ''
+                  {usuario.area.nombre === 'null' ||
+                  usuario.area.nombre.trim() === ''
                     ? 'Proveedor'
-                    : usuario.area}
+                    : usuario.area.nombre}
                 </Typography>
 
                 {usuario.acercaDe && (
