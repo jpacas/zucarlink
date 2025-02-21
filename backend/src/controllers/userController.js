@@ -6,10 +6,14 @@ const Ingenio = require('../models/Ingenio')
 const Area = require('../models/Area')
 const s3 = require('../config/s3')
 
+////////////////////////////////////////////////////////////
+///// Upload to S3 /////////////////////////////////////////
+////////////////////////////////////////////////////////////
+
 const uploadToS3 = async (file) => {
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `uploads/${Date.now()}-${file.originalname}`, // Ruta dentro del bucket
+    Key: `uploads/${Date.now()}-${file.originalname}`, //Ruta dentro del bucket
     Body: file.buffer,
     ContentType: file.mimetype,
   }
@@ -18,10 +22,13 @@ const uploadToS3 = async (file) => {
   return Location // URL pública del archivo
 }
 
-// Obtener todos los usuarios
+////////////////////////////////////////////////////////////
+///// Obtener todos los usuarios //////////////////////////
+///////////////////////////////////////////////////////////
+
 const getAllUsers = async (req, res) => {
   try {
-    const usuarios = await User.findAll({
+    const response = await User.findAll({
       attributes: [
         'id',
         'nombre',
@@ -40,56 +47,89 @@ const getAllUsers = async (req, res) => {
           model: Ingenio,
           as: 'ingenio',
           attributes: ['nombre'],
+          required: false,
         },
         {
           model: Area,
           as: 'area',
           attributes: ['nombre'],
+          required: false,
         },
+        /*   {
+          model: Proveedor,
+          as: 'proveedor',
+          attributes: ['nombre'],
+          required: false,
+        }, */
       ],
     })
+
+    //Preparar la respuesta para el frontend
+
+    const usuarios = response.map((usuario) => {
+      return {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        apellido: usuario.apellido,
+        email: usuario.email,
+        avatarUrl: usuario.avatarUrl,
+        pais: usuario.pais.nombre,
+        ingenio: usuario.ingenio?.nombre || null,
+        area: usuario.area?.nombre || null,
+        acercaDe: usuario.acercaDe,
+        proveedor: usuario.proveedor?.nombre || null,
+      }
+    })
+
     res.status(200).json(usuarios)
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener los usuarios', error })
   }
 }
 
-// Registrar usuario
+////////////////////////////////////////////////////////////
+///// Registrar usuario ////////////////////////////////////
+///////////////////////////////////////////////////////////
+
 const registerUser = async (req, res) => {
   try {
     const {
       nombre,
       apellido,
-      paisId,
+      pais,
       email,
       password,
-      areaId,
-      ingenioId,
-      proveedorId,
+      area,
+      ingenio,
+      proveedor,
       fecha_nacimiento,
     } = req.body
 
-    const requiredFields = {
-      nombre,
-      apellido,
-      paisId,
-      email,
-      password,
-      areaId,
-      ingenioId,
-      proveedorId,
-      fecha_nacimiento,
-    }
+    /**
+     * 1. Validación de campos requeridos
+     * Usamos un arreglo con los nombres de los campos obligatorios y filtramos
+     * aquellos que no cumplen la condición de estar "rellenos".
+     */
+    const requiredFields = [
+      'nombre',
+      'apellido',
+      'pais',
+      'email',
+      'password',
+      'area',
+      'fecha_nacimiento',
+    ]
 
-    const missingFields = Object.entries(requiredFields)
-      .filter(
-        ([key, value]) =>
-          value === undefined ||
-          value === null ||
-          value === '' ||
-          value === 'null'
-      ) // Considera vacío si es undefined, null o ''
-      .map(([key]) => key) // Solo nos interesa el nombre del campo
+    // Filtra campos faltantes o vacíos (en el sentido de undefined, null, cadena vacía o 'null')
+    const missingFields = requiredFields.filter((field) => {
+      const value = req.body[field]
+      return (
+        value === undefined ||
+        value === null ||
+        value === '' ||
+        value === 'null'
+      )
+    })
 
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -99,66 +139,114 @@ const registerUser = async (req, res) => {
       })
     }
 
-    // 📌 Validar que solo uno de los dos sea enviado
-    if (ingenioId && proveedorId) {
+    /**
+     * 2. Validación de ingenio/proveedor
+     * - Solo debe existir uno de los dos.
+     * - Si existen ambos o si no existe ninguno, se marca error.
+     */
+    const hasIngenio = Boolean(ingenio)
+    const hasProveedor = Boolean(proveedor)
+
+    if ((hasIngenio && hasProveedor) || (!hasIngenio && !hasProveedor)) {
       return res.status(400).json({
         message:
-          'Un usuario no puede tener un ingenioId y un proveedorId al mismo tiempo. Debe elegir solo uno.',
+          'Debe proporcionar únicamente ingenio o proveedor (no ambos, ni ninguno).',
       })
     }
 
-    // 📌 Si no se envía ninguno, error
-    if (!ingenioId && !proveedorId) {
+    // Asigna valores en base a lo que se recibe
+    const ingenioValue = hasIngenio ? ingenio : null
+    const proveedorValue = hasProveedor ? proveedor : null
+
+    /**
+     * 3. Búsqueda en base de datos
+     * - Se hace en paralelo para mejorar la performance.
+     * - Busca solo lo que corresponda: si `ingenio` no viene, no hace falta buscarlo.
+     */
+    const [foundIngenio, foundProveedor, foundArea, foundPais] =
+      await Promise.all([
+        hasIngenio
+          ? Ingenio.findOne({ where: { nombre: ingenioValue } })
+          : null,
+        hasProveedor
+          ? Proveedor.findOne({ where: { nombre: proveedorValue } })
+          : null,
+        Area.findOne({ where: { nombre: area } }),
+        Pais.findOne({ where: { nombre: pais } }),
+      ])
+
+    // Valida que los registros existan en la BD (solo los que se hayan solicitado)
+    if (
+      (hasIngenio && !foundIngenio) ||
+      (hasProveedor && !foundProveedor) ||
+      !foundArea
+    ) {
       return res.status(400).json({
-        message: 'Debe proporcionar ingenioId o proveedorId, pero no ambos.',
+        message: 'Los datos de ingenio, proveedor o área no son válidos.',
       })
     }
 
-    // 📌 Si `ingenioId` se envía, `proveedorId` debe ser NULL, y viceversa
-    const ingenioValue = ingenioId || null
-    const proveedorValue = proveedorId || null
-
+    /**
+     * 4. Encriptar la contraseña
+     */
     const hashedPassword = await bcrypt.hash(password, 10)
 
+    /**
+     * 5. Manejo del avatar
+     */
     let avatarUrl =
-      'https://zucarlink-profiles.s3.us-east-2.amazonaws.com/uploads/avatar-generico.jpg' // URL genérica
+      'https://zucarlink-profiles.s3.us-east-2.amazonaws.com/uploads/avatar-generico.jpg'
     if (req.file) {
-      avatarUrl = await uploadToS3(req.file) // Subir a S3 y obtener la URL
+      avatarUrl = await uploadToS3(req.file)
     }
 
+    /**
+     * 6. Crear el usuario
+     * Nota: La relación de pais con paisId es algo que no se ve claro en el código original.
+     * Se asume que existe un `pais` y que en algún lugar se debe convertir a `paisId`,
+     * al igual que con `ingenioId` o `proveedorId`. Ajusta según tu modelo.
+     */
     const user = await User.create({
       nombre,
       apellido,
-      paisId,
+      paisId: foundPais.id, // o paisId si ya lo obtuviste de la BD
       email,
       password: hashedPassword,
       avatarUrl,
-      areaId,
-      ingenioId: ingenioValue,
-      proveedorId: proveedorValue,
       fecha_nacimiento,
+      areaId: foundArea.id,
+      ingenioId: foundIngenio ? foundIngenio.id : null,
+      proveedorId: foundProveedor ? foundProveedor.id : null,
     })
 
-    res.status(201).json({ message: 'Usuario registrado exitosamente', user })
+    return res.status(201).json({
+      message: 'Usuario registrado exitosamente',
+      user,
+    })
   } catch (error) {
     console.error(error)
-    res.status(500).json({ message: 'Error al registrar el usuario', error })
+    return res.status(500).json({
+      message: 'Error al registrar el usuario',
+      error,
+    })
   }
 }
 
-// Obtener usuario por ID
+////////////////////////////////////////////////////////////
+///// Obtener usuario por ID //////////////////////////////
+///////////////////////////////////////////////////////////
+
 const getUserById = async (req, res) => {
   const { id } = req.params
 
   try {
-    const usuario = await User.findOne({
+    const response = await User.findOne({
       where: { id },
       attributes: [
         'id',
         'nombre',
         'apellido',
         'email',
-        'createdAt',
         'avatarUrl',
         'acercaDe',
       ],
@@ -181,8 +269,21 @@ const getUserById = async (req, res) => {
       ],
     })
 
-    if (!usuario) {
+    if (!response) {
       return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    const usuario = {
+      id: response.id,
+      nombre: response.nombre,
+      apellido: response.apellido,
+      email: response.email,
+      avatarUrl: response.avatarUrl,
+      pais: response.pais.nombre,
+      ingenio: response.ingenio?.nombre || null,
+      area: response.area?.nombre || null,
+      acercaDe: response.acercaDe,
+      proveedor: response.proveedor?.nombre || null,
     }
 
     res.status(200).json(usuario)
@@ -191,10 +292,15 @@ const getUserById = async (req, res) => {
   }
 }
 
-// 🔹 ACTUALIZAR PERFIL DEL USUARIO
+////////////////////////////////////////////////////////////
+///// Actualizar perfil del usuario ///////////////////////
+///////////////////////////////////////////////////////////
+
 const updateUserProfile = async (req, res) => {
   const { id } = req.params
-  const { nombre, apellido, pais, acercaDe, ingenio } = req.body
+  const { nombre, apellido, pais, acercaDe, ingenio, area } = req.body
+
+  console.log(id)
 
   try {
     const usuario = await User.findByPk(id)
@@ -208,11 +314,25 @@ const updateUserProfile = async (req, res) => {
       avatarUrl = await uploadToS3(req.file)
     }
 
+    // Buscar ingenio, proveedor y area en la base de datos
+    const ingenioId = await Ingenio.findOne({
+      where: { nombre: ingenio },
+    })
+
+    const areaId = await Area.findOne({
+      where: { nombre: area },
+    })
+
+    const paisId = await Pais.findOne({
+      where: { nombre: pais },
+    })
+
     // Actualizar datos del usuario
     usuario.nombre = nombre || usuario.nombre
     usuario.apellido = apellido || usuario.apellido
-    usuario.pais = pais || usuario.pais
-    usuario.ingenio = ingenio || usuario.ingenio
+    usuario.paisId = paisId.id || usuario.paisId
+    usuario.ingenioId = ingenioId.id || usuario.ingenioId
+    usuario.areaId = areaId.id || usuario.areaId
     usuario.acercaDe = acercaDe || usuario.acercaDe
     usuario.avatarUrl = avatarUrl
 
@@ -227,7 +347,10 @@ const updateUserProfile = async (req, res) => {
   }
 }
 
-// 🔹 CAMBIAR CONTRASEÑA DEL USUARIO
+////////////////////////////////////////////////////////////
+///// Cambiar contraseña del usuario /////////////////////
+///////////////////////////////////////////////////////////
+
 const changeUserPassword = async (req, res) => {
   const { id } = req.params
   const { newPassword } = req.body
@@ -250,7 +373,10 @@ const changeUserPassword = async (req, res) => {
   }
 }
 
-// Actualizar la foto de perfil
+////////////////////////////////////////////////////////////
+///// Actualizar la foto de perfil ////////////////////////
+///////////////////////////////////////////////////////////
+
 const uploadProfilePicture = async (req, res) => {
   const { id } = req.params
 
@@ -278,7 +404,10 @@ const uploadProfilePicture = async (req, res) => {
   }
 }
 
-// Login
+////////////////////////////////////////////////////////////
+///// Login ///////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body
@@ -315,13 +444,16 @@ const loginUser = async (req, res) => {
         expiresIn: '1h',
       }
     )
-    res.status(200).json({ message: 'Login exitoso', token })
+    res.status(200).json({ message: 'Login exitoso', token, user })
   } catch (error) {
     res.status(500).json({ message: 'Error al iniciar sesión', error })
   }
 }
 
-// Logout
+////////////////////////////////////////////////////////////
+///// Logout //////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+
 const logout = (req, res) => {
   try {
     res.status(200).json({

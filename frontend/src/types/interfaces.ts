@@ -3,12 +3,12 @@ export interface User {
   nombre: string
   apellido: string
   email: string
-  proveedor: string //no esta retornando esto desde el backend
+  proveedor: string | null //no esta retornando esto desde el backend
   avatarUrl?: string
   acercaDe: string
-  pais: { nombre: string }
-  ingenio: { nombre: string }
-  area: { nombre: string }
+  pais: string
+  ingenio: string | null
+  area: string | null
 }
 
 export interface Experience {
@@ -17,6 +17,7 @@ export interface Experience {
   acercaDe: string
   ingenio: string
   area: string
+  pais: string
   fechaInicio: string
   fechaFin: string
   actualmenteTrabaja: boolean
@@ -30,17 +31,45 @@ export interface Post {
   id: number
   titulo: string
   contenido: string
-  area: string
+  views: number
   createdAt: string
-  usuarioId: number
-  autor: { id: number; nombre: string; apellido: string; avatarUrl?: string }
+  updatedAt: string
+  usuarioId: string
+  autor: {
+    nombre: string
+    apellido: string
+    avatarUrl?: string
+  }
   comments: Comment[]
-  likes: string[]
+  likes: Like[]
+  area: {
+    nombre: string
+  }
 }
 
 export interface Comment {
-  user: string
+  id: number
+  contenido: string
+  usuarioId: string
+  usuario: {
+    nombre: string
+    apellido: string
+  }
+}
+
+export interface Like {
+  activo: boolean
+  usuarioId: string
+}
+
+export interface AuthContextType {
+  isAuthenticated: boolean
+  user: User | null
+  login: (user: User) => void // Acepta un objeto `User`
+  logout: () => void
+}
+
+export interface Ingenio {
   nombre: string
-  apellido: string
-  value: string
+  pais: string
 }

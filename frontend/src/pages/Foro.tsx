@@ -75,7 +75,6 @@ const Foro: React.FC = () => {
         `${import.meta.env.VITE_API_URL}/helper/areas`
       )
       setAreas(response.data.map((area) => area.nombre))
-      console.log(areas)
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message || 'Error al cargar los datos.')
@@ -87,7 +86,6 @@ const Foro: React.FC = () => {
 
   useEffect(() => {
     fetchAreas()
-    console.log(areas)
   }, [])
 
   useEffect(() => {
@@ -103,16 +101,22 @@ const Foro: React.FC = () => {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/posts/${postId}/like`,
-        {
-          userId: user.id,
-        }
+        { userId: user.id }
       )
-      const updatedPosts = posts.map((post) =>
-        post.id === postId ? { ...post, likes: response.data.likes } : post
+
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                likes: response.data.likes, // array actualizado
+                userHasLiked: response.data.userHasLiked,
+              }
+            : post
+        )
       )
-      setPosts(updatedPosts)
     } catch (err) {
-      setError('Error al actualizar el like.')
+      console.error('Error al actualizar el like.', err)
     }
   }
 
@@ -160,47 +164,15 @@ const Foro: React.FC = () => {
     }
 
     try {
-      await axios.post(
+      const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/posts/${postId}/comment`,
         {
-          comment: newComment[postId],
-          userId: user.id,
-          nombre: user.nombre, // Agregamos el nombre del usuario
-          apellido: user.apellido, // Agregamos el apellido del usuario
+          contenido: newComment[postId], // Asegúrate de que coincida con el backend
+          usuarioId: user.id, // Enviar solo usuarioId, el backend se encargará de obtener nombre y apellido
         }
       )
 
-      const newCommentData = {
-        user: user.id,
-        nombre: user.nombre, // Mostramos el nombre en lugar del ID
-        apellido: user.apellido,
-        value: newComment[postId],
-      }
-
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === postId
-            ? { ...post, comments: [...post.comments, newCommentData] }
-            : post
-        )
-      )
-
-      setNewComment((prev) => ({ ...prev, [postId]: '' }))
-    } catch (err: any) {
-      console.error('Error al enviar comentario:', err.response?.data || err)
-    }
-  }
-
-  const handleDeleteComment = async (postId: number, commentIndex: number) => {
-    try {
-      const response = await axios.delete(
-        `${
-          import.meta.env.VITE_API_URL
-        }/posts/${postId}/comment/${commentIndex}`
-      )
-
-      console.log(commentIndex)
-
+      // El backend devuelve la lista de comentarios actualizada
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === postId
@@ -208,8 +180,42 @@ const Foro: React.FC = () => {
             : post
         )
       )
-    } catch (err) {
-      console.error('Error al eliminar comentario:', err)
+
+      // Limpiar el input después de agregar el comentario
+      setNewComment((prev) => ({ ...prev, [postId]: '' }))
+    } catch (err: any) {
+      console.error('Error al enviar comentario:', err.response?.data || err)
+    }
+  }
+
+  const handleDeleteComment = async (postId: number, commentId: number) => {
+    if (!postId || !commentId) {
+      console.error('Error: postId o commentId no válido.')
+      return
+    }
+
+    try {
+      const response = await axios.delete(
+        `${import.meta.env.VITE_API_URL}/posts/${postId}/comment/${commentId}`
+      )
+
+      if (!response.data || !response.data.comments) {
+        throw new Error('No se recibió la lista de comentarios actualizada.')
+      }
+
+      // Actualizar el estado con la lista de comentarios actualizada del backend
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === postId
+            ? { ...post, comments: response.data.comments }
+            : post
+        )
+      )
+    } catch (err: any) {
+      console.error(
+        'Error al eliminar comentario:',
+        err.response?.data?.message || err.message
+      )
     }
   }
 
@@ -358,21 +364,23 @@ const Foro: React.FC = () => {
                       }}
                     >
                       <Typography variant='body2' color='textSecondary'>
-                        {post.area} - {formatRelativeDate(post.createdAt)}
+                        {post.area.nombre} -{' '}
+                        {formatRelativeDate(post.createdAt)}
                       </Typography>
 
                       <Box sx={{ display: 'flex', gap: 3 }}>
                         <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                          }}
+                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                         >
-                          <Typography>{post.likes.length}</Typography>
+                          <Typography>
+                            {post.likes?.filter((x) => x.activo).length}
+                          </Typography>{' '}
                           <IconButton
                             color={
-                              post.likes.includes(user?.id ?? '')
+                              post.likes?.some(
+                                (like) =>
+                                  like.usuarioId === user?.id && like.activo
+                              )
                                 ? 'primary'
                                 : 'default'
                             }
@@ -396,7 +404,8 @@ const Foro: React.FC = () => {
                             onClick={() => toggleComments(post.id)}
                             color={
                               post.comments?.some(
-                                (comment) => comment.user == user?.id
+                                (comment) =>
+                                  comment.usuarioId === (user?.id ?? '')
                               )
                                 ? 'primary'
                                 : 'default'
@@ -409,9 +418,9 @@ const Foro: React.FC = () => {
                     </Box>
                     <Collapse in={expandedComments[post.id]}>
                       <Box sx={{ padding: 2 }}>
-                        {post.comments.map((comment, index) => (
+                        {post.comments.map((comment) => (
                           <Box
-                            key={index}
+                            key={comment.id}
                             sx={{
                               display: 'flex',
                               alignItems: 'center',
@@ -424,17 +433,20 @@ const Foro: React.FC = () => {
                           >
                             <Typography sx={{ flexGrow: 1 }}>
                               <strong>
-                                {`${comment.nombre} ${comment.apellido}`}:{' '}
-                              </strong>{' '}
-                              {comment.value}
+                                {comment.usuario
+                                  ? `${comment.usuario.nombre} ${comment.usuario.apellido}: `
+                                  : 'Usuario desconocido: '}
+                              </strong>
+                              {comment.contenido}
                             </Typography>
-                            {user?.id === comment.user && (
+
+                            {user?.id === comment.usuarioId && (
                               <IconButton
                                 color='error'
                                 size='small'
-                                onClick={() =>
-                                  handleDeleteComment(post.id, index)
-                                }
+                                onClick={() => {
+                                  handleDeleteComment(post.id, comment.id)
+                                }}
                               >
                                 <DeleteIcon />
                               </IconButton>

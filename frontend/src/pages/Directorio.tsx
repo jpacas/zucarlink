@@ -65,7 +65,7 @@ const Directorio: React.FC = () => {
           .toLowerCase()
           .includes(filtros.nombre.toLowerCase().trim())) &&
       (!filtros.pais ||
-        usuario.pais?.nombre.toLowerCase() === filtros.pais?.toLowerCase())
+        usuario.pais?.toLowerCase() === filtros.pais?.toLowerCase())
   )
 
   const handleFiltroChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,13 +174,13 @@ const Directorio: React.FC = () => {
                       {usuario.nombre} {usuario.apellido}
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
-                      <strong>País:</strong> {usuario.pais.nombre}
+                      <strong>País:</strong> {usuario.pais}
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
-                      <strong>Ingenio:</strong> {usuario.ingenio.nombre}
+                      <strong>Ingenio:</strong> {usuario.ingenio}
                     </Typography>
                     <Typography variant='body2' color='text.secondary'>
-                      <strong>Area:</strong> {usuario.area.nombre}
+                      <strong>Area:</strong> {usuario.area}
                     </Typography>
                   </CardContent>
                 </Card>

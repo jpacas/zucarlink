@@ -35,20 +35,10 @@ const Login: React.FC = () => {
         }
       )
 
-      const { token } = response.data
+      const { token, user } = response.data
       const payload = JSON.parse(atob(token.split('.')[1])) // Decodificar el token
 
-      login({
-        id: payload.id,
-        nombre: payload.nombre,
-        apellido: payload.apellido,
-        avatar: payload.avatar,
-        pais: payload.pais,
-        area: payload.area,
-        acercaDe: payload.acercaDe,
-        ingenio: payload.ingenio,
-        empleador: payload.empleador,
-      })
+      login(user)
       localStorage.setItem('token', token)
 
       // Redirigir al perfil después del inicio de sesión exitoso

@@ -28,7 +28,7 @@ const Ingenio = sequelize.define(
   }
 )
 
-Ingenio.belongsTo(Pais, { foreignKey: 'paisId' })
-Pais.hasMany(Ingenio, { foreignKey: 'paisId' })
+Ingenio.belongsTo(Pais, { foreignKey: 'paisId', as: 'pais' })
+Pais.hasMany(Ingenio, { foreignKey: 'paisId', as: 'ingenios' })
 
 module.exports = Ingenio

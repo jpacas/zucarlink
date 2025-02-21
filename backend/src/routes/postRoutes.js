@@ -14,6 +14,6 @@ router.post('/', createPost)
 router.post('/:postId/like', toggleLike)
 router.post('/:postId/comment', addComment)
 router.post('/:postId/view', incrementViews)
-router.delete('/:postId/comment/:commentIndex', deleteComment)
+router.delete('/:postId/comment/:commentId', deleteComment)
 
 module.exports = router

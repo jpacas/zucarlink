@@ -3,7 +3,7 @@ const sequelize = require('../config/database')
 const User = require('./User')
 const Post = require('./Post')
 
-sequelize.define(
+const Comment = sequelize.define(
   'Comment',
   {
     contenido: {
@@ -21,4 +21,4 @@ Post.hasMany(Comment, { foreignKey: 'postId', as: 'comments' })
 Comment.belongsTo(User, { foreignKey: 'usuarioId', as: 'usuario' })
 User.hasMany(Comment, { foreignKey: 'usuarioId', as: 'comments' })
 
-module.exports = sequelize.Comment
+module.exports = Comment

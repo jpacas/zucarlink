@@ -174,7 +174,7 @@ const Navbar: React.FC = () => {
               }}
             >
               <Avatar
-                src={user.avatar || ''}
+                src={user.avatarUrl || ''}
                 alt={user.nombre}
                 onClick={() => navigate(`/perfil/${user.id}`)} // Redirigir al perfil
                 sx={{
@@ -185,7 +185,8 @@ const Navbar: React.FC = () => {
                   color: '#fff',
                 }}
               >
-                {!user.avatar && getInitials(`${user.nombre} ${user.apellido}`)}
+                {!user.avatarUrl &&
+                  getInitials(`${user.nombre} ${user.apellido}`)}
               </Avatar>
             </Box>
           )}

@@ -16,13 +16,13 @@ import { useAuth } from '../context/AuthContext'
 const EditarPerfil: React.FC = () => {
   const { user, login } = useAuth()
   const navigate = useNavigate()
+  console.log(user)
 
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
     pais: '',
     ingenio: '',
-    empleador: '',
     acercaDe: '',
     area: '',
     avatarUrl: '',
@@ -50,10 +50,9 @@ const EditarPerfil: React.FC = () => {
         apellido: user.apellido || '',
         pais: user.pais || '',
         ingenio: user.ingenio || '',
-        empleador: user.empleador || '',
         area: user.area || '',
         acercaDe: user.acercaDe || '',
-        avatarUrl: user.avatar || '',
+        avatarUrl: user.avatarUrl || '',
         password: '',
         confirmPassword: '',
       })
@@ -158,7 +157,6 @@ const EditarPerfil: React.FC = () => {
       formDataToSend.append('pais', formData.pais)
       formDataToSend.append('area', formData.area)
       formDataToSend.append('ingenio', formData.ingenio)
-      formDataToSend.append('proveedor', formData.empleador)
       formDataToSend.append('acercaDe', formData.acercaDe)
       if (avatar) {
         formDataToSend.append('avatar', avatar)

@@ -1,17 +1,53 @@
 const Post = require('../models/Post')
 const User = require('../models/User')
 const Like = require('../models/Like')
+const Area = require('../models/Area')
+const Comment = require('../models/Comment')
 const { Op } = require('sequelize')
 
-// Obtener todos los posts (con filtrado por tema o categoría)
+////////////////////////////////////////////////////////////
+///// Obtener todos los posts ///////////////////////////////
+////////////////////////////////////////////////////////////
+
 const getAllPosts = async (req, res) => {
   try {
-    const { tema, categoria } = req.query
+    const { tema, area } = req.query
 
     let whereClause = {}
+    let include = [
+      {
+        model: User,
+        as: 'autor',
+        attributes: ['nombre', 'apellido', 'avatarUrl'],
+      },
+      {
+        model: Comment,
+        as: 'comments',
+        attributes: ['id', 'contenido', 'usuarioId'],
+        include: [
+          { model: User, as: 'usuario', attributes: ['nombre', 'apellido'] },
+        ],
+      },
+      {
+        model: Like,
+        as: 'likes',
+        attributes: ['activo', 'usuarioId'],
+      },
+    ]
 
-    if (categoria) {
-      whereClause.categoria = categoria
+    if (area) {
+      include.push({
+        model: Area,
+        as: 'area',
+        where: { nombre: { [Op.like]: `%${area}%` } },
+      })
+    } else {
+      // Si no hay filtro de área, incluyes el modelo Area normal
+      include.push({
+        model: Area,
+        as: 'area',
+        attributes: ['nombre'],
+      })
     }
 
     if (tema) {
@@ -23,11 +59,10 @@ const getAllPosts = async (req, res) => {
 
     const posts = await Post.findAll({
       where: whereClause,
-      include: {
-        model: User,
-        as: 'autor',
-        attributes: ['nombre', 'apellido', 'avatarUrl'],
+      attributes: {
+        exclude: ['areaId'],
       },
+      include,
       order: [['createdAt', 'DESC']],
     })
     res.status(200).json(posts)
@@ -37,21 +72,34 @@ const getAllPosts = async (req, res) => {
   }
 }
 
-// Crear un nuevo post
+////////////////////////////////////////////////////////////
+///// Crear un nuevo post //////////////////////////////////
+////////////////////////////////////////////////////////////
+
 const createPost = async (req, res) => {
   try {
-    const { titulo, contenido, categoria, usuarioId } = req.body
+    const { titulo, contenido, area, usuarioId } = req.body
 
-    if (!titulo || !contenido || !categoria || !usuarioId) {
+    if (!titulo || !contenido || !area || !usuarioId) {
       return res
         .status(400)
         .json({ message: 'Todos los campos son obligatorios.' })
     }
 
+    const areaFound = await Area.findOne({
+      where: { nombre: area },
+    })
+
+    if (!areaFound) {
+      return res
+        .status(404)
+        .json({ message: 'El área especificada no existe.' })
+    }
+
     const newPost = await Post.create({
       titulo,
       contenido,
-      categoria,
+      areaId: areaFound.id,
       usuarioId,
     })
 
@@ -67,34 +115,51 @@ const toggleLike = async (req, res) => {
   const { userId } = req.body
 
   try {
-    const post = await Post.findByPk(postId)
-    if (!post) return res.status(404).json({ message: 'Post no encontrado.' })
+    if (!userId) {
+      return res.status(400).json({ message: 'Se requiere un userId válido.' })
+    }
 
-    console.log(post)
+    const [userExists, postExists] = await Promise.all([
+      User.findByPk(userId),
+      Post.findByPk(postId),
+    ])
 
-    // Buscar si el usuario ya ha interactuado con el post
+    if (!userExists)
+      return res.status(404).json({ message: 'Usuario no encontrado.' })
+    if (!postExists)
+      return res.status(404).json({ message: 'Post no encontrado.' })
+
+    // Buscar si el usuario ya ha dado like al post
     let existingLike = await Like.findOne({
       where: { postId, usuarioId: userId },
     })
 
-    if (existingLike) {
-      // Si el like existe, solo cambiamos el estado de "activo"
-      existingLike.activo = !existingLike.activo
-      await existingLike.save()
-    } else {
-      // Si no existe, creamos un nuevo registro con "activo" en true
-      await Like.create({ postId, usuarioId: userId, activo: true })
-    }
+    let userHasLiked = false
 
-    // Contar la cantidad de likes activos
-    const totalLikes = await Like.count({ where: { postId, activo: true } })
+    if (existingLike) {
+      // Alternar entre 0 y 1
+      existingLike.activo = existingLike.activo ? 0 : 1
+      await existingLike.save()
+      userHasLiked = existingLike.activo === true
+    } else {
+      // Si no existe, se crea con activo = 1
+      existingLike = await Like.create({ postId, usuarioId: userId, activo: 1 })
+      userHasLiked = true
+    }
+    const updatedLikes = await Like.findAll({
+      where: { postId },
+      attributes: ['activo', 'usuarioId'],
+    })
+
+    // Verificas si el user tiene like activo en ese array
+    userHasLiked = updatedLikes.some(
+      (like) => like.usuarioId === userId && like.activo
+    )
 
     res.status(200).json({
-      message:
-        existingLike && !existingLike.activo
-          ? 'Like removido.'
-          : 'Like añadido.',
-      likes: totalLikes,
+      message: userHasLiked ? 'Like añadido.' : 'Like removido.',
+      likes: updatedLikes, // ahora es un array
+      userHasLiked,
     })
   } catch (error) {
     console.error('Error al procesar el like:', error)
@@ -102,55 +167,96 @@ const toggleLike = async (req, res) => {
   }
 }
 
+////////////////////////////////////////////////////////////
+///// Añadir un comentario a un post //////////////////////
+////////////////////////////////////////////////////////////
+
 const addComment = async (req, res) => {
-  const { postId } = req.params
-  const { userId, comment, nombre, apellido } = req.body
-
   try {
-    const post = await Post.findByPk(postId)
-    if (!post) return res.status(404).json({ message: 'Post no encontrado.' })
+    const { postId } = req.params
+    const { usuarioId, contenido } = req.body
 
-    post.comments = [
-      ...post.comments,
-      { user: userId, nombre, apellido, value: comment, createdAt: new Date() },
-    ]
+    // Verificar si el usuario existe
+    const userExists = await User.findByPk(usuarioId, {
+      attributes: ['id', 'nombre', 'apellido'],
+    })
+    if (!userExists) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' })
+    }
 
-    await post.save()
+    // Verificar si el post existe
+    const postExists = await Post.findByPk(postId)
+    if (!postExists) {
+      return res.status(404).json({ message: 'Post no encontrado.' })
+    }
 
-    res
-      .status(200)
-      .json({ message: 'Comentario añadido.', comments: post.comments })
+    // Crear el comentario en la base de datos
+    const newComment = await Comment.create({
+      contenido,
+      usuarioId,
+      postId,
+    })
+
+    // Obtener la lista de comentarios actualizada
+    const updatedComments = await Comment.findAll({
+      where: { postId },
+      include: [
+        { model: User, as: 'usuario', attributes: ['nombre', 'apellido'] },
+      ],
+      order: [['createdAt', 'ASC']], // Ordenar por fecha de creación
+    })
+
+    res.status(201).json({
+      message: 'Comentario añadido correctamente',
+      comments: updatedComments,
+    })
   } catch (error) {
+    console.error('Error al añadir comentario:', error)
     res.status(500).json({ message: 'Error al añadir comentario.', error })
   }
 }
 
-const deleteComment = async (req, res) => {
-  const { postId, commentIndex } = req.params // Se espera el índice del comentario a eliminar
+////////////////////////////////////////////////////////////
+///// Eliminar un comentario de un post ////////////////////
+////////////////////////////////////////////////////////////
 
+const deleteComment = async (req, res) => {
+  const { postId, commentId } = req.params
   try {
     const post = await Post.findByPk(postId)
     if (!post) return res.status(404).json({ message: 'Post no encontrado.' })
 
-    if (commentIndex < 0 || commentIndex >= post.comments.length) {
-      return res
-        .status(400)
-        .json({ message: 'Índice de comentario no válido.' })
+    // Verificar que exista el comentario
+    const commentToDelete = await Comment.findOne({
+      where: { id: commentId, postId },
+    })
+    if (!commentToDelete) {
+      return res.status(404).json({ message: 'Comentario no encontrado.' })
     }
 
-    // Eliminar el comentario por índice
-    const updatedComments = [...post.comments]
-    updatedComments.splice(commentIndex, 1)
-    post.comments = updatedComments
-    await post.save()
+    await commentToDelete.destroy()
 
-    res
-      .status(200)
-      .json({ message: 'Comentario eliminado.', comments: post.comments })
+    // Retornar la lista actualizada
+    const updatedComments = await Comment.findAll({
+      where: { postId },
+      include: [
+        { model: User, as: 'usuario', attributes: ['nombre', 'apellido'] },
+      ],
+      order: [['createdAt', 'ASC']],
+    })
+
+    res.status(200).json({
+      message: 'Comentario eliminado.',
+      comments: updatedComments,
+    })
   } catch (error) {
     res.status(500).json({ message: 'Error al eliminar comentario.', error })
   }
 }
+
+////////////////////////////////////////////////////////////
+///// Incrementar el número de vistas de un post ////////////
+////////////////////////////////////////////////////////////
 
 const incrementViews = async (req, res) => {
   const { postId } = req.params

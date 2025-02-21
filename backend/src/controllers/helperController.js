@@ -1,6 +1,6 @@
 const Pais = require('../models/Pais')
 const Area = require('../models/Area')
-
+const Ingenio = require('../models/Ingenio')
 //Enviar listado de paises disponibles
 const getPaises = async (req, res) => {
   try {
@@ -33,4 +33,34 @@ const getAreas = async (req, res) => {
   }
 }
 
-module.exports = { getPaises, getAreas }
+//Enviar listado de ingenios disponibles
+const getIngenios = async (req, res) => {
+  try {
+    const response = await Ingenio.findAll({
+      attributes: ['nombre'],
+      include: [
+        {
+          model: Pais,
+          as: 'pais',
+          attributes: ['nombre'],
+        },
+      ],
+    })
+
+    if (!response.length) {
+      return res.status(204).send() // No hay contenido
+    }
+
+    const ingenios = response.map((ingenio) => ({
+      nombre: ingenio.nombre,
+      pais: ingenio.pais.nombre,
+    }))
+
+    res.status(200).json(ingenios)
+  } catch (error) {
+    console.error('Error al obtener areas:', error)
+    res.status(500).json({ error: error.message })
+  }
+}
+
+module.exports = { getPaises, getAreas, getIngenios }

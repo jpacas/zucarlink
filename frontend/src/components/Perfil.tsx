@@ -23,12 +23,18 @@ import {
   InputLabel,
   FormControlLabel,
   Checkbox,
+  Divider,
 } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import IconButton from '@mui/material/IconButton'
 import DeleteIcon from '@mui/icons-material/Delete'
-import { User, Experience, Area } from '../types/interfaces'
-
+import CloseIcon from '@mui/icons-material/Close'
+import { User, Experience, Area, Ingenio } from '../types/interfaces'
+import {
+  fetchAreas,
+  fetchIngenios,
+  fetchPaises,
+} from '../functions/fetchFunctions'
 const Perfil: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -38,12 +44,15 @@ const Perfil: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [areas, setAreas] = useState<Area[]>([])
+  const [ingenios, setIngenios] = useState<Ingenio[]>([])
+  const [paises, setPaises] = useState<string[]>([])
   const [experienceData, setExperienceData] = useState<Experience>({
-    id: null,
+    id: '',
     ingenio: '',
     fechaInicio: '',
     fechaFin: '',
     cargo: '',
+    pais: '',
     area: '',
     acercaDe: '',
     actualmenteTrabaja: false,
@@ -61,22 +70,30 @@ const Perfil: React.FC = () => {
   }
 
   useEffect(() => {
-    const fetchAreas = async () => {
-      try {
-        const response = await axios.get<{ nombre: string }[]>(
-          `${import.meta.env.VITE_API_URL}/helper/areas`
-        )
-        setAreas(response.data.map((area) => area.nombre))
-      } catch (err) {
-        if (axios.isAxiosError(err)) {
-          setError(err.response?.data?.message || 'Error al cargar los datos.')
-        } else {
-          setError('Error desconocido.')
-        }
+    const fetchData = async () => {
+      const { areas, error: areasError } = await fetchAreas()
+      const { ingenios, error: ingeniosError } = await fetchIngenios()
+      const { paises, error: paisesError } = await fetchPaises()
+
+      if (areasError) {
+        setError(areasError)
+      } else {
+        setAreas(areas || [])
+      }
+
+      if (ingeniosError) {
+        setError(ingeniosError)
+      } else {
+        setIngenios(ingenios || [])
+      }
+
+      if (paisesError) {
+        setError(paisesError)
+      } else {
+        setPaises(paises || [])
       }
     }
-
-    fetchAreas()
+    fetchData()
   }, [])
 
   useEffect(() => {
@@ -110,12 +127,13 @@ const Perfil: React.FC = () => {
     return () => {
       setExperienceData(
         experience || {
-          id: null,
+          id: '',
           ingenio: '',
           fechaInicio: '',
           fechaFin: '',
           cargo: '',
           area: '',
+          pais: '',
           acercaDe: '',
           actualmenteTrabaja: false,
         }
@@ -127,12 +145,13 @@ const Perfil: React.FC = () => {
   const handleCloseModal = () => {
     setModalOpen(false)
     setExperienceData({
-      id: null,
+      id: '',
       ingenio: '',
       fechaInicio: '',
       fechaFin: '',
       cargo: '',
       area: '',
+      pais: '',
       acercaDe: '',
       actualmenteTrabaja: false,
     })
@@ -147,22 +166,22 @@ const Perfil: React.FC = () => {
       if (experienceData.id) {
         await axios.put(
           `${import.meta.env.VITE_API_URL}/experiencias/${experienceData.id}`,
-          experienceData
-        )
-        setExperiencias(
-          experiencias.map((exp) =>
-            exp.id === experienceData.id ? experienceData : exp
-          )
+          { ...experienceData, userId: user.id }
         )
       } else {
-        const { id, ...dataWithoutId } = experienceData // Extraer id y guardar el resto en dataWithoutId
-        const response = await axios.post(
+        const { id, ...dataWithoutId } = experienceData
+        await axios.post(
           `${import.meta.env.VITE_API_URL}/experiencias/${user.id}`,
           dataWithoutId
         )
-
-        setExperiencias([...experiencias, response.data])
       }
+
+      // 🔄 Vuelve a cargar la lista completa de experiencias desde la API
+      const expResponse = await axios.get(
+        `${import.meta.env.VITE_API_URL}/experiencias/${user.id}`
+      )
+      setExperiencias(expResponse.data)
+
       handleCloseModal()
     } catch (error) {
       console.error('Error al guardar la experiencia', error)
@@ -250,17 +269,16 @@ const Perfil: React.FC = () => {
                   {usuario.nombre} {usuario.apellido}
                 </Typography>
                 <Typography variant='body1' gutterBottom>
-                  <strong>País:</strong> {usuario.pais.nombre}
+                  <strong>País:</strong> {usuario.pais}
                 </Typography>
                 <Typography variant='body1' gutterBottom>
-                  <strong>Ingenio:</strong> {usuario.ingenio.nombre}
+                  <strong>Ingenio:</strong> {usuario.ingenio}
                 </Typography>
                 <Typography variant='body1' gutterBottom>
                   <strong>Área:</strong>{' '}
-                  {usuario.area.nombre === 'null' ||
-                  usuario.area.nombre.trim() === ''
+                  {usuario.area === 'null' || usuario.area?.trim() === ''
                     ? 'Proveedor'
-                    : usuario.area.nombre}
+                    : usuario.area}
                 </Typography>
 
                 {usuario.acercaDe && (
@@ -356,22 +374,80 @@ const Perfil: React.FC = () => {
             transform: 'translate(-50%, -50%)',
             width: 600,
             bgcolor: 'background.paper',
-            border: '2px solid #000',
+            borderRadius: 2,
             boxShadow: 24,
             p: 4,
           }}
         >
-          <TextField
-            fullWidth
-            label='Ingenio'
-            name='ingenio'
-            margin='dense'
-            variant='outlined'
-            value={experienceData.ingenio}
-            onChange={(e) =>
-              setExperienceData({ ...experienceData, ingenio: e.target.value })
-            }
-          />
+          {/* Encabezado del modal */}
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 2,
+            }}
+          >
+            <Typography variant='h6' component='h2' sx={{ fontWeight: 'bold' }}>
+              Agregar Experiencia Laboral
+            </Typography>
+            <IconButton onClick={handleCloseModal} sx={{ color: 'gray' }}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          <Divider sx={{ mb: 2 }} />
+
+          {/* Contenido del Modal */}
+          <FormControl fullWidth margin='dense'>
+            <InputLabel id='pais-label'>País</InputLabel>
+            <Select
+              labelId='pais-label'
+              id='pais'
+              name='pais'
+              value={experienceData.pais || ''} // Asegurar que no sea undefined
+              label='País'
+              onChange={(e) =>
+                setExperienceData({
+                  ...experienceData,
+                  pais: e.target.value,
+                  ingenio: '', // Reiniciar ingenio cuando cambia el país
+                })
+              }
+            >
+              {paises.map((pais) => (
+                <MenuItem key={pais} value={pais}>
+                  {pais}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth margin='dense' disabled={!experienceData.pais}>
+            <InputLabel id='ingenio-label'>Ingenio</InputLabel>
+            <Select
+              labelId='ingenio-label'
+              id='ingenio'
+              name='ingenio'
+              value={experienceData.ingenio || ''}
+              label='Ingenio'
+              onChange={(e) =>
+                setExperienceData({
+                  ...experienceData,
+                  ingenio: e.target.value,
+                })
+              }
+            >
+              {ingenios
+                .filter((ingenio) => ingenio.pais === experienceData.pais)
+                .map((ingenio) => (
+                  <MenuItem key={ingenio.nombre} value={ingenio.nombre}>
+                    {ingenio.nombre}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+
           <TextField
             fullWidth
             type='date'
@@ -391,6 +467,7 @@ const Perfil: React.FC = () => {
               })
             }
           />
+
           <FormControlLabel
             control={
               <Checkbox
@@ -408,6 +485,7 @@ const Perfil: React.FC = () => {
             }
             label='Actualmente trabajo aquí'
           />
+
           <TextField
             fullWidth
             type='date'
@@ -436,6 +514,7 @@ const Perfil: React.FC = () => {
             }}
             disabled={experienceData.actualmenteTrabaja}
           />
+
           <TextField
             fullWidth
             label='Cargo'
@@ -447,6 +526,7 @@ const Perfil: React.FC = () => {
               setExperienceData({ ...experienceData, cargo: e.target.value })
             }
           />
+
           <FormControl fullWidth margin='dense'>
             <InputLabel id='area-label'>Área de Trabajo</InputLabel>
             <Select
@@ -469,6 +549,7 @@ const Perfil: React.FC = () => {
               ))}
             </Select>
           </FormControl>
+
           <TextField
             fullWidth
             label='Descripción'
@@ -485,27 +566,23 @@ const Perfil: React.FC = () => {
               })
             }
           />
-          <Button
-            variant='contained'
-            color='primary'
-            sx={{ mt: 3 }}
-            onClick={handleSaveExperience}
-          >
-            Guardar Cambios
-          </Button>
-          {experienceData.id && (
-            <IconButton
-              sx={{
-                position: 'absolute',
-                bottom: 16,
-                right: 16,
-                color: 'error.main',
-              }}
-              onClick={handleDeleteExperience}
+
+          {/* Botones de acción */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+            <Button
+              variant='contained'
+              color='primary'
+              onClick={handleSaveExperience}
             >
-              <DeleteIcon />
-            </IconButton>
-          )}
+              Guardar Cambios
+            </Button>
+
+            {experienceData.id && (
+              <IconButton color='error' onClick={handleDeleteExperience}>
+                <DeleteIcon />
+              </IconButton>
+            )}
+          </Box>
         </Box>
       </Modal>
     </Box>
