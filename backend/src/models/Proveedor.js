@@ -9,7 +9,7 @@ const Proveedor = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    correo: {
+    email: {
       type: DataTypes.STRING,
       allowNull: false,
     },

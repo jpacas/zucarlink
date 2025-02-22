@@ -4,6 +4,7 @@ const User = require('../models/User')
 const Pais = require('../models/Pais')
 const Ingenio = require('../models/Ingenio')
 const Area = require('../models/Area')
+const Proveedor = require('../models/Proveedor')
 const s3 = require('../config/s3')
 
 ////////////////////////////////////////////////////////////
@@ -116,7 +117,6 @@ const registerUser = async (req, res) => {
       'pais',
       'email',
       'password',
-      'area',
       'fecha_nacimiento',
     ]
 
@@ -171,7 +171,7 @@ const registerUser = async (req, res) => {
         hasProveedor
           ? Proveedor.findOne({ where: { nombre: proveedorValue } })
           : null,
-        Area.findOne({ where: { nombre: area } }),
+        hasIngenio ? Area.findOne({ where: { nombre: area } }) : null,
         Pais.findOne({ where: { nombre: pais } }),
       ])
 
@@ -179,7 +179,7 @@ const registerUser = async (req, res) => {
     if (
       (hasIngenio && !foundIngenio) ||
       (hasProveedor && !foundProveedor) ||
-      !foundArea
+      (hasIngenio && !foundArea)
     ) {
       return res.status(400).json({
         message: 'Los datos de ingenio, proveedor o área no son válidos.',
@@ -214,7 +214,7 @@ const registerUser = async (req, res) => {
       password: hashedPassword,
       avatarUrl,
       fecha_nacimiento,
-      areaId: foundArea.id,
+      areaId: hasIngenio ? foundArea.id : null,
       ingenioId: foundIngenio ? foundIngenio.id : null,
       proveedorId: foundProveedor ? foundProveedor.id : null,
     })

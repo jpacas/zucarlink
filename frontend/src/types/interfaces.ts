@@ -27,6 +27,8 @@ export type Pais = string
 
 export type Area = string
 
+export type Proveedor = string
+
 export interface Post {
   id: number
   titulo: string

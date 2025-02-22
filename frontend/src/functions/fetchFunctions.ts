@@ -1,9 +1,9 @@
 import axios from 'axios'
-import { Ingenio } from '../types/interfaces'
+import { Ingenio, Area, Proveedor } from '../types/interfaces'
 
 export const fetchAreas = async () => {
   try {
-    const response = await axios.get<{ nombre: string }[]>(
+    const response = await axios.get<{ nombre: Area }[]>(
       `${import.meta.env.VITE_API_URL}/helper/areas`
     )
     return { areas: response.data.map((area) => area.nombre), error: null }
@@ -23,7 +23,10 @@ export const fetchIngenios = async () => {
     const response = await axios.get<Ingenio[]>(
       `${import.meta.env.VITE_API_URL}/helper/ingenios`
     )
-    return { ingenios: response.data, error: null }
+    return {
+      ingenios: response.data,
+      error: null,
+    }
   } catch (err) {
     if (axios.isAxiosError(err)) {
       return {
@@ -45,6 +48,27 @@ export const fetchPaises = async () => {
     if (axios.isAxiosError(err)) {
       return {
         error: err.response?.data?.message || 'Error al cargar los paises.',
+      }
+    } else {
+      return { error: 'Error desconocido.' }
+    }
+  }
+}
+
+export const fetchProveedores = async () => {
+  try {
+    const response = await axios.get<{ nombre: Proveedor }[]>(
+      `${import.meta.env.VITE_API_URL}/helper/proveedores`
+    )
+    return {
+      proveedores: response.data.map((proveedor) => proveedor.nombre),
+      error: null,
+    }
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      return {
+        error:
+          err.response?.data?.message || 'Error al cargar los proveedores.',
       }
     } else {
       return { error: 'Error desconocido.' }
