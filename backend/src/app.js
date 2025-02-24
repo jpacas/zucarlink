@@ -9,6 +9,7 @@ const contactRoutes = require('./routes/contactRoutes')
 const zucariaRoutes = require('./routes/zucariaRoutes')
 const experienciaRoutes = require('./routes/experienciaRoutes')
 const helperRoutes = require('./routes/helperRoutes')
+const paymentRoutes = require('./routes/paymentRoutes')
 const sequelize = require('./config/database')
 
 // Configuración General
@@ -33,6 +34,7 @@ app.use('/api/contact', contactRoutes)
 app.use('/api/conversations', zucariaRoutes)
 app.use('/api/experiencias', experienciaRoutes)
 app.use('/api/helper', helperRoutes)
+app.use('/api/payments', paymentRoutes)
 
 app.get('/', (req, res) => {
   res.send('API de Zucarlink')

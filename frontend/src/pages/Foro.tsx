@@ -45,6 +45,7 @@ const Foro: React.FC = () => {
     [postId: number]: boolean
   }>({})
   const [newComment, setNewComment] = useState<{ [postId: number]: string }>({})
+  const [autorFiltro, setAutorFiltro] = useState<string>('')
   const navigate = useNavigate()
 
   const fetchPosts = async () => {
@@ -53,7 +54,11 @@ const Foro: React.FC = () => {
       const response = await axios.get(
         `${import.meta.env.VITE_API_URL}/posts`,
         {
-          params: { tema: temaFiltro, area: areaFiltro },
+          params: {
+            tema: temaFiltro,
+            area: areaFiltro,
+            autor: autorFiltro.trim(),
+          },
         }
       )
       if (Array.isArray(response.data)) {
@@ -90,7 +95,7 @@ const Foro: React.FC = () => {
 
   useEffect(() => {
     fetchPosts()
-  }, [areaFiltro, temaFiltro])
+  }, [areaFiltro, temaFiltro, autorFiltro])
 
   const handleLikeToggle = async (postId: number) => {
     if (!user?.id) {
@@ -264,6 +269,19 @@ const Foro: React.FC = () => {
             </Typography>
             <TextField
               fullWidth
+              id='autor-filter'
+              name='autorFiltro'
+              label='Buscar por autor'
+              value={autorFiltro}
+              onChange={(e) => setAutorFiltro(e.target.value)}
+              variant='outlined'
+              margin='normal'
+              placeholder='Nombre o apellido'
+            />
+            <TextField
+              fullWidth
+              id='tema-filter'
+              name='temaFiltro'
               label='Buscar por tema'
               value={temaFiltro}
               onChange={(e) => setTemaFiltro(e.target.value)}
@@ -271,16 +289,18 @@ const Foro: React.FC = () => {
               margin='normal'
             />
             <Select
+              id='area-filter'
+              name='areaFiltro'
               value={areaFiltro}
               onChange={(e) => setAreaFiltro(e.target.value)}
               displayEmpty
               fullWidth
               sx={{ marginTop: 2 }}
             >
-              <MenuItem value=''>Todas las categorías</MenuItem>
-              {areas.map((cat) => (
-                <MenuItem key={cat} value={cat}>
-                  {cat}
+              <MenuItem value=''>Todas las areas</MenuItem>
+              {areas.map((area) => (
+                <MenuItem key={area} value={area}>
+                  {area}
                 </MenuItem>
               ))}
             </Select>

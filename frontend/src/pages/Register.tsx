@@ -4,10 +4,6 @@ import {
   Button,
   TextField,
   Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Autocomplete,
   Avatar,
   CircularProgress,
@@ -79,15 +75,11 @@ interface Message {
   text: string
 }
 
-interface PlanPrice {
-  basic: number
-  premium: number
-}
-
 interface Plan {
   id: string
   name: string
   price: number
+  interval: 'month' | 'year'
   features: string[]
 }
 
@@ -95,24 +87,28 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
 
 const plans: Plan[] = [
   {
-    id: 'basic',
-    name: 'Plan Básico',
+    id: 'monthly',
+    name: 'Plan Mensual',
     price: 50,
+    interval: 'month',
     features: [
-      'Perfil de empresa básico',
+      'Perfil de empresa destacado',
       'Listado en el directorio',
-      'Soporte por email',
+      'Soporte prioritario',
+      'Estadísticas detalladas',
     ],
   },
   {
-    id: 'premium',
-    name: 'Plan Premium',
-    price: 100,
+    id: 'yearly',
+    name: 'Plan Anual',
+    price: 500, // Descuento de 2 meses
+    interval: 'year',
     features: [
       'Perfil de empresa destacado',
-      'Listado prioritario en el directorio',
-      'Soporte prioritario 24/7',
+      'Listado en el directorio',
+      'Soporte prioritario',
       'Estadísticas detalladas',
+      '2 meses gratis',
     ],
   },
 ]
@@ -221,7 +217,7 @@ const Register: React.FC = () => {
   })
 
   // Maneja la selección de la foto de perfil
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  /* const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const file = e.target.files[0]
       const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg']
@@ -242,7 +238,7 @@ const Register: React.FC = () => {
       setFormData((prev) => ({ ...prev, fotoPerfil: file }))
       setPreview(URL.createObjectURL(file))
     }
-  }
+  } */
 
   // Maneja la navegación entre partes del formulario
   const handleNext = () => {
@@ -298,20 +294,37 @@ const Register: React.FC = () => {
 
         if (registrationStep === 'plan' && selectedPlan) {
           try {
+            console.log('Enviando solicitud de pago...', { plan: selectedPlan })
             const response = await axios.post(
               `${import.meta.env.VITE_API_URL}/payments/create-payment-intent`,
               {
                 plan: selectedPlan,
                 email: formData.email,
+                metadata: {
+                  email: formData.email,
+                  nombre: formData.nombre,
+                  pais: formData.pais,
+                  paginaWeb: formData.paginaWeb,
+                  descripcion: formData.descripcion,
+                },
               }
             )
+            console.log('Respuesta del servidor:', response.data)
+
+            if (!response.data.clientSecret) {
+              throw new Error('No se recibió el clientSecret')
+            }
+
             setClientSecret(response.data.clientSecret)
             setRegistrationStep('payment')
             return
-          } catch (error) {
+          } catch (error: any) {
+            console.error('Error detallado:', error.response?.data || error)
             setMessage({
               type: 'error',
-              text: 'Error al iniciar el proceso de pago',
+              text:
+                error.response?.data?.details ||
+                'Error al iniciar el proceso de pago',
             })
             return
           }
@@ -623,43 +636,53 @@ const Register: React.FC = () => {
                 <Typography variant='h6' mb={2}>
                   Detalles de Usuario
                 </Typography>
-                <FormControl fullWidth margin='normal'>
-                  <InputLabel>Ingenio</InputLabel>
-                  <Select
-                    name='ingenio'
-                    value={formData.ingenio}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        ingenio: e.target.value,
-                      }))
-                    }
-                    required
-                  >
-                    {ingeniosFiltrados.map((ingenio) => (
-                      <MenuItem key={ingenio.nombre} value={ingenio.nombre}>
-                        {ingenio.nombre}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl fullWidth margin='normal'>
-                  <InputLabel>Área</InputLabel>
-                  <Select
-                    name='area'
-                    value={formData.area}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, area: e.target.value }))
-                    }
-                    required
-                  >
-                    {areas.map((area) => (
-                      <MenuItem key={area} value={area}>
-                        {area}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <Autocomplete
+                  options={ingeniosFiltrados}
+                  value={
+                    ingeniosFiltrados.find(
+                      (ing) => ing.nombre === formData.ingenio
+                    ) || null
+                  }
+                  onChange={(_, value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      ingenio: value ? value.nombre : '',
+                    }))
+                  }
+                  getOptionLabel={(option) => option.nombre}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label='Ingenio'
+                      margin='normal'
+                      fullWidth
+                      required
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) =>
+                    option.nombre === (value?.nombre || value)
+                  }
+                />
+                <Autocomplete
+                  options={areas}
+                  value={areas.find((a) => a === formData.area) || null}
+                  onChange={(_, value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      area: value || null,
+                    }))
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label='Área'
+                      margin='normal'
+                      fullWidth
+                      required
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option === value}
+                />
                 <TextField
                   fullWidth
                   label='Contraseña'
@@ -730,26 +753,29 @@ const Register: React.FC = () => {
                 <Typography variant='h6' mb={2}>
                   Detalles de Usuario
                 </Typography>
-                <FormControl fullWidth margin='normal'>
-                  <InputLabel>Proveedor</InputLabel>
-                  <Select
-                    name='proveedor'
-                    value={formData.proveedor}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        proveedor: e.target.value,
-                      }))
-                    }
-                    required
-                  >
-                    {proveedores.map((proveedor) => (
-                      <MenuItem key={proveedor} value={proveedor}>
-                        {proveedor}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <Autocomplete
+                  options={proveedores}
+                  value={
+                    proveedores.find((prov) => prov === formData.proveedor) ||
+                    null
+                  }
+                  onChange={(_, value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      proveedor: value || '',
+                    }))
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label='Empresa'
+                      margin='normal'
+                      fullWidth
+                      required
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option === value}
+                />
                 <TextField
                   fullWidth
                   label='Contraseña'
@@ -834,7 +860,10 @@ const Register: React.FC = () => {
                   options={paises}
                   value={formData.pais}
                   onChange={(_, value) =>
-                    setFormData((prev) => ({ ...prev, pais: value || '' }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      pais: value || '',
+                    }))
                   }
                   renderInput={(params) => (
                     <TextField
@@ -951,44 +980,66 @@ const Register: React.FC = () => {
 
             {registrationStep === 'plan' && (
               <Box sx={{ mt: 2 }}>
-                <Typography variant='h6' gutterBottom>
-                  Selecciona un Plan
+                <Typography variant='h6' gutterBottom align='center'>
+                  Selecciona tu Plan
                 </Typography>
-                <Grid container spacing={3}>
+                <Grid container spacing={3} justifyContent='center'>
                   {plans.map((plan) => (
                     <Grid item xs={12} md={6} key={plan.id}>
                       <Card
                         sx={{
                           height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
                           border:
                             selectedPlan === plan.id
-                              ? '2px solid primary.main'
+                              ? '2px solid #1976d2'
                               : 'none',
+                          transition: 'transform 0.2s ease',
+                          '&:hover': {
+                            transform: 'translateY(-4px)',
+                            boxShadow: 4,
+                          },
                         }}
                       >
-                        <CardContent>
-                          <Typography variant='h5' component='div'>
+                        <CardContent sx={{ flexGrow: 1 }}>
+                          <Typography variant='h5' component='div' gutterBottom>
                             {plan.name}
                           </Typography>
-                          <Typography
-                            variant='h4'
-                            color='primary'
-                            sx={{ my: 2 }}
-                          >
-                            ${plan.price}/mes
+                          <Typography variant='h4' color='primary' gutterBottom>
+                            ${plan.price}
+                            <Typography
+                              component='span'
+                              variant='body1'
+                              color='text.secondary'
+                            >
+                              /{plan.interval === 'month' ? 'mes' : 'año'}
+                            </Typography>
                           </Typography>
+                          {plan.interval === 'year' && (
+                            <Typography
+                              variant='subtitle1'
+                              color='success.main'
+                              gutterBottom
+                            >
+                              ¡Ahorra $100 al año!
+                            </Typography>
+                          )}
                           <List>
                             {plan.features.map((feature, index) => (
-                              <ListItem key={index}>
-                                <ListItemIcon>
-                                  <CheckCircleOutline color='primary' />
+                              <ListItem key={index} sx={{ py: 0.5 }}>
+                                <ListItemIcon sx={{ minWidth: 36 }}>
+                                  <CheckCircleOutline
+                                    color='primary'
+                                    fontSize='small'
+                                  />
                                 </ListItemIcon>
                                 <ListItemText primary={feature} />
                               </ListItem>
                             ))}
                           </List>
                         </CardContent>
-                        <CardActions>
+                        <CardActions sx={{ p: 2, pt: 0 }}>
                           <Button
                             fullWidth
                             variant={
@@ -997,8 +1048,11 @@ const Register: React.FC = () => {
                                 : 'outlined'
                             }
                             onClick={() => setSelectedPlan(plan.id)}
+                            sx={{ py: 1 }}
                           >
-                            Seleccionar Plan
+                            {selectedPlan === plan.id
+                              ? 'Plan Seleccionado'
+                              : 'Seleccionar Plan'}
                           </Button>
                         </CardActions>
                       </Card>
@@ -1008,7 +1062,7 @@ const Register: React.FC = () => {
                 <Button
                   fullWidth
                   variant='contained'
-                  sx={{ mt: 3 }}
+                  sx={{ mt: 4 }}
                   disabled={!selectedPlan}
                   onClick={handleSubmit}
                 >
@@ -1023,7 +1077,7 @@ const Register: React.FC = () => {
                   Información de Pago
                 </Typography>
                 <Elements stripe={stripePromise} options={{ clientSecret }}>
-                  <PaymentForm clientSecret={clientSecret} />
+                  <PaymentForm email={formData.email} />
                 </Elements>
               </Box>
             )}
@@ -1046,37 +1100,78 @@ const Register: React.FC = () => {
   )
 }
 
-const PaymentForm: React.FC<{ clientSecret: string }> = ({ clientSecret }) => {
+const PaymentForm = ({ email }: { email: string }) => {
   const stripe = useStripe()
   const elements = useElements()
+  const [error, setError] = useState<string | null>(null)
+  const [processing, setProcessing] = useState(false)
+  const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!stripe || !elements) return
 
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/registro-exitoso`,
-      },
-    })
+    if (!stripe || !elements) {
+      console.log('Stripe o Elements no está inicializado')
+      return
+    }
 
-    if (error) {
-      console.error(error)
+    setProcessing(true)
+    setError(null) // Limpiar errores anteriores
+
+    try {
+      // Validar que los elementos del formulario estén completos
+      const { error: elementsError } = await elements.submit()
+      if (elementsError) {
+        setError(elementsError.message || 'Por favor complete todos los campos')
+        setProcessing(false)
+        return
+      }
+
+      const { error: confirmError } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/registro-exitoso`,
+          payment_method_data: {
+            billing_details: {
+              email: email,
+            },
+          },
+        },
+        redirect: 'if_required', // Añadir esta opción
+      })
+
+      if (confirmError) {
+        console.error('Error de confirmación:', confirmError)
+        setError(confirmError.message || 'Error al procesar el pago')
+        setProcessing(false)
+      } else {
+        // El pago fue exitoso
+        console.log('Pago procesado correctamente')
+        navigate('/registro-exitoso')
+      }
+    } catch (e) {
+      console.error('Error inesperado:', e)
+      setError('Error inesperado al procesar el pago')
+      setProcessing(false)
     }
   }
 
   return (
     <form onSubmit={handleSubmit}>
       <PaymentElement />
+      {error && (
+        <Typography color='error' sx={{ mt: 2 }}>
+          {error}
+        </Typography>
+      )}
       <Button
         type='submit'
         variant='contained'
         fullWidth
         sx={{ mt: 2 }}
-        disabled={!stripe}
+        disabled={!stripe || processing}
       >
-        Pagar y Completar Registro
+        {processing ? 'Procesando...' : 'Pagar'}
       </Button>
     </form>
   )

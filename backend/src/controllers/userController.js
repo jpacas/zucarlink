@@ -56,12 +56,12 @@ const getAllUsers = async (req, res) => {
           attributes: ['nombre'],
           required: false,
         },
-        /*   {
+        {
           model: Proveedor,
           as: 'proveedor',
           attributes: ['nombre'],
           required: false,
-        }, */
+        },
       ],
     })
 
@@ -266,6 +266,11 @@ const getUserById = async (req, res) => {
           as: 'area',
           attributes: ['nombre'],
         },
+        {
+          model: Proveedor,
+          as: 'proveedor',
+          attributes: ['nombre'],
+        },
       ],
     })
 
@@ -353,12 +358,30 @@ const updateUserProfile = async (req, res) => {
 
 const changeUserPassword = async (req, res) => {
   const { id } = req.params
-  const { newPassword } = req.body
+  const { currentPassword, newPassword, confirmPassword } = req.body
 
   try {
+    // Validar que las contraseñas coincidan
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        message: 'La nueva contraseña y la confirmación no coinciden',
+      })
+    }
+
     const usuario = await User.findByPk(id)
     if (!usuario) {
       return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    // Verificar la contraseña actual
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      usuario.password
+    )
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        message: 'La contraseña actual es incorrecta',
+      })
     }
 
     // Encriptar la nueva contraseña
@@ -366,10 +389,15 @@ const changeUserPassword = async (req, res) => {
     usuario.password = hashedPassword
     await usuario.save()
 
-    res.status(200).json({ message: 'Contraseña actualizada exitosamente' })
+    res.status(200).json({
+      message: 'Contraseña actualizada exitosamente',
+    })
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ message: 'Error al cambiar la contraseña', error })
+    console.error('Error al cambiar la contraseña:', error)
+    res.status(500).json({
+      message: 'Error al cambiar la contraseña',
+      error: error.message,
+    })
   }
 }
 

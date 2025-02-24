@@ -16,25 +16,17 @@ import {
   Button,
   Modal,
   Chip,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormControlLabel,
-  Checkbox,
-  Divider,
 } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import IconButton from '@mui/material/IconButton'
-import DeleteIcon from '@mui/icons-material/Delete'
-import CloseIcon from '@mui/icons-material/Close'
 import { User, Experience, Area, Ingenio } from '../types/interfaces'
 import {
   fetchAreas,
   fetchIngenios,
   fetchPaises,
 } from '../functions/fetchFunctions'
+import ExperienceModal from './ExperienceModal'
+
 const Perfil: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -218,10 +210,7 @@ const Perfil: React.FC = () => {
     )
   }
 
-  const handleDeleteExperience = async (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    event.preventDefault()
+  const handleDeleteExperience = async () => {
     if (!experienceData.id) return
     try {
       await axios.delete(
@@ -272,15 +261,17 @@ const Perfil: React.FC = () => {
                   <strong>País:</strong> {usuario.pais}
                 </Typography>
                 <Typography variant='body1' gutterBottom>
-                  <strong>Ingenio:</strong> {usuario.ingenio}
+                  <strong>{usuario.proveedor ? 'Empresa' : 'Ingenio'}:</strong>{' '}
+                  {usuario.proveedor || usuario.ingenio}
                 </Typography>
-                <Typography variant='body1' gutterBottom>
-                  <strong>Área:</strong>{' '}
-                  {usuario.area === 'null' || usuario.area?.trim() === ''
-                    ? 'Proveedor'
-                    : usuario.area}
-                </Typography>
-
+                {!usuario.proveedor && (
+                  <Typography variant='body1' gutterBottom>
+                    <strong>Área:</strong>{' '}
+                    {usuario.area === 'null' || usuario.area?.trim() === ''
+                      ? 'No especificada'
+                      : usuario.area}
+                  </Typography>
+                )}
                 {usuario.acercaDe && (
                   <Typography variant='body1' gutterBottom>
                     <strong>Acerca De:</strong> {usuario.acercaDe}
@@ -365,226 +356,21 @@ const Perfil: React.FC = () => {
         </Button>
       )}
 
-      <Modal open={modalOpen} onClose={handleCloseModal}>
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 600,
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 24,
-            p: 4,
-          }}
-        >
-          {/* Encabezado del modal */}
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
-            <Typography variant='h6' component='h2' sx={{ fontWeight: 'bold' }}>
-              Agregar Experiencia Laboral
-            </Typography>
-            <IconButton onClick={handleCloseModal} sx={{ color: 'gray' }}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          <Divider sx={{ mb: 2 }} />
-
-          {/* Contenido del Modal */}
-          <FormControl fullWidth margin='dense'>
-            <InputLabel id='pais-label'>País</InputLabel>
-            <Select
-              labelId='pais-label'
-              id='pais'
-              name='pais'
-              value={experienceData.pais || ''} // Asegurar que no sea undefined
-              label='País'
-              onChange={(e) =>
-                setExperienceData({
-                  ...experienceData,
-                  pais: e.target.value,
-                  ingenio: '', // Reiniciar ingenio cuando cambia el país
-                })
-              }
-            >
-              {paises.map((pais) => (
-                <MenuItem key={pais} value={pais}>
-                  {pais}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth margin='dense' disabled={!experienceData.pais}>
-            <InputLabel id='ingenio-label'>Ingenio</InputLabel>
-            <Select
-              labelId='ingenio-label'
-              id='ingenio'
-              name='ingenio'
-              value={experienceData.ingenio || ''}
-              label='Ingenio'
-              onChange={(e) =>
-                setExperienceData({
-                  ...experienceData,
-                  ingenio: e.target.value,
-                })
-              }
-            >
-              {ingenios
-                .filter((ingenio) => ingenio.pais === experienceData.pais)
-                .map((ingenio) => (
-                  <MenuItem key={ingenio.nombre} value={ingenio.nombre}>
-                    {ingenio.nombre}
-                  </MenuItem>
-                ))}
-            </Select>
-          </FormControl>
-
-          <TextField
-            fullWidth
-            type='date'
-            label='Fecha de Inicio'
-            name='fechaInicio'
-            InputLabelProps={{ shrink: true }}
-            margin='dense'
-            value={
-              experienceData.fechaInicio
-                ? formatDate(experienceData.fechaInicio)
-                : ''
-            }
-            onChange={(e) =>
-              setExperienceData({
-                ...experienceData,
-                fechaInicio: e.target.value,
-              })
-            }
+      {modalOpen && (
+        <Modal open={modalOpen} onClose={handleCloseModal}>
+          <ExperienceModal
+            experienceData={experienceData}
+            setExperienceData={setExperienceData}
+            paises={paises}
+            ingenios={ingenios}
+            areas={areas}
+            onSave={handleSaveExperience}
+            onClose={handleCloseModal}
+            onDelete={experienceData.id ? handleDeleteExperience : undefined}
+            formatDate={formatDate}
           />
-
-          <FormControlLabel
-            control={
-              <Checkbox
-                id='actualmenteTrabaja'
-                name='actualmenteTrabaja'
-                checked={experienceData.actualmenteTrabaja}
-                onChange={(e) =>
-                  setExperienceData({
-                    ...experienceData,
-                    actualmenteTrabaja: e.target.checked,
-                    fechaFin: '',
-                  })
-                }
-              />
-            }
-            label='Actualmente trabajo aquí'
-          />
-
-          <TextField
-            fullWidth
-            type='date'
-            name='fechaFin'
-            label='Fecha de Fin'
-            InputLabelProps={{ shrink: true }}
-            margin='dense'
-            value={
-              experienceData.fechaFin ? formatDate(experienceData.fechaFin) : ''
-            }
-            onChange={(e) => {
-              const nuevaFechaFin = e.target.value
-              if (
-                experienceData.fechaInicio &&
-                nuevaFechaFin < experienceData.fechaInicio
-              ) {
-                alert(
-                  'La fecha de fin no puede ser anterior a la fecha de inicio.'
-                )
-              } else {
-                setExperienceData({
-                  ...experienceData,
-                  fechaFin: nuevaFechaFin,
-                })
-              }
-            }}
-            disabled={experienceData.actualmenteTrabaja}
-          />
-
-          <TextField
-            fullWidth
-            label='Cargo'
-            name='cargo'
-            margin='dense'
-            variant='outlined'
-            value={experienceData.cargo}
-            onChange={(e) =>
-              setExperienceData({ ...experienceData, cargo: e.target.value })
-            }
-          />
-
-          <FormControl fullWidth margin='dense'>
-            <InputLabel id='area-label'>Área de Trabajo</InputLabel>
-            <Select
-              labelId='area-label'
-              id='area'
-              name='area'
-              value={experienceData.area}
-              label='Área de Trabajo'
-              onChange={(e) =>
-                setExperienceData({
-                  ...experienceData,
-                  area: e.target.value,
-                })
-              }
-            >
-              {areas.map((area) => (
-                <MenuItem key={area} value={area}>
-                  {area}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <TextField
-            fullWidth
-            label='Descripción'
-            name='acercaDe'
-            margin='dense'
-            variant='outlined'
-            multiline
-            rows={3}
-            value={experienceData.acercaDe}
-            onChange={(e) =>
-              setExperienceData({
-                ...experienceData,
-                acercaDe: e.target.value,
-              })
-            }
-          />
-
-          {/* Botones de acción */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-            <Button
-              variant='contained'
-              color='primary'
-              onClick={handleSaveExperience}
-            >
-              Guardar Cambios
-            </Button>
-
-            {experienceData.id && (
-              <IconButton color='error' onClick={handleDeleteExperience}>
-                <DeleteIcon />
-              </IconButton>
-            )}
-          </Box>
-        </Box>
-      </Modal>
+        </Modal>
+      )}
     </Box>
   )
 }

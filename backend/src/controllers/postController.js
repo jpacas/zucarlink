@@ -11,7 +11,7 @@ const { Op } = require('sequelize')
 
 const getAllPosts = async (req, res) => {
   try {
-    const { tema, area } = req.query
+    const { tema, area, autor } = req.query
 
     let whereClause = {}
     let include = [
@@ -19,6 +19,14 @@ const getAllPosts = async (req, res) => {
         model: User,
         as: 'autor',
         attributes: ['nombre', 'apellido', 'avatarUrl'],
+        where: autor
+          ? {
+              [Op.or]: [
+                { nombre: { [Op.like]: `%${autor}%` } },
+                { apellido: { [Op.like]: `%${autor}%` } },
+              ],
+            }
+          : undefined,
       },
       {
         model: Comment,

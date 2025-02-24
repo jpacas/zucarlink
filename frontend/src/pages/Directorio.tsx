@@ -8,25 +8,52 @@ import {
   CardContent,
   Typography,
   Autocomplete,
+  FormControlLabel,
+  Checkbox,
+  FormGroup,
 } from '@mui/material'
-import { User } from '../types/interfaces'
-import { Pais } from '../types/interfaces'
+import { User, Ingenio, Area } from '../types/interfaces'
 import { useNavigate } from 'react-router-dom'
 
 const Directorio: React.FC = () => {
   const [usuarios, setUsuarios] = useState<User[]>([])
-  const [filtros, setFiltros] = useState({ nombre: '', pais: '' })
+  const [filtros, setFiltros] = useState({
+    nombre: '',
+    pais: '',
+    ingenio: '',
+    area: '',
+    tipoUsuario: {
+      ingenio: false,
+      proveedor: false,
+    },
+  })
   const [error, setError] = useState<string | null>(null)
-  const [paises, setPaises] = useState<Pais[]>([])
+  const [paises, setPaises] = useState<string[]>([])
+  const [ingenios, setIngenios] = useState<Ingenio[]>([])
+  const [areas, setAreas] = useState<Area[]>([])
   const navigate = useNavigate()
 
   useEffect(() => {
-    const fetchUsuarios = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get<User[]>(
-          `${import.meta.env.VITE_API_URL}/users/usuarios`
-        )
-        setUsuarios(response.data)
+        const [usuariosRes, paisesRes, ingeniosRes, areasRes] =
+          await Promise.all([
+            axios.get<User[]>(`${import.meta.env.VITE_API_URL}/users/usuarios`),
+            axios.get<{ nombre: string }[]>(
+              `${import.meta.env.VITE_API_URL}/helper/paises`
+            ),
+            axios.get<Ingenio[]>(
+              `${import.meta.env.VITE_API_URL}/helper/ingenios`
+            ),
+            axios.get<{ nombre: string }[]>(
+              `${import.meta.env.VITE_API_URL}/helper/areas`
+            ),
+          ])
+
+        setUsuarios(usuariosRes.data)
+        setPaises(paisesRes.data.map((pais) => pais.nombre))
+        setIngenios(ingeniosRes.data)
+        setAreas(areasRes.data.map((area) => area.nombre))
       } catch (err) {
         if (axios.isAxiosError(err)) {
           setError(err.response?.data?.message || 'Error al cargar los datos.')
@@ -36,44 +63,49 @@ const Directorio: React.FC = () => {
       }
     }
 
-    const fetchPaises = async () => {
-      try {
-        const response = await axios.get<{ nombre: string }[]>(
-          `${import.meta.env.VITE_API_URL}/helper/paises`
-        )
-        setPaises(response.data.map((pais) => pais.nombre))
-      } catch (err) {
-        if (axios.isAxiosError(err)) {
-          setError(err.response?.data?.message || 'Error al cargar los datos.')
-        } else {
-          setError('Error desconocido.')
-        }
-      }
-    }
-
-    fetchUsuarios()
-    fetchPaises()
+    fetchData()
   }, [])
 
-  // Filtrar usuarios
-  const usuariosFiltrados = usuarios.filter(
-    (usuario) =>
-      (usuario.nombre
+  const usuariosFiltrados = usuarios.filter((usuario) => {
+    const matchNombre =
+      usuario.nombre
         .toLowerCase()
         .includes(filtros.nombre.toLowerCase().trim()) ||
-        usuario.apellido
-          .toLowerCase()
-          .includes(filtros.nombre.toLowerCase().trim())) &&
-      (!filtros.pais ||
-        usuario.pais?.toLowerCase() === filtros.pais?.toLowerCase())
-  )
+      usuario.apellido
+        .toLowerCase()
+        .includes(filtros.nombre.toLowerCase().trim())
+
+    const matchPais =
+      !filtros.pais ||
+      usuario.pais?.toLowerCase() === filtros.pais?.toLowerCase()
+
+    const matchIngenio = !filtros.ingenio || usuario.ingenio === filtros.ingenio
+
+    const matchArea = !filtros.area || usuario.area === filtros.area
+
+    const matchTipoUsuario =
+      (!filtros.tipoUsuario.ingenio && !filtros.tipoUsuario.proveedor) ||
+      (filtros.tipoUsuario.ingenio && filtros.tipoUsuario.proveedor) ||
+      (filtros.tipoUsuario.ingenio && !usuario.proveedor) ||
+      (filtros.tipoUsuario.proveedor && usuario.proveedor)
+
+    return (
+      matchNombre && matchPais && matchIngenio && matchArea && matchTipoUsuario
+    )
+  })
 
   const handleFiltroChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFiltros({ ...filtros, [e.target.name]: e.target.value })
   }
 
-  const handleCountryChange = (_: any, value: string | null) => {
-    setFiltros({ ...filtros, pais: value || '' })
+  const handleTipoUsuarioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFiltros({
+      ...filtros,
+      tipoUsuario: {
+        ...filtros.tipoUsuario,
+        [e.target.name]: e.target.checked,
+      },
+    })
   }
 
   return (
@@ -119,11 +151,71 @@ const Directorio: React.FC = () => {
             <Autocomplete
               options={paises}
               value={filtros.pais || null}
-              onChange={handleCountryChange}
+              onChange={(_, value) =>
+                setFiltros({ ...filtros, pais: value || '' })
+              }
               renderInput={(params) => (
                 <TextField {...params} label='País' margin='normal' fullWidth />
               )}
             />
+            <Autocomplete
+              options={ingenios.map((ing) => ing.nombre)}
+              value={filtros.ingenio || null}
+              onChange={(_, value) =>
+                setFiltros({ ...filtros, ingenio: value || '' })
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label='Ingenio'
+                  margin='normal'
+                  fullWidth
+                />
+              )}
+            />
+            <Autocomplete
+              options={areas}
+              value={filtros.area || null}
+              onChange={(_, value) =>
+                setFiltros({ ...filtros, area: value || '' })
+              }
+              renderInput={(params) => (
+                <TextField {...params} label='Área' margin='normal' fullWidth />
+              )}
+            />
+            <FormGroup sx={{ mt: 2 }}>
+              <Typography variant='subtitle1' gutterBottom fontWeight='bold'>
+                Tipo de Usuario
+              </Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  gap: { xs: 0, sm: 2 },
+                }}
+              >
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={filtros.tipoUsuario.ingenio}
+                      onChange={handleTipoUsuarioChange}
+                      name='ingenio'
+                    />
+                  }
+                  label='Ingenio'
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={filtros.tipoUsuario.proveedor}
+                      onChange={handleTipoUsuarioChange}
+                      name='proveedor'
+                    />
+                  }
+                  label='Proveedor'
+                />
+              </Box>
+            </FormGroup>
           </Box>
         </Grid>
         {/* Resultados */}
@@ -142,6 +234,9 @@ const Directorio: React.FC = () => {
                     transition: 'transform 0.3s ease',
                     willChange: 'transform',
                     '&:hover': { transform: 'translateY(-5px)' },
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
                   }}
                   onClick={() => navigate(`/perfil/${usuario.id}`)}
                 >
@@ -151,6 +246,9 @@ const Directorio: React.FC = () => {
                       flexDirection: 'column',
                       alignItems: 'center',
                       textAlign: 'center',
+                      flexGrow: 1,
+                      minHeight: '300px',
+                      padding: '24px',
                     }}
                   >
                     {usuario.avatarUrl ? (
@@ -176,12 +274,20 @@ const Directorio: React.FC = () => {
                     <Typography variant='body2' color='text.secondary'>
                       <strong>País:</strong> {usuario.pais}
                     </Typography>
-                    <Typography variant='body2' color='text.secondary'>
-                      <strong>Ingenio:</strong> {usuario.ingenio}
-                    </Typography>
-                    <Typography variant='body2' color='text.secondary'>
-                      <strong>Area:</strong> {usuario.area}
-                    </Typography>
+                    {usuario.proveedor ? (
+                      <Typography variant='body2' color='text.secondary'>
+                        <strong>Empresa:</strong> {usuario.proveedor}
+                      </Typography>
+                    ) : (
+                      <>
+                        <Typography variant='body2' color='text.secondary'>
+                          <strong>Ingenio:</strong> {usuario.ingenio}
+                        </Typography>
+                        <Typography variant='body2' color='text.secondary'>
+                          <strong>Área:</strong> {usuario.area}
+                        </Typography>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
