@@ -27,6 +27,12 @@ import { useNavigate } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { Post, Area } from '../types/interfaces'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import CloudUploadIcon from '@mui/icons-material/CloudUpload'
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import DescriptionIcon from '@mui/icons-material/Description'
+import ImageIcon from '@mui/icons-material/Image'
+import VideoFileIcon from '@mui/icons-material/VideoFile'
 
 const Foro: React.FC = () => {
   const { user } = useAuth()
@@ -47,6 +53,7 @@ const Foro: React.FC = () => {
   const [newComment, setNewComment] = useState<{ [postId: number]: string }>({})
   const [autorFiltro, setAutorFiltro] = useState<string>('')
   const navigate = useNavigate()
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
 
   const fetchPosts = async () => {
     try {
@@ -125,6 +132,12 @@ const Foro: React.FC = () => {
     }
   }
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setSelectedFiles(Array.from(event.target.files))
+    }
+  }
+
   const handlePostSubmit = async () => {
     if (!titulo || !contenido || !area) {
       setModalError('Todos los campos son obligatorios.')
@@ -132,15 +145,27 @@ const Foro: React.FC = () => {
     }
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/posts`, {
-        titulo,
-        contenido,
-        area,
-        usuarioId: user?.id,
+      const formData = new FormData()
+      formData.append('titulo', titulo)
+      formData.append('contenido', contenido)
+      formData.append('area', area)
+      formData.append('usuarioId', user?.id || '')
+
+      // Agregar archivos al FormData
+      selectedFiles.forEach((file) => {
+        formData.append('archivos', file)
       })
+
+      await axios.post(`${import.meta.env.VITE_API_URL}/posts`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+
       setTitulo('')
       setContenido('')
       setArea('')
+      setSelectedFiles([])
       setModalError(null)
       setModalOpen(false)
       fetchPosts()
@@ -229,6 +254,7 @@ const Foro: React.FC = () => {
     setTitulo('')
     setContenido('')
     setArea('')
+    setSelectedFiles([])
     setModalError(null) // Resetea el error cuando el modal se cierra
   }
 
@@ -338,7 +364,10 @@ const Foro: React.FC = () => {
                       boxShadow: 3,
                     }}
                   >
-                    <CardContent>
+                    <CardContent
+                      onClick={() => navigate(`/foro/post/${post.id}`)}
+                      sx={{ cursor: 'pointer' }}
+                    >
                       <Box
                         sx={{
                           display: 'flex',
@@ -364,9 +393,10 @@ const Foro: React.FC = () => {
                             src={post.autor.avatarUrl || ''}
                             alt={`${post.autor.nombre} ${post.autor.apellido}`}
                             sx={{ width: 40, height: 40, cursor: 'pointer' }}
-                            onClick={() =>
+                            onClick={(e) => {
+                              e.stopPropagation()
                               navigate(`/perfil/${post.usuarioId}`)
-                            }
+                            }}
                           />
                         </Box>
                       </Box>
@@ -374,6 +404,143 @@ const Foro: React.FC = () => {
                         {post.contenido}
                       </Typography>
                     </CardContent>
+
+                    {/* Sección de archivos multimedia */}
+                    {post.archivos && post.archivos.length > 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant='subtitle2' sx={{ mb: 1 }}>
+                          Archivos adjuntos:
+                        </Typography>
+                        <Grid container spacing={2}>
+                          {post.archivos.map((archivo, index) => (
+                            <Grid item xs={12} sm={6} md={4} key={index}>
+                              {archivo.tipo.startsWith('image/') ? (
+                                // Mostrar imágenes
+                                <Box
+                                  sx={{
+                                    position: 'relative',
+                                    '&:hover': {
+                                      '& .overlay': {
+                                        opacity: 1,
+                                      },
+                                    },
+                                  }}
+                                >
+                                  <img
+                                    src={archivo.url}
+                                    alt={archivo.nombre}
+                                    style={{
+                                      width: '100%',
+                                      height: '200px',
+                                      objectFit: 'cover',
+                                      borderRadius: '8px',
+                                    }}
+                                  />
+                                  <Box
+                                    className='overlay'
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 0,
+                                      left: 0,
+                                      right: 0,
+                                      bottom: 0,
+                                      bgcolor: 'rgba(0,0,0,0.5)',
+                                      display: 'flex',
+                                      justifyContent: 'center',
+                                      alignItems: 'center',
+                                      opacity: 0,
+                                      transition: 'opacity 0.3s',
+                                      borderRadius: '8px',
+                                    }}
+                                  >
+                                    <Button
+                                      variant='contained'
+                                      color='primary'
+                                      onClick={() =>
+                                        window.open(archivo.url, '_blank')
+                                      }
+                                    >
+                                      Ver completa
+                                    </Button>
+                                  </Box>
+                                </Box>
+                              ) : archivo.tipo.startsWith('video/') ? (
+                                // Mostrar videos
+                                <Box
+                                  sx={{
+                                    width: '100%',
+                                    borderRadius: '8px',
+                                    overflow: 'hidden',
+                                  }}
+                                >
+                                  <video
+                                    controls
+                                    style={{
+                                      width: '100%',
+                                      maxHeight: '200px',
+                                    }}
+                                  >
+                                    <source
+                                      src={archivo.url}
+                                      type={archivo.tipo}
+                                    />
+                                    Tu navegador no soporta el elemento de
+                                    video.
+                                  </video>
+                                </Box>
+                              ) : (
+                                // Mostrar documentos (PDF, DOC, etc.)
+                                <Card
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    p: 2,
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                      bgcolor: 'action.hover',
+                                    },
+                                  }}
+                                  onClick={() =>
+                                    window.open(archivo.url, '_blank')
+                                  }
+                                >
+                                  {archivo.tipo.includes('pdf') ? (
+                                    <PictureAsPdfIcon
+                                      color='error'
+                                      sx={{ fontSize: 40 }}
+                                    />
+                                  ) : archivo.tipo.includes('word') ? (
+                                    <DescriptionIcon
+                                      color='primary'
+                                      sx={{ fontSize: 40 }}
+                                    />
+                                  ) : (
+                                    <DescriptionIcon
+                                      color='action'
+                                      sx={{ fontSize: 40 }}
+                                    />
+                                  )}
+                                  <Box sx={{ ml: 2, overflow: 'hidden' }}>
+                                    <Typography noWrap>
+                                      {archivo.nombre}
+                                    </Typography>
+                                    <Typography
+                                      variant='caption'
+                                      color='text.secondary'
+                                    >
+                                      {(
+                                        archivo.tipo.split('/')[1] ||
+                                        'documento'
+                                      ).toUpperCase()}
+                                    </Typography>
+                                  </Box>
+                                </Card>
+                              )}
+                            </Grid>
+                          ))}
+                        </Grid>
+                      </Box>
+                    )}
 
                     <Box
                       sx={{
@@ -389,13 +556,15 @@ const Foro: React.FC = () => {
                       </Typography>
 
                       <Box sx={{ display: 'flex', gap: 3 }}>
+                        {/* Contador de likes */}
                         <Box
                           sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                         >
-                          <Typography>
+                          <Typography variant='body2'>
                             {post.likes?.filter((x) => x.activo).length}
-                          </Typography>{' '}
+                          </Typography>
                           <IconButton
+                            size='small'
                             color={
                               post.likes?.some(
                                 (like) =>
@@ -404,24 +573,28 @@ const Foro: React.FC = () => {
                                 ? 'primary'
                                 : 'default'
                             }
-                            onClick={() => handleLikeToggle(post.id)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleLikeToggle(post.id)
+                            }}
                           >
-                            <ThumbUpIcon />
+                            <ThumbUpIcon fontSize='small' />
                           </IconButton>
                         </Box>
 
+                        {/* Contador de comentarios */}
                         <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                          }}
+                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                         >
                           <Typography variant='body2'>
                             {post.comments.length}
                           </Typography>
                           <IconButton
-                            onClick={() => toggleComments(post.id)}
+                            size='small'
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              toggleComments(post.id)
+                            }}
                             color={
                               post.comments?.some(
                                 (comment) =>
@@ -431,8 +604,18 @@ const Foro: React.FC = () => {
                                 : 'default'
                             }
                           >
-                            <CommentIcon />
+                            <CommentIcon fontSize='small' />
                           </IconButton>
+                        </Box>
+
+                        {/* Contador de vistas */}
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                        >
+                          <Typography variant='body2'>
+                            {post.views || 0}
+                          </Typography>
+                          <VisibilityIcon fontSize='small' color='action' />
                         </Box>
                       </Box>
                     </Box>
@@ -464,7 +647,8 @@ const Foro: React.FC = () => {
                               <IconButton
                                 color='error'
                                 size='small'
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation()
                                   handleDeleteComment(post.id, comment.id)
                                 }}
                               >
@@ -494,7 +678,10 @@ const Foro: React.FC = () => {
                             endAdornment: (
                               <InputAdornment position='end'>
                                 <IconButton
-                                  onClick={() => handleCommentSubmit(post.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleCommentSubmit(post.id)
+                                  }}
                                   color='primary'
                                 >
                                   <SendIcon />
@@ -576,6 +763,36 @@ const Foro: React.FC = () => {
               </MenuItem>
             ))}
           </Select>
+
+          <Button
+            component='label'
+            variant='outlined'
+            startIcon={<CloudUploadIcon />}
+            sx={{ mt: 2, mb: 2 }}
+            fullWidth
+          >
+            Subir Archivos
+            <input
+              type='file'
+              hidden
+              multiple
+              onChange={handleFileChange}
+              accept='image/*,video/*,.pdf,.doc,.docx'
+            />
+          </Button>
+
+          {selectedFiles.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant='subtitle2'>
+                Archivos seleccionados: {selectedFiles.length}
+              </Typography>
+              {selectedFiles.map((file, index) => (
+                <Typography key={index} variant='body2'>
+                  {file.name}
+                </Typography>
+              ))}
+            </Box>
+          )}
 
           <Box
             sx={{

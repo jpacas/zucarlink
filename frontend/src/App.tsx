@@ -16,6 +16,7 @@ import ZucarIA from './pages/ZucarIA'
 import PolPrivacidad from './pages/PolPrivacidad'
 import TerminosUso from './pages/TerminosUso'
 import EditarPerfil from './components/EditarPerfil'
+import PostDetalle from './pages/PostDetalle'
 
 const App: React.FC = () => {
   return (
@@ -80,6 +81,7 @@ const App: React.FC = () => {
             </ProtectedRoute>
           }
         />
+        <Route path='/foro/post/:postId' element={<PostDetalle />} />
         {/* Otras rutas */}
       </Routes>
     </Router>

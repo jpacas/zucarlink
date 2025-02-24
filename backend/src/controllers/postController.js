@@ -3,7 +3,10 @@ const User = require('../models/User')
 const Like = require('../models/Like')
 const Area = require('../models/Area')
 const Comment = require('../models/Comment')
+const Archivo = require('../models/Archivo')
+const s3 = require('../config/s3')
 const { Op } = require('sequelize')
+const { v4: uuidv4 } = require('uuid')
 
 ////////////////////////////////////////////////////////////
 ///// Obtener todos los posts ///////////////////////////////
@@ -87,6 +90,7 @@ const getAllPosts = async (req, res) => {
 const createPost = async (req, res) => {
   try {
     const { titulo, contenido, area, usuarioId } = req.body
+    const files = req.files // Array de archivos
 
     if (!titulo || !contenido || !area || !usuarioId) {
       return res
@@ -104,6 +108,7 @@ const createPost = async (req, res) => {
         .json({ message: 'El área especificada no existe.' })
     }
 
+    // Crear el post
     const newPost = await Post.create({
       titulo,
       contenido,
@@ -111,7 +116,44 @@ const createPost = async (req, res) => {
       usuarioId,
     })
 
-    res.status(201).json(newPost)
+    // Subir archivos a S3 si existen
+    if (files && files.length > 0) {
+      const uploadPromises = files.map((file) => {
+        const fileExtension = file.originalname.split('.').pop()
+        const fileName = `posts/${newPost.id}/${uuidv4()}.${fileExtension}`
+
+        const params = {
+          Bucket: process.env.AWS_BUCKET_NAME,
+          Key: fileName,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+        }
+
+        return s3
+          .upload(params)
+          .promise()
+          .then((data) => {
+            return Archivo.create({
+              nombre: file.originalname,
+              url: data.Location,
+              tipo: file.mimetype,
+              postId: newPost.id,
+            })
+          })
+      })
+
+      await Promise.all(uploadPromises)
+    }
+
+    // Obtener el post con sus archivos
+    const postWithFiles = await Post.findByPk(newPost.id, {
+      include: [
+        { model: Archivo, as: 'archivos' },
+        { model: Area, as: 'area' },
+      ],
+    })
+
+    res.status(201).json(postWithFiles)
   } catch (error) {
     console.error('Error al crear el post:', error)
     res.status(500).json({ message: 'Error al crear el post', error })
@@ -284,6 +326,50 @@ const incrementViews = async (req, res) => {
   }
 }
 
+////////////////////////////////////////////////////////////
+///// Obtener un post por su ID ///////////////////////////
+////////////////////////////////////////////////////////////
+
+const getPostById = async (req, res) => {
+  const { postId } = req.params
+  try {
+    const post = await Post.findByPk(postId, {
+      include: [
+        {
+          model: User,
+          as: 'autor',
+          attributes: ['nombre', 'apellido', 'avatarUrl'],
+        },
+        {
+          model: Comment,
+          as: 'comments',
+          include: [
+            { model: User, as: 'usuario', attributes: ['nombre', 'apellido'] },
+          ],
+        },
+        {
+          model: Like,
+          as: 'likes',
+        },
+        {
+          model: Area,
+          as: 'area',
+        },
+        // Agregar el modelo de archivos si lo tienes
+      ],
+    })
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post no encontrado' })
+    }
+
+    res.json(post)
+  } catch (error) {
+    console.error('Error al obtener el post:', error)
+    res.status(500).json({ message: 'Error al obtener el post', error })
+  }
+}
+
 module.exports = {
   getAllPosts,
   createPost,
@@ -291,4 +377,5 @@ module.exports = {
   addComment,
   incrementViews,
   deleteComment,
+  getPostById,
 }

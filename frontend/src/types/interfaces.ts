@@ -29,6 +29,16 @@ export type Area = string
 
 export type Proveedor = string
 
+export interface Archivo {
+  id: number
+  nombre: string
+  url: string
+  tipo: string
+  postId: number
+  createdAt?: string
+  updatedAt?: string
+}
+
 export interface Post {
   id: number
   titulo: string
@@ -47,6 +57,7 @@ export interface Post {
   area: {
     nombre: string
   }
+  archivos?: Archivo[]
 }
 
 export interface Comment {

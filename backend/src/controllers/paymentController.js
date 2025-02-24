@@ -10,10 +10,9 @@ const createPaymentIntent = async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: 'usd',
-      payment_method_types: ['card'],
-      /* automatic_payment_methods: {
+      automatic_payment_methods: {
         enabled: true,
-      }, */
+      },
       metadata: {
         email,
         plan,

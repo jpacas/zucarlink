@@ -20,8 +20,8 @@ app.use(express.json())
 
 //Inicializando la base de datos
 sequelize
-  .authenticate()
-  //.sync({ alter: true })
+  //.authenticate()
+  .sync({ alter: true })
   .then(() => console.log('Conexión a la base de datos exitosa'))
   .catch((err) => console.error('Error al conectar la base de datos:', err))
 

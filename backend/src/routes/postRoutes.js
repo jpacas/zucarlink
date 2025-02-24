@@ -6,14 +6,16 @@ const {
   addComment,
   incrementViews,
   deleteComment,
+  getPostById,
 } = require('../controllers/postController')
 const router = express.Router()
+const upload = require('../middleware/multer')
 
 router.get('/', getAllPosts)
-router.post('/', createPost)
+router.post('/', upload.array('archivos', 5), createPost)
 router.post('/:postId/like', toggleLike)
 router.post('/:postId/comment', addComment)
 router.post('/:postId/view', incrementViews)
 router.delete('/:postId/comment/:commentId', deleteComment)
-
+router.get('/:postId', getPostById)
 module.exports = router
