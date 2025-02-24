@@ -16,12 +16,15 @@ import {
   Avatar,
   IconButton,
   Collapse,
+  FormControl,
+  InputLabel,
+  InputAdornment,
 } from '@mui/material'
 import ThumbUpIcon from '@mui/icons-material/ThumbUp'
 import CommentIcon from '@mui/icons-material/Comment'
 import DeleteIcon from '@mui/icons-material/Delete'
 import SendIcon from '@mui/icons-material/Send'
-import InputAdornment from '@mui/material/InputAdornment'
+import SortIcon from '@mui/icons-material/Sort'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
@@ -29,10 +32,7 @@ import { es } from 'date-fns/locale'
 import { Post, Area } from '../types/interfaces'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
-import DescriptionIcon from '@mui/icons-material/Description'
-import ImageIcon from '@mui/icons-material/Image'
-import VideoFileIcon from '@mui/icons-material/VideoFile'
+import AttachFileIcon from '@mui/icons-material/AttachFile'
 
 const Foro: React.FC = () => {
   const { user } = useAuth()
@@ -54,6 +54,7 @@ const Foro: React.FC = () => {
   const [autorFiltro, setAutorFiltro] = useState<string>('')
   const navigate = useNavigate()
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [ordenamiento, setOrdenamiento] = useState<string>('reciente')
 
   const fetchPosts = async () => {
     try {
@@ -65,6 +66,7 @@ const Foro: React.FC = () => {
             tema: temaFiltro,
             area: areaFiltro,
             autor: autorFiltro.trim(),
+            orden: ordenamiento,
           },
         }
       )
@@ -102,7 +104,7 @@ const Foro: React.FC = () => {
 
   useEffect(() => {
     fetchPosts()
-  }, [areaFiltro, temaFiltro, autorFiltro])
+  }, [areaFiltro, temaFiltro, autorFiltro, ordenamiento])
 
   const handleLikeToggle = async (postId: number) => {
     if (!user?.id) {
@@ -293,6 +295,23 @@ const Foro: React.FC = () => {
             <Typography variant='h5' marginBottom={2} color='primary'>
               Filtros
             </Typography>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Ordenar por</InputLabel>
+              <Select
+                value={ordenamiento}
+                onChange={(e) => setOrdenamiento(e.target.value)}
+                startAdornment={
+                  <InputAdornment position='start'>
+                    <SortIcon />
+                  </InputAdornment>
+                }
+              >
+                <MenuItem value='reciente'>Más recientes</MenuItem>
+                <MenuItem value='antiguo'>Más antiguos</MenuItem>
+                <MenuItem value='vistas'>Más vistos</MenuItem>
+                <MenuItem value='menosVistas'>Menos vistos</MenuItem>
+              </Select>
+            </FormControl>
             <TextField
               fullWidth
               id='autor-filter'
@@ -377,8 +396,17 @@ const Foro: React.FC = () => {
                       >
                         <Typography variant='h5' sx={{ flex: 1 }}>
                           {post.titulo}
+                          {post.archivos && post.archivos.length > 0 && (
+                            <AttachFileIcon
+                              sx={{
+                                ml: 1,
+                                fontSize: 20,
+                                verticalAlign: 'middle',
+                                color: 'text.secondary',
+                              }}
+                            />
+                          )}
                         </Typography>
-                        {/* CAMBIO: Agrupamos nombre y avatar en la esquina superior derecha */}
                         <Box
                           sx={{
                             display: 'flex',
@@ -404,143 +432,6 @@ const Foro: React.FC = () => {
                         {post.contenido}
                       </Typography>
                     </CardContent>
-
-                    {/* Sección de archivos multimedia */}
-                    {post.archivos && post.archivos.length > 0 && (
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant='subtitle2' sx={{ mb: 1 }}>
-                          Archivos adjuntos:
-                        </Typography>
-                        <Grid container spacing={2}>
-                          {post.archivos.map((archivo, index) => (
-                            <Grid item xs={12} sm={6} md={4} key={index}>
-                              {archivo.tipo.startsWith('image/') ? (
-                                // Mostrar imágenes
-                                <Box
-                                  sx={{
-                                    position: 'relative',
-                                    '&:hover': {
-                                      '& .overlay': {
-                                        opacity: 1,
-                                      },
-                                    },
-                                  }}
-                                >
-                                  <img
-                                    src={archivo.url}
-                                    alt={archivo.nombre}
-                                    style={{
-                                      width: '100%',
-                                      height: '200px',
-                                      objectFit: 'cover',
-                                      borderRadius: '8px',
-                                    }}
-                                  />
-                                  <Box
-                                    className='overlay'
-                                    sx={{
-                                      position: 'absolute',
-                                      top: 0,
-                                      left: 0,
-                                      right: 0,
-                                      bottom: 0,
-                                      bgcolor: 'rgba(0,0,0,0.5)',
-                                      display: 'flex',
-                                      justifyContent: 'center',
-                                      alignItems: 'center',
-                                      opacity: 0,
-                                      transition: 'opacity 0.3s',
-                                      borderRadius: '8px',
-                                    }}
-                                  >
-                                    <Button
-                                      variant='contained'
-                                      color='primary'
-                                      onClick={() =>
-                                        window.open(archivo.url, '_blank')
-                                      }
-                                    >
-                                      Ver completa
-                                    </Button>
-                                  </Box>
-                                </Box>
-                              ) : archivo.tipo.startsWith('video/') ? (
-                                // Mostrar videos
-                                <Box
-                                  sx={{
-                                    width: '100%',
-                                    borderRadius: '8px',
-                                    overflow: 'hidden',
-                                  }}
-                                >
-                                  <video
-                                    controls
-                                    style={{
-                                      width: '100%',
-                                      maxHeight: '200px',
-                                    }}
-                                  >
-                                    <source
-                                      src={archivo.url}
-                                      type={archivo.tipo}
-                                    />
-                                    Tu navegador no soporta el elemento de
-                                    video.
-                                  </video>
-                                </Box>
-                              ) : (
-                                // Mostrar documentos (PDF, DOC, etc.)
-                                <Card
-                                  sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    p: 2,
-                                    cursor: 'pointer',
-                                    '&:hover': {
-                                      bgcolor: 'action.hover',
-                                    },
-                                  }}
-                                  onClick={() =>
-                                    window.open(archivo.url, '_blank')
-                                  }
-                                >
-                                  {archivo.tipo.includes('pdf') ? (
-                                    <PictureAsPdfIcon
-                                      color='error'
-                                      sx={{ fontSize: 40 }}
-                                    />
-                                  ) : archivo.tipo.includes('word') ? (
-                                    <DescriptionIcon
-                                      color='primary'
-                                      sx={{ fontSize: 40 }}
-                                    />
-                                  ) : (
-                                    <DescriptionIcon
-                                      color='action'
-                                      sx={{ fontSize: 40 }}
-                                    />
-                                  )}
-                                  <Box sx={{ ml: 2, overflow: 'hidden' }}>
-                                    <Typography noWrap>
-                                      {archivo.nombre}
-                                    </Typography>
-                                    <Typography
-                                      variant='caption'
-                                      color='text.secondary'
-                                    >
-                                      {(
-                                        archivo.tipo.split('/')[1] ||
-                                        'documento'
-                                      ).toUpperCase()}
-                                    </Typography>
-                                  </Box>
-                                </Card>
-                              )}
-                            </Grid>
-                          ))}
-                        </Grid>
-                      </Box>
-                    )}
 
                     <Box
                       sx={{

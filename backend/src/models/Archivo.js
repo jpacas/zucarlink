@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
-const Post = require('./Post')
 
 const Archivo = sequelize.define('Archivo', {
   nombre: {
@@ -13,10 +12,6 @@ const Archivo = sequelize.define('Archivo', {
   },
   tipo: {
     type: DataTypes.STRING,
-    allowNull: false,
-  },
-  postId: {
-    type: DataTypes.INTEGER,
     allowNull: false,
   },
 })

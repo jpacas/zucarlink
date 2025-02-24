@@ -14,69 +14,73 @@ const { v4: uuidv4 } = require('uuid')
 
 const getAllPosts = async (req, res) => {
   try {
-    const { tema, area, autor } = req.query
+    const { tema, area, autor, orden } = req.query
 
-    let whereClause = {}
-    let include = [
-      {
-        model: User,
-        as: 'autor',
-        attributes: ['nombre', 'apellido', 'avatarUrl'],
-        where: autor
-          ? {
-              [Op.or]: [
-                { nombre: { [Op.like]: `%${autor}%` } },
-                { apellido: { [Op.like]: `%${autor}%` } },
-              ],
-            }
-          : undefined,
-      },
-      {
-        model: Comment,
-        as: 'comments',
-        attributes: ['id', 'contenido', 'usuarioId'],
-        include: [
-          { model: User, as: 'usuario', attributes: ['nombre', 'apellido'] },
-        ],
-      },
-      {
-        model: Like,
-        as: 'likes',
-        attributes: ['activo', 'usuarioId'],
-      },
-    ]
+    let orderConfig = [['createdAt', 'DESC']] // orden por defecto: más recientes
 
-    if (area) {
-      include.push({
-        model: Area,
-        as: 'area',
-        where: { nombre: { [Op.like]: `%${area}%` } },
-      })
-    } else {
-      // Si no hay filtro de área, incluyes el modelo Area normal
-      include.push({
-        model: Area,
-        as: 'area',
-        attributes: ['nombre'],
-      })
+    // Configurar el ordenamiento según el parámetro
+    switch (orden) {
+      case 'antiguo':
+        orderConfig = [['createdAt', 'ASC']]
+        break
+      case 'vistas':
+        orderConfig = [['views', 'DESC']]
+        break
+      case 'menosVistas':
+        orderConfig = [['views', 'ASC']]
+        break
+      default: // 'reciente' o cualquier otro valor
+        orderConfig = [['createdAt', 'DESC']]
     }
 
+    const whereClause = {}
     if (tema) {
-      whereClause[Op.or] = [
-        { titulo: { [Op.like]: `%${tema}%` } },
-        { contenido: { [Op.like]: `%${tema}%` } },
-      ]
+      whereClause.titulo = { [Op.like]: `%${tema}%` }
+    }
+    if (area) {
+      whereClause['$area.nombre$'] = area
+    }
+    if (autor) {
+      whereClause['$autor.nombre$'] = { [Op.iLike]: `%${autor}%` }
     }
 
     const posts = await Post.findAll({
       where: whereClause,
-      attributes: {
-        exclude: ['areaId'],
-      },
-      include,
-      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: User,
+          as: 'autor',
+          attributes: ['id', 'nombre', 'apellido', 'avatarUrl'],
+        },
+        {
+          model: Comment,
+          as: 'comments',
+          include: [
+            {
+              model: User,
+              as: 'usuario',
+              attributes: ['id', 'nombre', 'apellido'],
+            },
+          ],
+        },
+        {
+          model: Like,
+          as: 'likes',
+        },
+        {
+          model: Area,
+          as: 'area',
+        },
+        {
+          model: Archivo,
+          as: 'archivos',
+          attributes: ['id', 'nombre', 'url', 'tipo'],
+        },
+      ],
+      order: orderConfig,
     })
-    res.status(200).json(posts)
+
+    res.json(posts)
   } catch (error) {
     console.error('Error al obtener los posts:', error)
     res.status(500).json({ message: 'Error al obtener los posts', error })
@@ -331,20 +335,26 @@ const incrementViews = async (req, res) => {
 ////////////////////////////////////////////////////////////
 
 const getPostById = async (req, res) => {
-  const { postId } = req.params
   try {
+    const { postId } = req.params
+
+    // Buscar el post con todas sus relaciones
     const post = await Post.findByPk(postId, {
       include: [
         {
           model: User,
           as: 'autor',
-          attributes: ['nombre', 'apellido', 'avatarUrl'],
+          attributes: ['id', 'nombre', 'apellido', 'avatarUrl'],
         },
         {
           model: Comment,
           as: 'comments',
           include: [
-            { model: User, as: 'usuario', attributes: ['nombre', 'apellido'] },
+            {
+              model: User,
+              as: 'usuario',
+              attributes: ['id', 'nombre', 'apellido'],
+            },
           ],
         },
         {
@@ -355,7 +365,10 @@ const getPostById = async (req, res) => {
           model: Area,
           as: 'area',
         },
-        // Agregar el modelo de archivos si lo tienes
+        {
+          model: Archivo,
+          as: 'archivos',
+        },
       ],
     })
 
@@ -363,7 +376,42 @@ const getPostById = async (req, res) => {
       return res.status(404).json({ message: 'Post no encontrado' })
     }
 
-    res.json(post)
+    // Obtener el post actualizado con el nuevo contador de vistas
+    const updatedPost = await Post.findByPk(postId, {
+      include: [
+        {
+          model: User,
+          as: 'autor',
+          attributes: ['id', 'nombre', 'apellido', 'avatarUrl'],
+        },
+        {
+          model: Comment,
+          as: 'comments',
+          include: [
+            {
+              model: User,
+              as: 'usuario',
+              attributes: ['id', 'nombre', 'apellido'],
+            },
+          ],
+        },
+        {
+          model: Like,
+          as: 'likes',
+        },
+        {
+          model: Area,
+          as: 'area',
+        },
+        {
+          model: Archivo,
+          as: 'archivos',
+          attributes: ['id', 'nombre', 'url', 'tipo'],
+        },
+      ],
+    })
+
+    res.json(updatedPost)
   } catch (error) {
     console.error('Error al obtener el post:', error)
     res.status(500).json({ message: 'Error al obtener el post', error })

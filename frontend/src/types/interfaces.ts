@@ -34,9 +34,6 @@ export interface Archivo {
   nombre: string
   url: string
   tipo: string
-  postId: number
-  createdAt?: string
-  updatedAt?: string
 }
 
 export interface Post {

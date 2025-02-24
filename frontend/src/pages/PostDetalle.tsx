@@ -10,11 +10,14 @@ import {
   IconButton,
   Button,
   CircularProgress,
+  Grid,
 } from '@mui/material'
 import ThumbUpIcon from '@mui/icons-material/ThumbUp'
 import SendIcon from '@mui/icons-material/Send'
 import DeleteIcon from '@mui/icons-material/Delete'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import DescriptionIcon from '@mui/icons-material/Description'
 import { useAuth } from '../context/AuthContext'
 import axios from 'axios'
 import { formatDistanceToNow } from 'date-fns'
@@ -22,31 +25,69 @@ import { es } from 'date-fns/locale'
 import { Post } from '../types/interfaces'
 
 const PostDetalle: React.FC = () => {
-  const { postId } = useParams()
+  const { postId } = useParams<{ postId: string }>()
   const { user } = useAuth()
   const navigate = useNavigate()
   const [post, setPost] = useState<Post | null>(null)
   const [newComment, setNewComment] = useState('')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchPost = async () => {
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/posts/${postId}`
-      )
-      setPost(response.data)
+      setLoading(true)
+      setError(null)
 
-      // Incrementar el contador de vistas
+      // Agregar timeout a la petición
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/posts/${postId}`,
+        {
+          timeout: 5000, // 5 segundos de timeout
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+
       await axios.post(`${import.meta.env.VITE_API_URL}/posts/${postId}/view`)
-    } catch (error) {
-      console.error('Error al cargar el post:', error)
-    } finally {
+
+      setPost(response.data)
       setLoading(false)
+    } catch (err) {
+      console.error('Error completo:', err)
+      setLoading(false)
+
+      if (axios.isAxiosError(err)) {
+        if (err.code === 'ECONNABORTED') {
+          setError('La petición tardó demasiado tiempo')
+        } else if (err.response) {
+          // Error de respuesta del servidor
+          console.error('Error de respuesta:', err.response.data)
+          setError(err.response.data.message || 'Error al cargar el post')
+        } else if (err.request) {
+          // Error de red
+          console.error('Error de red:', err.request)
+          setError('Error de conexión con el servidor')
+        } else {
+          // Otros errores
+          console.error('Error de configuración:', err.message)
+          setError('Error inesperado')
+        }
+      } else {
+        console.error('Error no Axios:', err)
+        setError('Error inesperado al cargar el post')
+      }
     }
   }
 
   useEffect(() => {
-    fetchPost()
+    if (postId) {
+      fetchPost()
+    } else {
+      setLoading(false)
+    }
+    // Cleanup function
+    return () => {}
   }, [postId])
 
   const handleLikeToggle = async () => {
@@ -115,18 +156,54 @@ const PostDetalle: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          mt: 4,
+        }}
+      >
         <CircularProgress />
+        <Typography sx={{ mt: 2 }}>Cargando post...</Typography>
+      </Box>
+    )
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ mt: 4, p: 2 }}>
+        <Typography color='error' variant='h6'>
+          {error}
+        </Typography>
+        <Button
+          variant='contained'
+          onClick={() => navigate('/foro')}
+          sx={{ mt: 2 }}
+        >
+          Volver al Foro
+        </Button>
       </Box>
     )
   }
 
   if (!post) {
-    return <Typography>Post no encontrado</Typography>
+    return (
+      <Box sx={{ mt: 4, p: 2 }}>
+        <Typography>Post no encontrado</Typography>
+        <Button
+          variant='contained'
+          onClick={() => navigate('/foro')}
+          sx={{ mt: 2 }}
+        >
+          Volver al Foro
+        </Button>
+      </Box>
+    )
   }
 
   return (
-    <Box sx={{ p: 3, mt: '64px' }}>
+    <Box sx={{ padding: 3, marginTop: '64px' }}>
       <Button
         startIcon={<ArrowBackIcon />}
         onClick={() => navigate('/foro')}
@@ -135,7 +212,8 @@ const PostDetalle: React.FC = () => {
         Volver al Foro
       </Button>
 
-      <Card sx={{ mb: 3 }}>
+      {/* Card Principal - Título y Contenido */}
+      <Card sx={{ mb: 2 }}>
         <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
             <Typography variant='h4'>{post.titulo}</Typography>
@@ -144,40 +222,25 @@ const PostDetalle: React.FC = () => {
                 {post.autor.nombre} {post.autor.apellido}
               </Typography>
               <Avatar
-                src={post.autor.avatarUrl}
+                src={post.autor.avatarUrl || ''}
+                alt={`${post.autor.nombre} ${post.autor.apellido}`}
                 onClick={() => navigate(`/perfil/${post.usuarioId}`)}
                 sx={{ cursor: 'pointer' }}
               />
             </Box>
           </Box>
 
-          <Typography variant='body1' sx={{ mb: 2 }}>
+          <Typography variant='body1' sx={{ mb: 3 }}>
             {post.contenido}
           </Typography>
 
-          {/* Sección de archivos multimedia */}
-          {post.archivos && post.archivos.length > 0 && (
-            <Box sx={{ mb: 2 }}>
-              {post.archivos.map((archivo, index) => (
-                <Box key={index} sx={{ mb: 1 }}>
-                  {archivo.tipo.startsWith('image/') ? (
-                    <img
-                      src={archivo.url}
-                      alt={`Imagen ${index + 1}`}
-                      style={{ maxWidth: '100%', height: 'auto' }}
-                    />
-                  ) : archivo.tipo.startsWith('video/') ? (
-                    <video controls style={{ maxWidth: '100%' }}>
-                      <source src={archivo.url} type={archivo.tipo} />
-                      Tu navegador no soporta el elemento de video.
-                    </video>
-                  ) : null}
-                </Box>
-              ))}
-            </Box>
-          )}
-
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
             <Typography variant='body2' color='textSecondary'>
               {post.area.nombre} -{' '}
               {formatDistanceToNow(new Date(post.createdAt), {
@@ -209,51 +272,169 @@ const PostDetalle: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Sección de comentarios */}
-      <Box sx={{ mt: 3 }}>
-        <Typography variant='h6' sx={{ mb: 2 }}>
-          Comentarios ({post.comments.length})
-        </Typography>
+      {/* Card de Archivos Adjuntos - Si existen */}
+      {post.archivos && post.archivos.length > 0 && (
+        <Card sx={{ mb: 2 }}>
+          <CardContent>
+            <Typography variant='subtitle1' sx={{ mb: 2, fontWeight: 500 }}>
+              Archivos adjuntos ({post.archivos.length})
+            </Typography>
+            <Grid container spacing={1}>
+              {post.archivos.map((archivo, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  {archivo.tipo.startsWith('image/') ? (
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        height: '150px',
+                        '&:hover': { '& .overlay': { opacity: 1 } },
+                      }}
+                    >
+                      <img
+                        src={archivo.url}
+                        alt={archivo.nombre}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          borderRadius: '4px',
+                        }}
+                      />
+                      <Box
+                        className='overlay'
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          bgcolor: 'rgba(0,0,0,0.5)',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          opacity: 0,
+                          transition: 'opacity 0.2s',
+                          borderRadius: '4px',
+                        }}
+                      >
+                        <Button
+                          size='small'
+                          variant='contained'
+                          onClick={() => window.open(archivo.url, '_blank')}
+                        >
+                          Ver
+                        </Button>
+                      </Box>
+                    </Box>
+                  ) : archivo.tipo.startsWith('video/') ? (
+                    <Box
+                      sx={{
+                        height: '150px',
+                        borderRadius: '4px',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <video
+                        controls
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      >
+                        <source src={archivo.url} type={archivo.tipo} />
+                        Tu navegador no soporta el elemento de video.
+                      </video>
+                    </Box>
+                  ) : (
+                    <Card
+                      variant='outlined'
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        p: 1,
+                        cursor: 'pointer',
+                        '&:hover': { bgcolor: 'action.hover' },
+                      }}
+                      onClick={() => window.open(archivo.url, '_blank')}
+                    >
+                      {archivo.tipo.includes('pdf') ? (
+                        <PictureAsPdfIcon color='error' sx={{ fontSize: 24 }} />
+                      ) : archivo.tipo.includes('word') ? (
+                        <DescriptionIcon
+                          color='primary'
+                          sx={{ fontSize: 24 }}
+                        />
+                      ) : (
+                        <DescriptionIcon color='action' sx={{ fontSize: 24 }} />
+                      )}
+                      <Typography
+                        variant='body2'
+                        sx={{
+                          ml: 1,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {archivo.nombre}
+                      </Typography>
+                    </Card>
+                  )}
+                </Grid>
+              ))}
+            </Grid>
+          </CardContent>
+        </Card>
+      )}
 
-        <TextField
-          fullWidth
-          multiline
-          rows={2}
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder='Escribe un comentario...'
-          sx={{ mb: 2 }}
-          InputProps={{
-            endAdornment: (
-              <IconButton onClick={handleCommentSubmit} color='primary'>
-                <SendIcon />
-              </IconButton>
-            ),
-          }}
-        />
+      {/* Card de Comentarios */}
+      <Card>
+        <CardContent>
+          <Typography variant='h6' sx={{ mb: 2 }}>
+            Comentarios ({post.comments.length})
+          </Typography>
 
-        {post.comments.map((comment) => (
-          <Card key={comment.id} sx={{ mb: 1, p: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Box>
-                <Typography variant='subtitle2'>
-                  {comment.usuario.nombre} {comment.usuario.apellido}
-                </Typography>
-                <Typography>{comment.contenido}</Typography>
-              </Box>
-              {user?.id === comment.usuarioId && (
-                <IconButton
-                  size='small'
-                  color='error'
-                  onClick={() => handleDeleteComment(comment.id)}
-                >
-                  <DeleteIcon />
+          <TextField
+            fullWidth
+            multiline
+            rows={2}
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder='Escribe un comentario...'
+            sx={{ mb: 2 }}
+            InputProps={{
+              endAdornment: (
+                <IconButton onClick={handleCommentSubmit} color='primary'>
+                  <SendIcon />
                 </IconButton>
-              )}
-            </Box>
-          </Card>
-        ))}
-      </Box>
+              ),
+            }}
+          />
+
+          {post.comments.map((comment) => (
+            <Card key={comment.id} sx={{ mb: 1, p: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant='subtitle2'>
+                    {comment.usuario.nombre} {comment.usuario.apellido}
+                  </Typography>
+                  <Typography>{comment.contenido}</Typography>
+                </Box>
+                {user?.id === comment.usuarioId && (
+                  <IconButton
+                    size='small'
+                    color='error'
+                    onClick={() => handleDeleteComment(comment.id)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                )}
+              </Box>
+            </Card>
+          ))}
+        </CardContent>
+      </Card>
     </Box>
   )
 }

@@ -30,6 +30,7 @@ const Directorio: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [paises, setPaises] = useState<string[]>([])
   const [ingenios, setIngenios] = useState<Ingenio[]>([])
+  const [ingeniosFiltrados, setIngeniosFiltrados] = useState<Ingenio[]>([])
   const [areas, setAreas] = useState<Area[]>([])
   const navigate = useNavigate()
 
@@ -53,6 +54,7 @@ const Directorio: React.FC = () => {
         setUsuarios(usuariosRes.data)
         setPaises(paisesRes.data.map((pais) => pais.nombre))
         setIngenios(ingeniosRes.data)
+        setIngeniosFiltrados(ingeniosRes.data)
         setAreas(areasRes.data.map((area) => area.nombre))
       } catch (err) {
         if (axios.isAxiosError(err)) {
@@ -65,6 +67,20 @@ const Directorio: React.FC = () => {
 
     fetchData()
   }, [])
+
+  useEffect(() => {
+    if (filtros.pais) {
+      const ingeniosPorPais = ingenios.filter(
+        (ingenio) => ingenio.pais.toLowerCase() === filtros.pais.toLowerCase()
+      )
+      setIngeniosFiltrados(ingeniosPorPais)
+      if (!ingeniosPorPais.some((ing) => ing.nombre === filtros.ingenio)) {
+        setFiltros((prev) => ({ ...prev, ingenio: '' }))
+      }
+    } else {
+      setIngeniosFiltrados(ingenios)
+    }
+  }, [filtros.pais, ingenios])
 
   const usuariosFiltrados = usuarios.filter((usuario) => {
     const matchNombre =
@@ -159,7 +175,7 @@ const Directorio: React.FC = () => {
               )}
             />
             <Autocomplete
-              options={ingenios.map((ing) => ing.nombre)}
+              options={ingeniosFiltrados.map((ing) => ing.nombre)}
               value={filtros.ingenio || null}
               onChange={(_, value) =>
                 setFiltros({ ...filtros, ingenio: value || '' })
@@ -170,6 +186,12 @@ const Directorio: React.FC = () => {
                   label='Ingenio'
                   margin='normal'
                   fullWidth
+                  disabled={ingeniosFiltrados.length === 0}
+                  helperText={
+                    filtros.pais && ingeniosFiltrados.length === 0
+                      ? 'No hay ingenios disponibles para el país seleccionado'
+                      : ''
+                  }
                 />
               )}
             />
