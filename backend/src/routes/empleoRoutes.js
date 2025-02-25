@@ -1,9 +1,11 @@
 const express = require('express')
-const { getEmpleos, createEmpleo } = require('../controllers/empleoController')
-const upload = require('../middleware/multer') // Para imágenes
 const router = express.Router()
+const empleoController = require('../controllers/empleoController')
+const upload = require('../middleware/multer')
 
-router.get('/', getEmpleos)
-router.post('/', upload.single('foto'), createEmpleo)
+router.get('/', empleoController.getAllEmpleos)
+router.get('/:id', empleoController.getEmpleoById)
+router.post('/', upload.array('archivos'), empleoController.createEmpleo)
+// Agregar rutas para update y delete
 
 module.exports = router

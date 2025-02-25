@@ -1,80 +1,143 @@
 const Empleo = require('../models/Empleo')
 const User = require('../models/User')
+const Archivo = require('../models/Archivo')
+const Pais = require('../models/Pais')
+const Area = require('../models/Area')
+const Ingenio = require('../models/Ingenio')
 
-exports.getEmpleos = async (req, res) => {
+const getAllEmpleos = async (req, res) => {
   try {
-    const empleos = await Empleo.findAll()
-    res.status(200).json(empleos)
+    const empleos = await Empleo.findAll({
+      include: [
+        {
+          model: User,
+          as: 'autor',
+          attributes: ['id', 'nombre', 'apellido', 'avatarUrl'],
+        },
+        {
+          model: Archivo,
+          as: 'archivos',
+        },
+      ],
+      order: [['createdAt', 'DESC']],
+    })
+    res.json(empleos)
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener los empleos.' })
+    console.error('Error al obtener empleos:', error)
+    res.status(500).json({ message: 'Error al obtener empleos', error })
   }
 }
 
-exports.createEmpleo = async (req, res) => {
-  const { user_id, nombre, descripcion, contacto, categoria } = req.body
-  const foto = req.file ? req.file.location : null // Si usa S3 para imágenes
-
-  // Validación de entrada
-  if (!user_id || !nombre || !descripcion || !contacto || !categoria) {
-    return res
-      .status(400)
-      .json({ error: 'Todos los campos requeridos deben ser proporcionados.' })
-  }
-
-  if (
-    !['Campo', 'Molinos', 'Fabrica', 'Calderas', 'Energia', 'Alcohol'].includes(
-      categoria
-    )
-  ) {
-    return res.status(400).json({
-      error: `La categoría debe ser una de las siguientes: 'Campo', 'Molinos', 'Fabrica', 'Calderas', 'Energia', 'Alcohol'.`,
-    })
-  }
-
+const getEmpleoById = async (req, res) => {
   try {
-    // Verificar si el usuario existe
-    const user = await User.findByPk(user_id)
-    if (!user) {
-      return res
-        .status(404)
-        .json({ error: 'El usuario especificado no existe.' })
+    const { id } = req.params
+    const empleo = await Empleo.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: 'autor',
+          attributes: ['id', 'nombre', 'apellido', 'avatarUrl'],
+        },
+        {
+          model: Archivo,
+          as: 'archivos',
+        },
+      ],
+    })
+
+    if (!empleo) {
+      return res.status(404).json({ message: 'Empleo no encontrado' })
     }
 
-    // Crear el empleo
-    const nuevoEmpleo = await Empleo.create({
-      user_id,
-      nombre,
-      foto,
-      descripcion,
-      contacto,
-      categoria,
-    })
-
-    res.status(201).json({
-      message: 'Empleo creado exitosamente.',
-      empleo: nuevoEmpleo,
-    })
+    res.json(empleo)
   } catch (error) {
-    // Manejo específico de errores de Sequelize
-    if (error.name === 'SequelizeValidationError') {
-      const validationErrors = error.errors.map((err) => err.message)
-      return res.status(400).json({
-        error: 'Error de validación.',
-        details: validationErrors,
-      })
-    }
-
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      return res.status(400).json({
-        error: 'Error de unicidad. Un registro con estos datos ya existe.',
-      })
-    }
-
-    // Error general
-    console.error('Error al crear empleo:', error)
-    res.status(500).json({
-      error:
-        'Error interno del servidor. Por favor, inténtelo de nuevo más tarde.',
-    })
+    console.error('Error al obtener empleo:', error)
+    res.status(500).json({ message: 'Error al obtener empleo', error })
   }
+}
+
+const createEmpleo = async (req, res) => {
+  try {
+    const { nombre, descripcion, ingenio, area, pais, contacto, usuarioId } =
+      req.body
+    const archivos = req.files || []
+
+    if (
+      !nombre ||
+      !descripcion ||
+      !ingenio ||
+      !area ||
+      !pais ||
+      !contacto ||
+      !usuarioId
+    ) {
+      return res
+        .status(400)
+        .json({ message: 'Todos los campos son requeridos' })
+    }
+
+    const [paisData, areaData, ingenioData] = await Promise.all([
+      Pais.findOne({ where: { nombre: pais } }),
+      Area.findOne({ where: { nombre: area } }),
+      Ingenio.findOne({ where: { nombre: ingenio } }),
+    ])
+
+    const paisId = paisData.id
+    const areaId = areaData.id
+    const ingenioId = ingenioData.id
+
+    if (!paisId || !areaId || !ingenioId) {
+      return res
+        .status(400)
+        .json({ message: 'Pais, area o ingenio no encontrado' })
+    }
+
+    const empleo = await Empleo.create({
+      nombre,
+      descripcion,
+      ingenioId,
+      areaId,
+      paisId,
+      contacto,
+      usuarioId,
+      vigente: true,
+    })
+
+    if (archivos && archivos.length > 0) {
+      const archivosData = archivos.map((archivo) => ({
+        nombre: archivo.originalname,
+        url: archivo.path,
+        tipo: archivo.mimetype,
+        empleoId: empleo.id,
+      }))
+      await Archivo.bulkCreate(archivosData)
+    }
+
+    const empleoCreado = await Empleo.findByPk(empleo.id, {
+      include: [
+        {
+          model: User,
+          as: 'autor',
+          attributes: ['id', 'nombre', 'apellido', 'avatarUrl'],
+        },
+        {
+          model: Archivo,
+          as: 'archivos',
+        },
+      ],
+    })
+
+    res.status(201).json(empleoCreado)
+  } catch (error) {
+    console.error('Error al crear empleo:', error)
+    res.status(500).json({ message: 'Error al crear empleo', error })
+  }
+}
+
+// Implementar también updateEmpleo y deleteEmpleo similares a los de Post
+
+module.exports = {
+  getAllEmpleos,
+  getEmpleoById,
+  createEmpleo,
 }

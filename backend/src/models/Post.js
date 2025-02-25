@@ -31,7 +31,11 @@ Post.belongsTo(Area, { foreignKey: 'areaId', as: 'area' })
 Area.hasOne(Post, { foreignKey: 'areaId', as: 'posts' })
 
 // Asociaciones con Archivo
-Post.hasMany(Archivo, { foreignKey: 'postId', as: 'archivos' })
-Archivo.belongsTo(Post, { foreignKey: 'postId' })
+Post.hasMany(Archivo, {
+  foreignKey: 'postId',
+  as: 'archivos',
+  onDelete: 'CASCADE',
+})
+Archivo.belongsTo(Post, { foreignKey: 'postId', onDelete: 'CASCADE' })
 
 module.exports = Post

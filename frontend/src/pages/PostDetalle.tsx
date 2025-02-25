@@ -52,7 +52,6 @@ const PostDetalle: React.FC = () => {
     setEditMode(isEditing)
 
     if (isEditing && post) {
-      console.log('Inicializando datos de edición:', post) // Debug
       setEditedTitle(post.titulo)
       setEditedContent(post.contenido)
       setEditedArea(post.area.nombre)
@@ -66,7 +65,6 @@ const PostDetalle: React.FC = () => {
         const response = await axios.get(
           `${import.meta.env.VITE_API_URL}/helper/areas`
         )
-        console.log('Áreas cargadas:', response.data) // Debug
         setAreas(response.data.map((a: any) => a.nombre))
       } catch (error) {
         console.error('Error al cargar áreas:', error)
@@ -102,31 +100,10 @@ const PostDetalle: React.FC = () => {
         setEditedContent(response.data.contenido)
         setEditedArea(response.data.area.nombre)
       }
+
+      setLoading(false)
     } catch (err) {
       console.error('Error completo:', err)
-      setLoading(false)
-
-      if (axios.isAxiosError(err)) {
-        if (err.code === 'ECONNABORTED') {
-          setError('La petición tardó demasiado tiempo')
-        } else if (err.response) {
-          // Error de respuesta del servidor
-          console.error('Error de respuesta:', err.response.data)
-          setError(err.response.data.message || 'Error al cargar el post')
-        } else if (err.request) {
-          // Error de red
-          console.error('Error de red:', err.request)
-          setError('Error de conexión con el servidor')
-        } else {
-          // Otros errores
-          console.error('Error de configuración:', err.message)
-          setError('Error inesperado')
-        }
-      } else {
-        console.error('Error no Axios:', err)
-        setError('Error inesperado al cargar el post')
-      }
-    } finally {
       setLoading(false)
     }
   }
@@ -259,7 +236,7 @@ const PostDetalle: React.FC = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          mt: 4,
+          mt: 10,
         }}
       >
         <CircularProgress />
@@ -270,7 +247,7 @@ const PostDetalle: React.FC = () => {
 
   if (error) {
     return (
-      <Box sx={{ mt: 4, p: 2 }}>
+      <Box sx={{ mt: 10, p: 2 }}>
         <Typography color='error' variant='h6'>
           {error}
         </Typography>
@@ -287,7 +264,7 @@ const PostDetalle: React.FC = () => {
 
   if (!post) {
     return (
-      <Box sx={{ mt: 4, p: 2 }}>
+      <Box sx={{ mt: 10, p: 2 }}>
         <Typography>Post no encontrado</Typography>
         <Button
           variant='contained'
@@ -652,61 +629,177 @@ const PostDetalle: React.FC = () => {
                 </Card>
               )}
 
-              {/* Card de Comentarios */}
-              <Card>
-                <CardContent>
-                  <Typography variant='h6' sx={{ mb: 2 }}>
-                    Comentarios ({post.comments.length})
-                  </Typography>
+              {/* Sección de comentarios */}
+              <Box sx={{ mt: 4 }}>
+                <Typography variant='h6' gutterBottom>
+                  Comentarios ({post.comments.length})
+                </Typography>
 
+                {/* Formulario de nuevo comentario */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 2,
+                    mb: 3,
+                    p: 2,
+                    bgcolor: 'background.paper',
+                    borderRadius: 1,
+                    boxShadow: 1,
+                  }}
+                >
+                  <Avatar
+                    src={user?.avatarUrl || ''}
+                    alt={user?.nombre || 'Usuario'}
+                    sx={{ width: 40, height: 40 }}
+                  />
                   <TextField
                     fullWidth
-                    multiline
-                    rows={2}
+                    placeholder='Escribe un comentario...'
+                    variant='outlined'
+                    size='small'
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    placeholder='Escribe un comentario...'
-                    sx={{ mb: 2 }}
+                    multiline
+                    rows={2}
                     InputProps={{
                       endAdornment: (
                         <IconButton
                           onClick={handleCommentSubmit}
+                          disabled={!newComment.trim()}
                           color='primary'
+                          sx={{ ml: 1 }}
                         >
                           <SendIcon />
                         </IconButton>
                       ),
                     }}
                   />
+                </Box>
 
+                {/* Lista de comentarios */}
+                <Box sx={{ maxHeight: '600px', overflowY: 'auto', pr: 1 }}>
                   {post.comments.map((comment) => (
-                    <Card key={comment.id} sx={{ mb: 1, p: 2 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <Box>
-                          <Typography variant='subtitle2'>
-                            {comment.usuario.nombre} {comment.usuario.apellido}
-                          </Typography>
-                          <Typography>{comment.contenido}</Typography>
+                    <Card
+                      key={comment.id}
+                      sx={{
+                        mb: 2,
+                        bgcolor:
+                          user?.id === comment.usuarioId
+                            ? 'rgba(25, 118, 210, 0.04)'
+                            : 'background.paper',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          boxShadow: 2,
+                          '& .delete-button': {
+                            opacity: 1,
+                          },
+                        },
+                      }}
+                    >
+                      <CardContent sx={{ py: 1.5, px: 2 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 2,
+                          }}
+                        >
+                          <Avatar
+                            src={comment.usuario?.avatarUrl || ''}
+                            alt={comment.usuario?.nombre || 'Usuario'}
+                            sx={{ width: 36, height: 36 }}
+                          />
+
+                          <Box sx={{ flex: 1 }}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'flex-start',
+                              }}
+                            >
+                              <Box>
+                                <Typography
+                                  variant='subtitle2'
+                                  component='span'
+                                  sx={{
+                                    fontWeight: 600,
+                                    color: 'text.primary',
+                                  }}
+                                >
+                                  {comment.usuario?.nombre}{' '}
+                                  {comment.usuario?.apellido}
+                                </Typography>
+                                <Typography
+                                  variant='caption'
+                                  component='span'
+                                  sx={{ ml: 1, color: 'text.secondary' }}
+                                >
+                                  {formatDistanceToNow(
+                                    new Date(comment.createdAt),
+                                    {
+                                      locale: es,
+                                      addSuffix: true,
+                                    }
+                                  )}
+                                </Typography>
+                              </Box>
+
+                              {(user?.id === comment.usuarioId ||
+                                user?.id === post.usuarioId) && (
+                                <IconButton
+                                  size='small'
+                                  onClick={() =>
+                                    handleDeleteComment(comment.id)
+                                  }
+                                  className='delete-button'
+                                  sx={{
+                                    opacity: 0,
+                                    transition: 'opacity 0.2s',
+                                    color: 'error.main',
+                                    p: 0.5,
+                                    ml: 1,
+                                  }}
+                                >
+                                  <DeleteIcon fontSize='small' />
+                                </IconButton>
+                              )}
+                            </Box>
+
+                            <Typography
+                              variant='body2'
+                              sx={{
+                                mt: 0.5,
+                                whiteSpace: 'pre-wrap',
+                                color: 'text.primary',
+                                lineHeight: 1.5,
+                              }}
+                            >
+                              {comment.contenido}
+                            </Typography>
+                          </Box>
                         </Box>
-                        {user?.id === comment.usuarioId && (
-                          <IconButton
-                            size='small'
-                            color='error'
-                            onClick={() => handleDeleteComment(comment.id)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        )}
-                      </Box>
+                      </CardContent>
                     </Card>
                   ))}
-                </CardContent>
-              </Card>
+
+                  {post.comments.length === 0 && (
+                    <Box
+                      sx={{
+                        p: 3,
+                        textAlign: 'center',
+                        color: 'text.secondary',
+                        bgcolor: 'background.paper',
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography variant='body1'>
+                        No hay comentarios todavía. ¡Sé el primero en comentar!
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
 
               <Box
                 sx={{

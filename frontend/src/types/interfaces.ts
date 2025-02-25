@@ -61,9 +61,11 @@ export interface Comment {
   id: number
   contenido: string
   usuarioId: string
+  createdAt: string
   usuario: {
     nombre: string
     apellido: string
+    avatarUrl?: string
   }
 }
 

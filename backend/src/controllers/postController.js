@@ -346,7 +346,7 @@ const getPostById = async (req, res) => {
             {
               model: User,
               as: 'usuario',
-              attributes: ['id', 'nombre', 'apellido'],
+              attributes: ['id', 'nombre', 'apellido', 'avatarUrl'],
             },
           ],
         },

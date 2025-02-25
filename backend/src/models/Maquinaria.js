@@ -10,6 +10,10 @@ const Maquinaria = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    descripcion: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     foto: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -26,9 +30,29 @@ const Maquinaria = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    marca: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    modelo: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    anio: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    estado: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     vistas: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
+    },
+    vigente: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
     },
   },
   {
