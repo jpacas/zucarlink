@@ -17,74 +17,77 @@ import PolPrivacidad from './pages/PolPrivacidad'
 import TerminosUso from './pages/TerminosUso'
 import EditarPerfil from './components/EditarPerfil'
 import PostDetalle from './pages/PostDetalle'
+import { SnackbarProvider } from 'notistack'
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <Navbar />
-      <Routes>
-        <Route
-          path='/'
-          element={
-            <>
-              <CallToAction />
-              <Benefits />
-              <Footer />
-            </>
-          }
-        ></Route>
-        <Route path='/register' element={<Register />} />
-        <Route path='/login' element={<Login />} />
-        <Route path='/contact' element={<Contact />} />
-        <Route path='/services' element={<Servicios />} />
-        <Route path='/privacidad' element={<PolPrivacidad />} />
-        <Route path='/uso' element={<TerminosUso />} />
-        <Route
-          path='/directorio'
-          element={
-            <ProtectedRoute>
-              <Directorio />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/perfil/:id'
-          element={
-            <ProtectedRoute>
-              <Perfil />
-            </ProtectedRoute>
-          }
-        />
+    <SnackbarProvider maxSnack={3} autoHideDuration={3000} preventDuplicate>
+      <Router>
+        <Navbar />
+        <Routes>
+          <Route
+            path='/'
+            element={
+              <>
+                <CallToAction />
+                <Benefits />
+                <Footer />
+              </>
+            }
+          ></Route>
+          <Route path='/register' element={<Register />} />
+          <Route path='/login' element={<Login />} />
+          <Route path='/contact' element={<Contact />} />
+          <Route path='/services' element={<Servicios />} />
+          <Route path='/privacidad' element={<PolPrivacidad />} />
+          <Route path='/uso' element={<TerminosUso />} />
+          <Route
+            path='/directorio'
+            element={
+              <ProtectedRoute>
+                <Directorio />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/perfil/:id'
+            element={
+              <ProtectedRoute>
+                <Perfil />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path='/editar-perfil/:id'
-          element={
-            <ProtectedRoute>
-              <EditarPerfil />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path='/editar-perfil/:id'
+            element={
+              <ProtectedRoute>
+                <EditarPerfil />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path='/foro'
-          element={
-            <ProtectedRoute>
-              <Foro />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path='/zucaria'
-          element={
-            <ProtectedRoute>
-              <ZucarIA />
-            </ProtectedRoute>
-          }
-        />
-        <Route path='/foro/post/:postId' element={<PostDetalle />} />
-        {/* Otras rutas */}
-      </Routes>
-    </Router>
+          <Route
+            path='/foro'
+            element={
+              <ProtectedRoute>
+                <Foro />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/zucaria'
+            element={
+              <ProtectedRoute>
+                <ZucarIA />
+              </ProtectedRoute>
+            }
+          />
+          <Route path='/foro/post/:postId' element={<PostDetalle />} />
+          {/* Otras rutas */}
+        </Routes>
+      </Router>
+    </SnackbarProvider>
   )
 }
 

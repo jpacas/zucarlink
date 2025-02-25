@@ -312,21 +312,15 @@ const deleteComment = async (req, res) => {
 ///// Incrementar el número de vistas de un post ////////////
 ////////////////////////////////////////////////////////////
 
-const incrementViews = async (req, res) => {
-  const { postId } = req.params
-
+const incrementViews = async (postId) => {
   try {
     const post = await Post.findByPk(postId)
-    if (!post) return res.status(404).json({ message: 'Post no encontrado.' })
+    if (!post) return { message: 'Post no encontrado.' }
 
     post.views += 1
     await post.save()
-
-    res
-      .status(200)
-      .json({ message: 'Vistas incrementadas.', views: post.views })
   } catch (error) {
-    res.status(500).json({ message: 'Error al incrementar vistas.', error })
+    console.error('Error al incrementar vistas:', error)
   }
 }
 
@@ -338,7 +332,6 @@ const getPostById = async (req, res) => {
   try {
     const { postId } = req.params
 
-    // Buscar el post con todas sus relaciones
     const post = await Post.findByPk(postId, {
       include: [
         {
@@ -376,28 +369,91 @@ const getPostById = async (req, res) => {
       return res.status(404).json({ message: 'Post no encontrado' })
     }
 
-    // Obtener el post actualizado con el nuevo contador de vistas
-    const updatedPost = await Post.findByPk(postId, {
+    incrementViews(postId)
+
+    res.json(post)
+  } catch (error) {
+    console.error('Error al obtener el post:', error)
+    res.status(500).json({ message: 'Error al obtener el post', error })
+  }
+}
+
+const deletePost = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { usuarioId } = req.body
+
+    const post = await Post.findByPk(id)
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post no encontrado' })
+    }
+
+    if (post.usuarioId !== usuarioId) {
+      return res
+        .status(403)
+        .json({ message: 'No tienes permiso para eliminar este post' })
+    }
+
+    await post.destroy()
+    res.json({ message: 'Post eliminado correctamente' })
+  } catch (error) {
+    console.error('Error al eliminar el post:', error)
+    res.status(500).json({ message: 'Error al eliminar el post', error })
+  }
+}
+
+const updatePost = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { titulo, contenido, area, usuarioId, filesToDelete } = req.body
+    const archivos = req.files
+
+    const post = await Post.findByPk(id)
+    if (!post) {
+      return res.status(404).json({ message: 'Post no encontrado' })
+    }
+
+    if (post.usuarioId !== parseInt(usuarioId)) {
+      return res.status(403).json({ message: 'No autorizado' })
+    }
+
+    // Actualizar datos básicos
+    await post.update({
+      titulo,
+      contenido,
+      area,
+    })
+
+    // Eliminar archivos marcados
+    if (filesToDelete) {
+      const idsToDelete = JSON.parse(filesToDelete)
+      await Archivo.destroy({
+        where: {
+          id: idsToDelete,
+          postId: id,
+        },
+      })
+    }
+
+    // Agregar nuevos archivos
+    if (archivos && archivos.length > 0) {
+      const nuevosArchivos = archivos.map((archivo) => ({
+        nombre: archivo.originalname,
+        url: archivo.path, // Asegúrate de que esto coincida con tu lógica de almacenamiento
+        tipo: archivo.mimetype,
+        postId: id,
+      }))
+      await Archivo.bulkCreate(nuevosArchivos)
+    }
+
+    // Obtener post actualizado con todos sus datos
+    const postActualizado = await Post.findByPk(id, {
       include: [
         {
           model: User,
           as: 'autor',
           attributes: ['id', 'nombre', 'apellido', 'avatarUrl'],
-        },
-        {
-          model: Comment,
-          as: 'comments',
-          include: [
-            {
-              model: User,
-              as: 'usuario',
-              attributes: ['id', 'nombre', 'apellido'],
-            },
-          ],
-        },
-        {
-          model: Like,
-          as: 'likes',
         },
         {
           model: Area,
@@ -406,15 +462,16 @@ const getPostById = async (req, res) => {
         {
           model: Archivo,
           as: 'archivos',
-          attributes: ['id', 'nombre', 'url', 'tipo'],
         },
       ],
     })
 
-    res.json(updatedPost)
+    res.json(postActualizado)
   } catch (error) {
-    console.error('Error al obtener el post:', error)
-    res.status(500).json({ message: 'Error al obtener el post', error })
+    console.error('Error al actualizar el post:', error)
+    res
+      .status(500)
+      .json({ message: 'Error al actualizar el post', error: error.message })
   }
 }
 
@@ -426,4 +483,6 @@ module.exports = {
   incrementViews,
   deleteComment,
   getPostById,
+  deletePost,
+  updatePost,
 }

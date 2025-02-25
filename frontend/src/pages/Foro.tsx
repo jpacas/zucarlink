@@ -19,12 +19,15 @@ import {
   FormControl,
   InputLabel,
   InputAdornment,
+  Menu,
 } from '@mui/material'
 import ThumbUpIcon from '@mui/icons-material/ThumbUp'
 import CommentIcon from '@mui/icons-material/Comment'
 import DeleteIcon from '@mui/icons-material/Delete'
 import SendIcon from '@mui/icons-material/Send'
 import SortIcon from '@mui/icons-material/Sort'
+import EditIcon from '@mui/icons-material/Edit'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
@@ -33,6 +36,13 @@ import { Post, Area } from '../types/interfaces'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import AttachFileIcon from '@mui/icons-material/AttachFile'
+import { useSnackbar } from 'notistack'
+import Dialog from '@mui/material/Dialog'
+import DialogActions from '@mui/material/DialogActions'
+import DialogContent from '@mui/material/DialogContent'
+import DialogContentText from '@mui/material/DialogContentText'
+import DialogTitle from '@mui/material/DialogTitle'
+import WarningIcon from '@mui/icons-material/Warning'
 
 const Foro: React.FC = () => {
   const { user } = useAuth()
@@ -55,6 +65,12 @@ const Foro: React.FC = () => {
   const navigate = useNavigate()
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [ordenamiento, setOrdenamiento] = useState<string>('reciente')
+  const [anchorEl, setAnchorEl] = useState<{
+    [key: number]: HTMLElement | null
+  }>({})
+  const { enqueueSnackbar } = useSnackbar()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [postToDelete, setPostToDelete] = useState<number | null>(null)
 
   const fetchPosts = async () => {
     try {
@@ -265,447 +281,599 @@ const Foro: React.FC = () => {
     return formatDistanceToNow(parsedDate, { addSuffix: true, locale: es })
   }
 
+  const handleMenuClick = (
+    event: React.MouseEvent<HTMLElement>,
+    postId: number
+  ) => {
+    event.stopPropagation() // Prevenir navegación al post
+    setAnchorEl({ ...anchorEl, [postId]: event.currentTarget })
+  }
+
+  const handleMenuClose = (postId: number) => {
+    setAnchorEl({ ...anchorEl, [postId]: null })
+  }
+
+  const handleDeleteClick = (postId: number) => {
+    setPostToDelete(postId)
+    setDeleteDialogOpen(true)
+    handleMenuClose(postId)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!postToDelete) return
+
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_API_URL}/posts/${postToDelete}`,
+        {
+          data: { usuarioId: user?.id },
+        }
+      )
+
+      enqueueSnackbar('Post eliminado correctamente', {
+        variant: 'success',
+        anchorOrigin: { vertical: 'top', horizontal: 'center' },
+      })
+
+      fetchPosts()
+    } catch (error) {
+      console.error('Error al eliminar el post:', error)
+      enqueueSnackbar('Error al eliminar el post', {
+        variant: 'error',
+        anchorOrigin: { vertical: 'top', horizontal: 'center' },
+      })
+    } finally {
+      setDeleteDialogOpen(false)
+      setPostToDelete(null)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false)
+    setPostToDelete(null)
+  }
+
   return (
-    <Box
-      sx={{
-        backgroundColor: '#f9f9f9',
-        minHeight: '100vh',
-        padding: 3,
-        marginTop: '64px',
-      }}
-    >
-      <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
-        <Grid
-          item
-          sx={{
-            flex: { xs: '1 1 auto', md: '0 0 25%' },
-            maxWidth: { xs: '100%', md: '25%' },
-          }}
-        >
-          <Box
+    <>
+      <Box
+        sx={{
+          backgroundColor: '#f9f9f9',
+          minHeight: '100vh',
+          padding: 3,
+          marginTop: '64px',
+        }}
+      >
+        <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
+          <Grid
+            item
             sx={{
-              backgroundColor: '#fff',
-              padding: 3,
-              borderRadius: 2,
-              boxShadow: 3,
-              position: 'sticky',
-              top: '80px', // Mantiene la caja de filtros fija al hacer scroll
+              flex: { xs: '1 1 auto', md: '0 0 25%' },
+              maxWidth: { xs: '100%', md: '25%' },
             }}
           >
-            <Typography variant='h5' marginBottom={2} color='primary'>
-              Filtros
-            </Typography>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Ordenar por</InputLabel>
+            <Box
+              sx={{
+                backgroundColor: '#fff',
+                padding: 3,
+                borderRadius: 2,
+                boxShadow: 3,
+                position: 'sticky',
+                top: '80px', // Mantiene la caja de filtros fija al hacer scroll
+              }}
+            >
+              <Typography variant='h5' marginBottom={2} color='primary'>
+                Filtros
+              </Typography>
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Ordenar por</InputLabel>
+                <Select
+                  value={ordenamiento}
+                  onChange={(e) => setOrdenamiento(e.target.value)}
+                  startAdornment={
+                    <InputAdornment position='start'>
+                      <SortIcon />
+                    </InputAdornment>
+                  }
+                >
+                  <MenuItem value='reciente'>Más recientes</MenuItem>
+                  <MenuItem value='antiguo'>Más antiguos</MenuItem>
+                  <MenuItem value='vistas'>Más vistos</MenuItem>
+                  <MenuItem value='menosVistas'>Menos vistos</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                fullWidth
+                id='autor-filter'
+                name='autorFiltro'
+                label='Buscar por autor'
+                value={autorFiltro}
+                onChange={(e) => setAutorFiltro(e.target.value)}
+                variant='outlined'
+                margin='normal'
+                placeholder='Nombre o apellido'
+              />
+              <TextField
+                fullWidth
+                id='tema-filter'
+                name='temaFiltro'
+                label='Buscar por tema'
+                value={temaFiltro}
+                onChange={(e) => setTemaFiltro(e.target.value)}
+                variant='outlined'
+                margin='normal'
+              />
               <Select
-                value={ordenamiento}
-                onChange={(e) => setOrdenamiento(e.target.value)}
-                startAdornment={
-                  <InputAdornment position='start'>
-                    <SortIcon />
-                  </InputAdornment>
-                }
+                id='area-filter'
+                name='areaFiltro'
+                value={areaFiltro}
+                onChange={(e) => setAreaFiltro(e.target.value)}
+                displayEmpty
+                fullWidth
+                sx={{ marginTop: 2 }}
               >
-                <MenuItem value='reciente'>Más recientes</MenuItem>
-                <MenuItem value='antiguo'>Más antiguos</MenuItem>
-                <MenuItem value='vistas'>Más vistos</MenuItem>
-                <MenuItem value='menosVistas'>Menos vistos</MenuItem>
+                <MenuItem value=''>Todas las areas</MenuItem>
+                {areas.map((area) => (
+                  <MenuItem key={area} value={area}>
+                    {area}
+                  </MenuItem>
+                ))}
               </Select>
-            </FormControl>
-            <TextField
-              fullWidth
-              id='autor-filter'
-              name='autorFiltro'
-              label='Buscar por autor'
-              value={autorFiltro}
-              onChange={(e) => setAutorFiltro(e.target.value)}
-              variant='outlined'
-              margin='normal'
-              placeholder='Nombre o apellido'
-            />
-            <TextField
-              fullWidth
-              id='tema-filter'
-              name='temaFiltro'
-              label='Buscar por tema'
-              value={temaFiltro}
-              onChange={(e) => setTemaFiltro(e.target.value)}
-              variant='outlined'
-              margin='normal'
-            />
-            <Select
-              id='area-filter'
-              name='areaFiltro'
-              value={areaFiltro}
-              onChange={(e) => setAreaFiltro(e.target.value)}
-              displayEmpty
-              fullWidth
-              sx={{ marginTop: 2 }}
-            >
-              <MenuItem value=''>Todas las areas</MenuItem>
-              {areas.map((area) => (
-                <MenuItem key={area} value={area}>
-                  {area}
-                </MenuItem>
-              ))}
-            </Select>
-            <Button
-              onClick={() => setModalOpen(true)}
-              variant='contained'
-              color='primary'
-              fullWidth
-              sx={{ marginTop: 3 }}
-            >
-              Crear Nuevo Post
-            </Button>
-          </Box>
-        </Grid>
-        <Grid item sx={{ flex: { xs: '1 1 auto', md: '1' } }}>
-          {error && (
-            <Alert severity='error' sx={{ marginBottom: 3 }}>
-              {error}
-            </Alert>
-          )}
-          {isLoading ? (
-            <Box sx={{ textAlign: 'center', marginTop: 4 }}>
-              <CircularProgress />
+              <Button
+                onClick={() => setModalOpen(true)}
+                variant='contained'
+                color='primary'
+                fullWidth
+                sx={{ marginTop: 3 }}
+              >
+                Crear Nuevo Post
+              </Button>
             </Box>
-          ) : posts.length > 0 ? (
-            <Grid container spacing={3}>
-              {posts.map((post) => (
-                <Grid item xs={12} key={post.id}>
-                  <Card
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      padding: 2,
-                      boxShadow: 3,
-                    }}
-                  >
-                    <CardContent
-                      onClick={() => navigate(`/foro/post/${post.id}`)}
-                      sx={{ cursor: 'pointer' }}
+          </Grid>
+          <Grid item sx={{ flex: { xs: '1 1 auto', md: '1' } }}>
+            {error && (
+              <Alert severity='error' sx={{ marginBottom: 3 }}>
+                {error}
+              </Alert>
+            )}
+            {isLoading ? (
+              <Box sx={{ textAlign: 'center', marginTop: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : posts.length > 0 ? (
+              <Grid container spacing={3}>
+                {posts.map((post) => (
+                  <Grid item xs={12} key={post.id}>
+                    <Card
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        padding: 2,
+                        boxShadow: 3,
+                      }}
                     >
+                      <CardContent
+                        onClick={() => navigate(`/foro/post/${post.id}`)}
+                        sx={{ cursor: 'pointer' }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Typography variant='h5' sx={{ flex: 1 }}>
+                            {post.titulo}
+                            {post.archivos && post.archivos.length > 0 && (
+                              <AttachFileIcon
+                                sx={{
+                                  ml: 1,
+                                  fontSize: 20,
+                                  verticalAlign: 'middle',
+                                  color: 'text.secondary',
+                                }}
+                              />
+                            )}
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
+                          >
+                            <Typography variant='body1'>
+                              {post.autor.nombre} {post.autor.apellido}
+                            </Typography>
+                            <Avatar
+                              src={post.autor.avatarUrl || ''}
+                              alt={`${post.autor.nombre} ${post.autor.apellido}`}
+                              sx={{ width: 40, height: 40, cursor: 'pointer' }}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                navigate(`/perfil/${post.usuarioId}`)
+                              }}
+                            />
+                            {user?.id === post.usuarioId && (
+                              <>
+                                <IconButton
+                                  onClick={(e) => handleMenuClick(e, post.id)}
+                                  size='small'
+                                >
+                                  <MoreVertIcon />
+                                </IconButton>
+                                <Menu
+                                  anchorEl={anchorEl[post.id]}
+                                  open={Boolean(anchorEl[post.id])}
+                                  onClose={() => handleMenuClose(post.id)}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <MenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleMenuClose(post.id)
+                                      navigate(
+                                        `/foro/post/${post.id}?edit=true`
+                                      )
+                                    }}
+                                  >
+                                    <EditIcon sx={{ mr: 1 }} fontSize='small' />
+                                    Editar
+                                  </MenuItem>
+                                  <MenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleDeleteClick(post.id)
+                                    }}
+                                  >
+                                    <DeleteIcon
+                                      sx={{ mr: 1 }}
+                                      fontSize='small'
+                                      color='error'
+                                    />
+                                    Eliminar
+                                  </MenuItem>
+                                </Menu>
+                              </>
+                            )}
+                          </Box>
+                        </Box>
+                        <Typography variant='body1' sx={{ marginTop: 2 }}>
+                          {post.contenido}
+                        </Typography>
+                      </CardContent>
+
                       <Box
                         sx={{
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
+                          marginTop: 2,
                         }}
                       >
-                        <Typography variant='h5' sx={{ flex: 1 }}>
-                          {post.titulo}
-                          {post.archivos && post.archivos.length > 0 && (
-                            <AttachFileIcon
-                              sx={{
-                                ml: 1,
-                                fontSize: 20,
-                                verticalAlign: 'middle',
-                                color: 'text.secondary',
-                              }}
-                            />
-                          )}
+                        <Typography variant='body2' color='textSecondary'>
+                          {post.area.nombre} -{' '}
+                          {formatRelativeDate(post.createdAt)}
                         </Typography>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                          }}
-                        >
-                          <Typography variant='body1'>
-                            {post.autor.nombre} {post.autor.apellido}
-                          </Typography>
-                          <Avatar
-                            src={post.autor.avatarUrl || ''}
-                            alt={`${post.autor.nombre} ${post.autor.apellido}`}
-                            sx={{ width: 40, height: 40, cursor: 'pointer' }}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              navigate(`/perfil/${post.usuarioId}`)
-                            }}
-                          />
-                        </Box>
-                      </Box>
-                      <Typography variant='body1' sx={{ marginTop: 2 }}>
-                        {post.contenido}
-                      </Typography>
-                    </CardContent>
 
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginTop: 2,
-                      }}
-                    >
-                      <Typography variant='body2' color='textSecondary'>
-                        {post.area.nombre} -{' '}
-                        {formatRelativeDate(post.createdAt)}
-                      </Typography>
-
-                      <Box sx={{ display: 'flex', gap: 3 }}>
-                        {/* Contador de likes */}
-                        <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                        >
-                          <Typography variant='body2'>
-                            {post.likes?.filter((x) => x.activo).length}
-                          </Typography>
-                          <IconButton
-                            size='small'
-                            color={
-                              post.likes?.some(
-                                (like) =>
-                                  like.usuarioId === user?.id && like.activo
-                              )
-                                ? 'primary'
-                                : 'default'
-                            }
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleLikeToggle(post.id)
-                            }}
-                          >
-                            <ThumbUpIcon fontSize='small' />
-                          </IconButton>
-                        </Box>
-
-                        {/* Contador de comentarios */}
-                        <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                        >
-                          <Typography variant='body2'>
-                            {post.comments.length}
-                          </Typography>
-                          <IconButton
-                            size='small'
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              toggleComments(post.id)
-                            }}
-                            color={
-                              post.comments?.some(
-                                (comment) =>
-                                  comment.usuarioId === (user?.id ?? '')
-                              )
-                                ? 'primary'
-                                : 'default'
-                            }
-                          >
-                            <CommentIcon fontSize='small' />
-                          </IconButton>
-                        </Box>
-
-                        {/* Contador de vistas */}
-                        <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                        >
-                          <Typography variant='body2'>
-                            {post.views || 0}
-                          </Typography>
-                          <VisibilityIcon fontSize='small' color='action' />
-                        </Box>
-                      </Box>
-                    </Box>
-                    <Collapse in={expandedComments[post.id]}>
-                      <Box sx={{ padding: 2 }}>
-                        {post.comments.map((comment) => (
+                        <Box sx={{ display: 'flex', gap: 3 }}>
+                          {/* Contador de likes */}
                           <Box
-                            key={comment.id}
                             sx={{
                               display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'space-between',
-                              backgroundColor: '#f5f5f5',
-                              padding: 1,
-                              marginBottom: 1,
-                              borderRadius: 1,
+                              gap: 1,
                             }}
                           >
-                            <Typography sx={{ flexGrow: 1 }}>
-                              <strong>
-                                {comment.usuario
-                                  ? `${comment.usuario.nombre} ${comment.usuario.apellido}: `
-                                  : 'Usuario desconocido: '}
-                              </strong>
-                              {comment.contenido}
+                            <Typography variant='body2'>
+                              {post.likes?.filter((x) => x.activo).length}
                             </Typography>
-
-                            {user?.id === comment.usuarioId && (
-                              <IconButton
-                                color='error'
-                                size='small'
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleDeleteComment(post.id, comment.id)
-                                }}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            )}
+                            <IconButton
+                              size='small'
+                              color={
+                                post.likes?.some(
+                                  (like) =>
+                                    like.usuarioId === user?.id && like.activo
+                                )
+                                  ? 'primary'
+                                  : 'default'
+                              }
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleLikeToggle(post.id)
+                              }}
+                            >
+                              <ThumbUpIcon fontSize='small' />
+                            </IconButton>
                           </Box>
-                        ))}
-                        <TextField
-                          fullWidth
-                          multiline
-                          minRows={1} // Altura mínima de 1 línea
-                          maxRows={8} // Altura máxima de 8 líneas
-                          placeholder='Escribe un comentario'
-                          value={newComment[post.id] || ''}
-                          onChange={(e) =>
-                            handleCommentChange(post.id, e.target.value)
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault()
-                              handleCommentSubmit(post.id)
-                            }
-                          }}
-                          sx={{ marginTop: 2 }}
-                          InputProps={{
-                            endAdornment: (
-                              <InputAdornment position='end'>
+
+                          {/* Contador de comentarios */}
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
+                          >
+                            <Typography variant='body2'>
+                              {post.comments.length}
+                            </Typography>
+                            <IconButton
+                              size='small'
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleComments(post.id)
+                              }}
+                              color={
+                                post.comments?.some(
+                                  (comment) =>
+                                    comment.usuarioId === (user?.id ?? '')
+                                )
+                                  ? 'primary'
+                                  : 'default'
+                              }
+                            >
+                              <CommentIcon fontSize='small' />
+                            </IconButton>
+                          </Box>
+
+                          {/* Contador de vistas */}
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
+                          >
+                            <Typography variant='body2'>
+                              {post.views || 0}
+                            </Typography>
+                            <VisibilityIcon fontSize='small' color='action' />
+                          </Box>
+                        </Box>
+                      </Box>
+                      <Collapse in={expandedComments[post.id]}>
+                        <Box sx={{ padding: 2 }}>
+                          {post.comments.map((comment) => (
+                            <Box
+                              key={comment.id}
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                backgroundColor: '#f5f5f5',
+                                padding: 1,
+                                marginBottom: 1,
+                                borderRadius: 1,
+                              }}
+                            >
+                              <Typography sx={{ flexGrow: 1 }}>
+                                <strong>
+                                  {comment.usuario
+                                    ? `${comment.usuario.nombre} ${comment.usuario.apellido}: `
+                                    : 'Usuario desconocido: '}
+                                </strong>
+                                {comment.contenido}
+                              </Typography>
+
+                              {user?.id === comment.usuarioId && (
                                 <IconButton
+                                  color='error'
+                                  size='small'
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    handleCommentSubmit(post.id)
+                                    handleDeleteComment(post.id, comment.id)
                                   }}
-                                  color='primary'
                                 >
-                                  <SendIcon />
+                                  <DeleteIcon />
                                 </IconButton>
-                              </InputAdornment>
-                            ),
-                          }}
-                        />
-                      </Box>
-                    </Collapse>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          ) : (
-            <Typography variant='h6' textAlign='center' marginTop={4}>
-              No hay posts disponibles.
-            </Typography>
-          )}
-        </Grid>
-      </Grid>
-
-      {/* Modal para Crear Post */}
-      <Modal
-        open={modalOpen}
-        onClose={handleModalClose}
-        aria-labelledby='crear-post-modal'
-        aria-describedby='crear-post-descripcion'
-      >
-        <Box
-          sx={{
-            backgroundColor: '#fff',
-            maxWidth: 600,
-            margin: 'auto',
-            marginTop: '10%',
-            padding: 4,
-            borderRadius: 2,
-            boxShadow: 24,
-          }}
-        >
-          {modalError && (
-            <Alert severity='error' sx={{ marginBottom: 2 }}>
-              {modalError}
-            </Alert>
-          )}
-          <Typography id='crear-post-modal' variant='h5' marginBottom={2}>
-            Crear Nuevo Post
-          </Typography>
-          <TextField
-            label='Título'
-            fullWidth
-            value={titulo}
-            onChange={(e) => setTitulo(e.target.value)}
-            margin='normal'
-          />
-
-          <TextField
-            label='Contenido'
-            fullWidth
-            multiline
-            rows={4}
-            value={contenido}
-            onChange={(e) => setContenido(e.target.value)}
-            margin='normal'
-          />
-          <Select
-            value={area}
-            onChange={(e) => setArea(e.target.value)}
-            displayEmpty
-            fullWidth
-            sx={{ marginTop: 2 }}
-          >
-            <MenuItem value='' disabled>
-              Selecciona una categoría
-            </MenuItem>
-            {areas.map((cat) => (
-              <MenuItem key={cat} value={cat}>
-                {cat}
-              </MenuItem>
-            ))}
-          </Select>
-
-          <Button
-            component='label'
-            variant='outlined'
-            startIcon={<CloudUploadIcon />}
-            sx={{ mt: 2, mb: 2 }}
-            fullWidth
-          >
-            Subir Archivos
-            <input
-              type='file'
-              hidden
-              multiple
-              onChange={handleFileChange}
-              accept='image/*,video/*,.pdf,.doc,.docx'
-            />
-          </Button>
-
-          {selectedFiles.length > 0 && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant='subtitle2'>
-                Archivos seleccionados: {selectedFiles.length}
+                              )}
+                            </Box>
+                          ))}
+                          <TextField
+                            fullWidth
+                            multiline
+                            minRows={1} // Altura mínima de 1 línea
+                            maxRows={8} // Altura máxima de 8 líneas
+                            placeholder='Escribe un comentario'
+                            value={newComment[post.id] || ''}
+                            onChange={(e) =>
+                              handleCommentChange(post.id, e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault()
+                                handleCommentSubmit(post.id)
+                              }
+                            }}
+                            sx={{ marginTop: 2 }}
+                            InputProps={{
+                              endAdornment: (
+                                <InputAdornment position='end'>
+                                  <IconButton
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleCommentSubmit(post.id)
+                                    }}
+                                    color='primary'
+                                  >
+                                    <SendIcon />
+                                  </IconButton>
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+                        </Box>
+                      </Collapse>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            ) : (
+              <Typography variant='h6' textAlign='center' marginTop={4}>
+                No hay posts disponibles.
               </Typography>
-              {selectedFiles.map((file, index) => (
-                <Typography key={index} variant='body2'>
-                  {file.name}
-                </Typography>
-              ))}
-            </Box>
-          )}
+            )}
+          </Grid>
+        </Grid>
 
+        {/* Modal para Crear Post */}
+        <Modal
+          open={modalOpen}
+          onClose={handleModalClose}
+          aria-labelledby='crear-post-modal'
+          aria-describedby='crear-post-descripcion'
+        >
           <Box
             sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginTop: 3,
+              backgroundColor: '#fff',
+              maxWidth: 600,
+              margin: 'auto',
+              marginTop: '10%',
+              padding: 4,
+              borderRadius: 2,
+              boxShadow: 24,
             }}
           >
-            <Button onClick={handleModalClose} color='secondary'>
+            {modalError && (
+              <Alert severity='error' sx={{ marginBottom: 2 }}>
+                {modalError}
+              </Alert>
+            )}
+            <Typography id='crear-post-modal' variant='h5' marginBottom={2}>
+              Crear Nuevo Post
+            </Typography>
+            <TextField
+              label='Título'
+              fullWidth
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              margin='normal'
+            />
+
+            <TextField
+              label='Contenido'
+              fullWidth
+              multiline
+              rows={4}
+              value={contenido}
+              onChange={(e) => setContenido(e.target.value)}
+              margin='normal'
+            />
+            <Select
+              value={area}
+              onChange={(e) => setArea(e.target.value)}
+              displayEmpty
+              fullWidth
+              sx={{ marginTop: 2 }}
+            >
+              <MenuItem value='' disabled>
+                Selecciona una categoría
+              </MenuItem>
+              {areas.map((cat) => (
+                <MenuItem key={cat} value={cat}>
+                  {cat}
+                </MenuItem>
+              ))}
+            </Select>
+
+            <Button
+              component='label'
+              variant='outlined'
+              startIcon={<CloudUploadIcon />}
+              sx={{ mt: 2, mb: 2 }}
+              fullWidth
+            >
+              Subir Archivos
+              <input
+                type='file'
+                hidden
+                multiple
+                onChange={handleFileChange}
+                accept='image/*,video/*,.pdf,.doc,.docx'
+              />
+            </Button>
+
+            {selectedFiles.length > 0 && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant='subtitle2'>
+                  Archivos seleccionados: {selectedFiles.length}
+                </Typography>
+                {selectedFiles.map((file, index) => (
+                  <Typography key={index} variant='body2'>
+                    {file.name}
+                  </Typography>
+                ))}
+              </Box>
+            )}
+
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginTop: 3,
+              }}
+            >
+              <Button onClick={handleModalClose} color='secondary'>
+                Cancelar
+              </Button>
+              <Button
+                onClick={handlePostSubmit}
+                variant='contained'
+                color='primary'
+              >
+                Crear Post
+              </Button>
+            </Box>
+          </Box>
+        </Modal>
+
+        {/* Diálogo de confirmación */}
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={handleDeleteCancel}
+          PaperProps={{
+            sx: {
+              width: '100%',
+              maxWidth: '400px',
+              p: 1,
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              color: 'error.main',
+            }}
+          >
+            <WarningIcon color='error' />
+            Confirmar eliminación
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              ¿Estás seguro de que deseas eliminar este post? Esta acción no se
+              puede deshacer.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={handleDeleteCancel} variant='outlined'>
               Cancelar
             </Button>
             <Button
-              onClick={handlePostSubmit}
+              onClick={handleDeleteConfirm}
               variant='contained'
-              color='primary'
+              color='error'
+              startIcon={<DeleteIcon />}
             >
-              Crear Post
+              Eliminar
             </Button>
-          </Box>
-        </Box>
-      </Modal>
-    </Box>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </>
   )
 }
 
