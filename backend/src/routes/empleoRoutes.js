@@ -6,6 +6,7 @@ const upload = require('../middleware/multer')
 router.get('/', empleoController.getAllEmpleos)
 router.get('/:id', empleoController.getEmpleoById)
 router.post('/', upload.array('archivos'), empleoController.createEmpleo)
-// Agregar rutas para update y delete
+router.put('/:id', upload.array('archivos'), empleoController.updateEmpleo)
+router.delete('/:id', empleoController.deleteEmpleo)
 
 module.exports = router

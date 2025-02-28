@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
-const Pais = require('./Pais')
 
 const Proveedor = sequelize.define(
   'Proveedor',
@@ -38,8 +37,5 @@ const Proveedor = sequelize.define(
     timestamps: true,
   }
 )
-
-Proveedor.belongsTo(Pais, { foreignKey: 'paisId' })
-Pais.hasMany(Proveedor, { foreignKey: 'paisId' })
 
 module.exports = Proveedor

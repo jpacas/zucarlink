@@ -7,6 +7,7 @@ import CallToAction from './components/CallToAction'
 import Benefits from './components/Benefits'
 import Footer from './components/Footer'
 import Directorio from './pages/Directorio'
+import DirectorioSelector from './pages/DirectorioSelector'
 import ProtectedRoute from './components/ProtectedRoute'
 import Perfil from './components/Perfil'
 import Foro from './pages/Foro'
@@ -18,6 +19,9 @@ import TerminosUso from './pages/TerminosUso'
 import EditarPerfil from './components/EditarPerfil'
 import PostDetalle from './pages/PostDetalle'
 import { SnackbarProvider } from 'notistack'
+/* import Empleos from './pages/Empleos'
+import Maquinarias from './pages/Maquinarias' */
+import RegistroExitoso from './pages/RegistroExitoso'
 
 const App: React.FC = () => {
   return (
@@ -41,8 +45,19 @@ const App: React.FC = () => {
           <Route path='/services' element={<Servicios />} />
           <Route path='/privacidad' element={<PolPrivacidad />} />
           <Route path='/uso' element={<TerminosUso />} />
+          {/*   <Route path='/empleo' element={<Empleos />} />
+          <Route path='/maquinaria' element={<Maquinarias />} /> */}
+          <Route path='/registro-exitoso' element={<RegistroExitoso />} />
           <Route
             path='/directorio'
+            element={
+              <ProtectedRoute>
+                <DirectorioSelector />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path='/directorio/:tipo'
             element={
               <ProtectedRoute>
                 <Directorio />
@@ -57,7 +72,6 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
-
           <Route
             path='/editar-perfil/:id'
             element={
@@ -66,7 +80,6 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
-
           <Route
             path='/foro'
             element={
@@ -84,7 +97,6 @@ const App: React.FC = () => {
             }
           />
           <Route path='/foro/post/:postId' element={<PostDetalle />} />
-          {/* Otras rutas */}
         </Routes>
       </Router>
     </SnackbarProvider>

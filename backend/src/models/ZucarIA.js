@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
-const User = require('./User')
 
 const ZucarIA = sequelize.define(
   'ZucarIA',
@@ -14,8 +13,5 @@ const ZucarIA = sequelize.define(
     timestamps: true, // createdAt y updatedAt
   }
 )
-
-ZucarIA.belongsTo(User, { foreignKey: 'usuarioId', as: 'user' })
-User.hasMany(ZucarIA, { foreignKey: 'usuarioId', as: 'zucarIA' })
 
 module.exports = ZucarIA

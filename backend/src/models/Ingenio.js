@@ -1,6 +1,5 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
-const Pais = require('./Pais')
 
 const Ingenio = sequelize.define(
   'Ingenio',
@@ -9,7 +8,7 @@ const Ingenio = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    correo: {
+    email: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -27,8 +26,5 @@ const Ingenio = sequelize.define(
     tableName: 'Ingenios',
   }
 )
-
-Ingenio.belongsTo(Pais, { foreignKey: 'paisId', as: 'pais' })
-Pais.hasMany(Ingenio, { foreignKey: 'paisId', as: 'ingenios' })
 
 module.exports = Ingenio

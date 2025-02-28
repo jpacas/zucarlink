@@ -2,8 +2,12 @@ const Pais = require('../models/Pais')
 const Area = require('../models/Area')
 const Ingenio = require('../models/Ingenio')
 const Proveedor = require('../models/Proveedor')
-const s3 = require('../config/s3')
-//Enviar listado de paises disponibles
+const { uploadToS3 } = require('./serverFunctions')
+
+////////////////////////////////////////////////////////////
+///// Enviar listado de paises disponibles ////////////////
+///////////////////////////////////////////////////////////
+
 const getPaises = async (req, res) => {
   try {
     const paises = await Pais.findAll({ attributes: ['nombre'] })
@@ -19,7 +23,10 @@ const getPaises = async (req, res) => {
   }
 }
 
-//Enviar listado de areas disponibles
+////////////////////////////////////////////////////////////
+///// Enviar listado de areas disponibles ////////////////
+///////////////////////////////////////////////////////////
+
 const getAreas = async (req, res) => {
   try {
     const areas = await Area.findAll({ attributes: ['nombre'] })
@@ -35,7 +42,10 @@ const getAreas = async (req, res) => {
   }
 }
 
-//Enviar listado de proveedores disponibles
+////////////////////////////////////////////////////////////
+///// Enviar listado de proveedores disponibles ///////////
+///////////////////////////////////////////////////////////
+
 const getProveedores = async (req, res) => {
   try {
     const proveedores = await Proveedor.findAll({ attributes: ['nombre'] })
@@ -51,7 +61,10 @@ const getProveedores = async (req, res) => {
   }
 }
 
-//Enviar listado de ingenios disponibles
+////////////////////////////////////////////////////////////
+///// Enviar listado de ingenios disponibles ///////////////
+///////////////////////////////////////////////////////////
+
 const getIngenios = async (req, res) => {
   try {
     const response = await Ingenio.findAll({
@@ -81,9 +94,19 @@ const getIngenios = async (req, res) => {
   }
 }
 
+////////////////////////////////////////////////////////////
+///// Registrar nuevo proveedor ///////////////////////////
+///////////////////////////////////////////////////////////
+
 const registerProveedor = async (req, res) => {
+  const { nombre, pais, email, webpage, descripcion } = req.body
+
   try {
-    const { nombre, pais, email, webpage, descripcion } = req.body
+    const proveedorExistente = await Proveedor.findOne({ where: { email } })
+
+    if (proveedorExistente) {
+      return res.status(200).json(proveedorExistente)
+    }
 
     const paisId = await Pais.findOne({ where: { nombre: pais } })
 
@@ -112,7 +135,6 @@ const registerProveedor = async (req, res) => {
 
     res.status(201).json(proveedor)
   } catch (error) {
-    console.error('Error al registrar proveedor:', error)
     res.status(500).json({ error: error.message })
   }
 }

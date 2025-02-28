@@ -3,20 +3,25 @@ const Proveedor = require('../models/Proveedor')
 
 const createPaymentIntent = async (req, res) => {
   try {
-    const { plan, email } = req.body
+    const { plan, email, metadata } = req.body
 
     const amount = plan === 'monthly' ? 5000 : 50000 // $50 o $500 en centavos
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: 'usd',
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      payment_method_types: ['card'],
       metadata: {
+        ...metadata,
         email,
         plan,
       },
+      description: `Suscripción ${
+        plan === 'monthly' ? 'Mensual' : 'Anual'
+      } - ${email}`,
+      capture_method: 'automatic',
+      confirm: false,
+      setup_future_usage: 'off_session',
     })
 
     console.log('PaymentIntent created:', paymentIntent.id)

@@ -5,23 +5,7 @@ const Pais = require('../models/Pais')
 const Ingenio = require('../models/Ingenio')
 const Area = require('../models/Area')
 const Proveedor = require('../models/Proveedor')
-const s3 = require('../config/s3')
-
-////////////////////////////////////////////////////////////
-///// Upload to S3 /////////////////////////////////////////
-////////////////////////////////////////////////////////////
-
-const uploadToS3 = async (file) => {
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: `uploads/${Date.now()}-${file.originalname}`, //Ruta dentro del bucket
-    Body: file.buffer,
-    ContentType: file.mimetype,
-  }
-
-  const { Location } = await s3.upload(params).promise()
-  return Location // URL pública del archivo
-}
+const { uploadToS3 } = require('./serverFunctions')
 
 ////////////////////////////////////////////////////////////
 ///// Obtener todos los usuarios //////////////////////////
@@ -93,23 +77,21 @@ const getAllUsers = async (req, res) => {
 ///////////////////////////////////////////////////////////
 
 const registerUser = async (req, res) => {
-  try {
-    const {
-      nombre,
-      apellido,
-      pais,
-      email,
-      password,
-      area,
-      ingenio,
-      proveedor,
-      fecha_nacimiento,
-    } = req.body
+  const {
+    nombre,
+    apellido,
+    pais,
+    email,
+    password,
+    area,
+    ingenio,
+    proveedor,
+    fecha_nacimiento,
+  } = req.body
 
+  try {
     /**
      * 1. Validación de campos requeridos
-     * Usamos un arreglo con los nombres de los campos obligatorios y filtramos
-     * aquellos que no cumplen la condición de estar "rellenos".
      */
     const requiredFields = [
       'nombre',
@@ -202,14 +184,11 @@ const registerUser = async (req, res) => {
 
     /**
      * 6. Crear el usuario
-     * Nota: La relación de pais con paisId es algo que no se ve claro en el código original.
-     * Se asume que existe un `pais` y que en algún lugar se debe convertir a `paisId`,
-     * al igual que con `ingenioId` o `proveedorId`. Ajusta según tu modelo.
      */
     const user = await User.create({
       nombre,
       apellido,
-      paisId: foundPais.id, // o paisId si ya lo obtuviste de la BD
+      paisId: foundPais.id,
       email,
       password: hashedPassword,
       avatarUrl,
@@ -219,9 +198,17 @@ const registerUser = async (req, res) => {
       proveedorId: foundProveedor ? foundProveedor.id : null,
     })
 
+    // Desestructurar el objeto user excluyendo el password
+    const {
+      password: _,
+      createdAt,
+      updatedAt,
+      ...userWithoutPassword
+    } = user.toJSON()
+
     return res.status(201).json({
       message: 'Usuario registrado exitosamente',
-      user,
+      user: userWithoutPassword,
     })
   } catch (error) {
     console.error(error)
@@ -305,8 +292,6 @@ const updateUserProfile = async (req, res) => {
   const { id } = req.params
   const { nombre, apellido, pais, acercaDe, ingenio, area } = req.body
 
-  console.log(id)
-
   try {
     const usuario = await User.findByPk(id)
     if (!usuario) {
@@ -343,9 +328,18 @@ const updateUserProfile = async (req, res) => {
 
     await usuario.save()
 
-    res
-      .status(200)
-      .json({ message: 'Perfil actualizado exitosamente', usuario })
+    // Desestructurar el objeto user excluyendo el password
+    const {
+      password: _,
+      createdAt,
+      updatedAt,
+      ...userWithoutPassword
+    } = usuario.toJSON()
+
+    res.status(200).json({
+      message: 'Perfil actualizado exitosamente',
+      usuario: userWithoutPassword,
+    })
   } catch (error) {
     console.error(error)
     res.status(500).json({ message: 'Error al actualizar el perfil', error })
@@ -472,7 +466,20 @@ const loginUser = async (req, res) => {
         expiresIn: '1h',
       }
     )
-    res.status(200).json({ message: 'Login exitoso', token, user })
+
+    // Desestructurar el objeto user excluyendo el password
+    const {
+      password: _,
+      createdAt,
+      updatedAt,
+      ...userWithoutPassword
+    } = user.toJSON()
+
+    res.status(200).json({
+      message: 'Login exitoso',
+      token,
+      user: userWithoutPassword,
+    })
   } catch (error) {
     res.status(500).json({ message: 'Error al iniciar sesión', error })
   }

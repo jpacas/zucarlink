@@ -1,14 +1,13 @@
 export interface User {
-  id: string
+  id: number
   nombre: string
   apellido: string
   email: string
-  proveedor: string | null //no esta retornando esto desde el backend
   avatarUrl?: string
-  acercaDe: string
   pais: string
-  ingenio: string | null
-  area: string | null
+  ingenio?: string | null
+  area?: string | null
+  proveedor?: string | null
 }
 
 export interface Experience {
@@ -27,7 +26,13 @@ export type Pais = string
 
 export type Area = string
 
-export type Proveedor = string
+export interface Proveedor {
+  nombre: string
+  email: string
+  webpage?: string
+  logo?: string
+  descripcion?: string
+}
 
 export interface Archivo {
   id: number
@@ -77,11 +82,55 @@ export interface Like {
 export interface AuthContextType {
   isAuthenticated: boolean
   user: User | null
-  login: (user: User) => void // Acepta un objeto `User`
+  login: (user: User) => void
   logout: () => void
 }
 
 export interface Ingenio {
   nombre: string
   pais: string
+  correo?: string
+  webpage?: string
+}
+
+export interface Empleo {
+  id: number
+  nombre: string
+  descripcion: string
+  contacto: string
+  foto?: string
+  views: number
+  vigente: boolean
+  createdAt: string
+  updatedAt: string
+  usuarioId: number
+  paisId: number
+  ingenioId: number
+  areaId: number
+  autor?: User
+  archivos?: Archivo[]
+  pais?: { id: number; nombre: string }
+  area?: { id: number; nombre: string }
+  ingenio?: { id: number; nombre: string }
+}
+
+export interface Maquinaria {
+  id: number
+  nombre: string
+  descripcion: string
+  foto?: string
+  precio: number
+  contacto: string
+  marca: string
+  modelo: string
+  anio: number
+  vistas: number
+  vigente: boolean
+  usuarioid: number
+  paisid: number
+  pais?: { id: number; nombre: string }
+  usuario?: User
+  archivos?: Archivo[]
+  createdAt: Date
+  updatedAt: Date
 }

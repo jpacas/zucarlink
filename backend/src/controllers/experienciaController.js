@@ -1,10 +1,10 @@
-const Experiencia = require('../models/Experiencia') // Asegúrate de que la ruta al modelo es correcta
+const Experiencia = require('../models/Experiencia')
 const Ingenio = require('../models/Ingenio')
 const Area = require('../models/Area')
 const Pais = require('../models/Pais')
 
 // Obtener todas las experiencias de un usuario
-exports.getExperiencias = async (req, res) => {
+const getExperiencias = async (req, res) => {
   try {
     // Validar que el userId es válido
     if (!req.params.userId) {
@@ -14,7 +14,7 @@ exports.getExperiencias = async (req, res) => {
     }
 
     const response = await Experiencia.findAll({
-      where: { UserId: req.params.userId },
+      where: { usuarioId: req.params.userId },
       include: [
         {
           model: Ingenio,
@@ -34,10 +34,9 @@ exports.getExperiencias = async (req, res) => {
       ],
     })
 
+    // Si no hay experiencias, retornar array vacío
     if (response.length === 0) {
-      return res.status(404).json({
-        message: 'No se encontraron experiencias para este usuario.',
-      })
+      return res.json([])
     }
 
     const experiencias = response.map((experiencia) => ({
@@ -65,7 +64,7 @@ exports.getExperiencias = async (req, res) => {
 }
 
 // Crear una nueva experiencia
-exports.createExperiencia = async (req, res) => {
+const createExperiencia = async (req, res) => {
   try {
     const {
       ingenio,
@@ -130,7 +129,7 @@ exports.createExperiencia = async (req, res) => {
   }
 }
 
-exports.updateExperiencia = async (req, res) => {
+const updateExperiencia = async (req, res) => {
   const { expId } = req.params
   const {
     userId,
@@ -153,7 +152,7 @@ exports.updateExperiencia = async (req, res) => {
     }
 
     // Verificar que el usuario autenticado sea el dueño de la experiencia
-    if (experiencia.userId !== userId) {
+    if (experiencia.usuarioId !== userId) {
       return res
         .status(403)
         .json({ message: 'No tienes permiso para editar esta experiencia' })
@@ -225,7 +224,7 @@ exports.updateExperiencia = async (req, res) => {
   }
 }
 
-exports.deleteExperience = async (req, res) => {
+const deleteExperience = async (req, res) => {
   const { expId } = req.params
   const { userId } = req.body
 
@@ -239,7 +238,7 @@ exports.deleteExperience = async (req, res) => {
     }
 
     // Verifica que el usuario autenticado sea el dueño de la experiencia
-    if (experience.userId !== userId) {
+    if (experience.usuarioId !== userId) {
       return res
         .status(403)
         .json({ message: 'No tienes permiso para eliminar esta experiencia' })
@@ -251,4 +250,11 @@ exports.deleteExperience = async (req, res) => {
     console.error('Error al eliminar experiencia:', error)
     res.status(500).json({ message: 'Error interno del servidor' })
   }
+}
+
+module.exports = {
+  getExperiencias,
+  createExperiencia,
+  updateExperiencia,
+  deleteExperience,
 }

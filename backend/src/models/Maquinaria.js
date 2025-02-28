@@ -1,7 +1,5 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
-const User = require('./User')
-const Pais = require('./Pais')
 
 const Maquinaria = sequelize.define(
   'Maquinaria',
@@ -9,42 +7,36 @@ const Maquinaria = sequelize.define(
     nombre: {
       type: DataTypes.STRING,
       allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [3, 100],
+      },
     },
     descripcion: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [10, 2000],
+      },
     },
     foto: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    descripcion: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
     precio: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
+      validate: {
+        min: 0,
+      },
     },
     contacto: {
       type: DataTypes.STRING,
       allowNull: false,
-    },
-    marca: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    modelo: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    anio: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    estado: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      validate: {
+        notEmpty: true,
+      },
     },
     vistas: {
       type: DataTypes.INTEGER,
@@ -59,10 +51,5 @@ const Maquinaria = sequelize.define(
     timestamps: true,
   }
 )
-
-Maquinaria.belongsTo(User, { foreignKey: 'usuarioid', as: 'usuario' })
-User.hasMany(Maquinaria, { foreignKey: 'usuarioid', as: 'maquinaria' })
-Maquinaria.belongsTo(Pais, { foreignKey: 'paisid', as: 'pais' })
-Pais.hasMany(Maquinaria, { foreignKey: 'paisid', as: 'maquinaria' })
 
 module.exports = Maquinaria

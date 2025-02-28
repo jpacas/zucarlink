@@ -11,6 +11,7 @@ const experienciaRoutes = require('./routes/experienciaRoutes')
 const helperRoutes = require('./routes/helperRoutes')
 const paymentRoutes = require('./routes/paymentRoutes')
 const sequelize = require('./config/database')
+const setupAssociations = require('./models/associations')
 
 // Configuración General
 dotenv.config()
@@ -18,11 +19,15 @@ const app = express()
 app.use(cors({ origin: '*', credentials: true }))
 app.use(express.json())
 
-//Inicializando la base de datos
+//Inicializando la base de datos y las asociaciones
 sequelize
   .authenticate()
   //.sync({ alter: true })
-  .then(() => console.log('Conexión a la base de datos exitosa'))
+  .then(() => {
+    console.log('Conexión a la base de datos exitosa')
+    setupAssociations() // Configurar las asociaciones después de conectar
+    console.log('Asociaciones configuradas exitosamente')
+  })
   .catch((err) => console.error('Error al conectar la base de datos:', err))
 
 // Rutas

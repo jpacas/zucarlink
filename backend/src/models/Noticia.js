@@ -1,10 +1,9 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
-const User = require('./User')
-const Pais = require('./Pais')
 
-module.exports = (sequelize, DataTypes) => {
-  const Noticia = sequelize.define('Noticia', {
+const Noticia = sequelize.define(
+  'Noticia',
+  {
     titulo: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -30,18 +29,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
-  })
-
-  Noticia.associate = (models) => {
-    Noticia.belongsTo(models.User, {
-      foreignKey: 'usuarioId',
-      as: 'autor',
-    })
-    Noticia.hasMany(models.Archivo, {
-      foreignKey: 'noticiaId',
-      as: 'archivos',
-    })
+  },
+  {
+    timestamps: true,
   }
+)
 
-  return Noticia
-}
+module.exports = Noticia

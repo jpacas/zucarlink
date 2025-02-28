@@ -4,9 +4,8 @@ const Like = require('../models/Like')
 const Area = require('../models/Area')
 const Comment = require('../models/Comment')
 const Archivo = require('../models/Archivo')
-const s3 = require('../config/s3')
+const { uploadToS3 } = require('./serverFunctions')
 const { Op } = require('sequelize')
-const { v4: uuidv4 } = require('uuid')
 
 ////////////////////////////////////////////////////////////
 ///// Obtener todos los posts ///////////////////////////////
@@ -88,6 +87,67 @@ const getAllPosts = async (req, res) => {
 }
 
 ////////////////////////////////////////////////////////////
+///// Obtener un post por su ID ///////////////////////////
+////////////////////////////////////////////////////////////
+
+const getPostById = async (req, res) => {
+  try {
+    const { postId } = req.params
+
+    const post = await Post.findByPk(postId, {
+      attributes: ['id', 'titulo', 'contenido'],
+      include: [
+        {
+          model: User,
+          as: 'autor',
+          attributes: ['id', 'nombre', 'apellido', 'avatarUrl'],
+        },
+
+        {
+          model: Comment,
+          as: 'comments',
+          attributes: ['contenido'],
+          include: [
+            {
+              model: User,
+              as: 'usuario',
+              attributes: ['id', 'nombre', 'apellido', 'avatarUrl'],
+            },
+          ],
+        },
+
+        {
+          model: Like,
+          as: 'likes',
+          attributes: ['activo', 'usuarioId'],
+        },
+        {
+          model: Area,
+          as: 'area',
+          attributes: ['nombre'],
+        },
+        {
+          model: Archivo,
+          as: 'archivos',
+          attributes: ['nombre', 'url', 'tipo'],
+        },
+      ],
+    })
+
+    if (!post) {
+      return res.status(404).json({ message: 'Post no encontrado' })
+    }
+
+    incrementViews(postId)
+
+    res.json(post)
+  } catch (error) {
+    console.error('Error al obtener el post:', error)
+    res.status(500).json({ message: 'Error al obtener el post', error })
+  }
+}
+
+////////////////////////////////////////////////////////////
 ///// Crear un nuevo post //////////////////////////////////
 ////////////////////////////////////////////////////////////
 
@@ -122,28 +182,14 @@ const createPost = async (req, res) => {
 
     // Subir archivos a S3 si existen
     if (files && files.length > 0) {
-      const uploadPromises = files.map((file) => {
-        const fileExtension = file.originalname.split('.').pop()
-        const fileName = `posts/${newPost.id}/${uuidv4()}.${fileExtension}`
-
-        const params = {
-          Bucket: process.env.AWS_BUCKET_NAME,
-          Key: fileName,
-          Body: file.buffer,
-          ContentType: file.mimetype,
-        }
-
-        return s3
-          .upload(params)
-          .promise()
-          .then((data) => {
-            return Archivo.create({
-              nombre: file.originalname,
-              url: data.Location,
-              tipo: file.mimetype,
-              postId: newPost.id,
-            })
-          })
+      const uploadPromises = files.map(async (file) => {
+        const url = await uploadToS3(file)
+        return Archivo.create({
+          nombre: file.originalname,
+          url,
+          tipo: file.mimetype,
+          postId: newPost.id,
+        })
       })
 
       await Promise.all(uploadPromises)
@@ -163,6 +209,10 @@ const createPost = async (req, res) => {
     res.status(500).json({ message: 'Error al crear el post', error })
   }
 }
+
+////////////////////////////////////////////////////////////
+///// Toggle like a un post ///////////////////////////////
+////////////////////////////////////////////////////////////
 
 const toggleLike = async (req, res) => {
   const { postId } = req.params
@@ -325,58 +375,8 @@ const incrementViews = async (postId) => {
 }
 
 ////////////////////////////////////////////////////////////
-///// Obtener un post por su ID ///////////////////////////
+///// Eliminar un post ////////////////////////////////////
 ////////////////////////////////////////////////////////////
-
-const getPostById = async (req, res) => {
-  try {
-    const { postId } = req.params
-
-    const post = await Post.findByPk(postId, {
-      include: [
-        {
-          model: User,
-          as: 'autor',
-          attributes: ['id', 'nombre', 'apellido', 'avatarUrl'],
-        },
-        {
-          model: Comment,
-          as: 'comments',
-          include: [
-            {
-              model: User,
-              as: 'usuario',
-              attributes: ['id', 'nombre', 'apellido', 'avatarUrl'],
-            },
-          ],
-        },
-        {
-          model: Like,
-          as: 'likes',
-        },
-        {
-          model: Area,
-          as: 'area',
-        },
-        {
-          model: Archivo,
-          as: 'archivos',
-        },
-      ],
-    })
-
-    if (!post) {
-      return res.status(404).json({ message: 'Post no encontrado' })
-    }
-
-    incrementViews(postId)
-
-    res.json(post)
-  } catch (error) {
-    console.error('Error al obtener el post:', error)
-    res.status(500).json({ message: 'Error al obtener el post', error })
-  }
-}
 
 const deletePost = async (req, res) => {
   try {
@@ -402,6 +402,10 @@ const deletePost = async (req, res) => {
     res.status(500).json({ message: 'Error al eliminar el post', error })
   }
 }
+
+////////////////////////////////////////////////////////////
+///// Actualizar un post ///////////////////////////////////
+////////////////////////////////////////////////////////////
 
 const updatePost = async (req, res) => {
   try {
@@ -438,12 +442,17 @@ const updatePost = async (req, res) => {
 
     // Agregar nuevos archivos
     if (archivos && archivos.length > 0) {
-      const nuevosArchivos = archivos.map((archivo) => ({
-        nombre: archivo.originalname,
-        url: archivo.path, // Asegúrate de que esto coincida con tu lógica de almacenamiento
-        tipo: archivo.mimetype,
-        postId: id,
-      }))
+      const uploadPromises = archivos.map(async (archivo) => {
+        const url = await uploadToS3(archivo)
+        return {
+          nombre: archivo.originalname,
+          url: url,
+          tipo: archivo.mimetype,
+          postId: id,
+        }
+      })
+
+      const nuevosArchivos = await Promise.all(uploadPromises)
       await Archivo.bulkCreate(nuevosArchivos)
     }
 
@@ -462,6 +471,7 @@ const updatePost = async (req, res) => {
         {
           model: Archivo,
           as: 'archivos',
+          attributes: ['id', 'nombre', 'url', 'tipo'],
         },
       ],
     })

@@ -1,10 +1,6 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
 const { v4: uuidv4 } = require('uuid')
-const Ingenio = require('./Ingenio')
-const Pais = require('./Pais')
-const Area = require('./Area')
-const Proveedor = require('./Proveedor')
 
 const User = sequelize.define(
   'User',
@@ -48,25 +44,16 @@ const User = sequelize.define(
     },
     ingenioId: {
       type: DataTypes.INTEGER,
-      allowNull: true, // ✅ Debe permitir valores nulos
+      allowNull: true,
     },
     proveedorId: {
       type: DataTypes.INTEGER,
-      allowNull: true, // ✅ Debe permitir valores nulos
+      allowNull: true,
     },
   },
   {
     timestamps: true,
   }
 )
-
-User.belongsTo(Pais, { foreignKey: 'paisId', as: 'pais' })
-Pais.hasMany(User, { foreignKey: 'paisId' })
-User.belongsTo(Ingenio, { foreignKey: 'ingenioId', as: 'ingenio' })
-Ingenio.hasMany(User, { foreignKey: 'ingenioId' })
-User.belongsTo(Area, { foreignKey: 'areaId', as: 'area' })
-Area.hasMany(User, { foreignKey: 'areaId' })
-User.belongsTo(Proveedor, { foreignKey: 'proveedorId', as: 'proveedor' })
-Proveedor.hasMany(User, { foreignKey: 'proveedorId' })
 
 module.exports = User
