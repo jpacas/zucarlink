@@ -109,7 +109,7 @@ const createExperiencia = async (req, res) => {
 
     // Validar que fechaFin solo se almacene si actualmenteTrabaja es false
     const experiencia = await Experiencia.create({
-      userId,
+      usuarioId: userId,
       fechaInicio,
       fechaFin: actualmenteTrabaja ? null : fechaFin, // Si trabaja actualmente, fechaFin es null
       actualmenteTrabaja,
@@ -132,7 +132,7 @@ const createExperiencia = async (req, res) => {
 const updateExperiencia = async (req, res) => {
   const { expId } = req.params
   const {
-    userId,
+    usuarioId,
     ingenio,
     fechaInicio,
     fechaFin,
@@ -152,7 +152,7 @@ const updateExperiencia = async (req, res) => {
     }
 
     // Verificar que el usuario autenticado sea el dueño de la experiencia
-    if (experiencia.usuarioId !== userId) {
+    if (experiencia.usuarioId !== usuarioId) {
       return res
         .status(403)
         .json({ message: 'No tienes permiso para editar esta experiencia' })
@@ -165,11 +165,6 @@ const updateExperiencia = async (req, res) => {
     const ingenioId = ingenioObj ? Number(ingenioObj.id) : experiencia.ingenioId
     const areaId = areaObj ? Number(areaObj.id) : experiencia.areaId
     const paisId = paisObj ? Number(paisObj.id) : experiencia.paisId
-
-    console.log('IDs obtenidos antes de guardar:')
-    console.log('ingenioId:', ingenioId, typeof ingenioId)
-    console.log('areaId:', areaId, typeof areaId)
-    console.log('paisId:', paisId, typeof paisId)
 
     // Validaciones: si nunca tuvo estos valores y no se envían, es un error
     if (!areaObj && !experiencia.areaId) {
@@ -226,7 +221,7 @@ const updateExperiencia = async (req, res) => {
 
 const deleteExperience = async (req, res) => {
   const { expId } = req.params
-  const { userId } = req.body
+  const { usuarioId } = req.body
 
   try {
     const experience = await Experiencia.findOne({
@@ -238,7 +233,7 @@ const deleteExperience = async (req, res) => {
     }
 
     // Verifica que el usuario autenticado sea el dueño de la experiencia
-    if (experience.usuarioId !== userId) {
+    if (experience.usuarioId !== usuarioId) {
       return res
         .status(403)
         .json({ message: 'No tienes permiso para eliminar esta experiencia' })

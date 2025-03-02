@@ -21,5 +21,6 @@ router.post('/:postId/view', incrementViews)
 router.delete('/:postId/comment/:commentId', deleteComment)
 router.get('/:postId', getPostById)
 router.delete('/:id', deletePost)
-router.put('/:id', updatePost)
+router.put('/:id', upload.array('archivos', 5), updatePost)
+
 module.exports = router

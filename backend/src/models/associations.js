@@ -17,20 +17,20 @@ const ZucarIA = require('./ZucarIA')
 const setupAssociations = () => {
   // Relaciones de User
   User.belongsTo(Pais, { foreignKey: 'paisId', as: 'pais' })
-  Pais.hasMany(User, { foreignKey: 'paisId' })
+  Pais.hasMany(User, { foreignKey: 'paisId', as: 'users' })
 
   User.belongsTo(Ingenio, { foreignKey: 'ingenioId', as: 'ingenio' })
-  Ingenio.hasMany(User, { foreignKey: 'ingenioId' })
+  Ingenio.hasMany(User, { foreignKey: 'ingenioId', as: 'users' })
 
   User.belongsTo(Area, { foreignKey: 'areaId', as: 'area' })
-  Area.hasMany(User, { foreignKey: 'areaId' })
+  Area.hasMany(User, { foreignKey: 'areaId', as: 'users' })
 
   User.belongsTo(Proveedor, { foreignKey: 'proveedorId', as: 'proveedor' })
-  Proveedor.hasMany(User, { foreignKey: 'proveedorId' })
+  Proveedor.hasMany(User, { foreignKey: 'proveedorId', as: 'users' })
 
   // Relaciones de Proveedor
   Proveedor.belongsTo(Pais, { foreignKey: 'paisId', as: 'pais' })
-  Pais.hasMany(Proveedor, { foreignKey: 'paisId' })
+  Pais.hasMany(Proveedor, { foreignKey: 'paisId', as: 'proveedor' })
 
   // Relaciones de Ingenio
   Ingenio.belongsTo(Pais, { foreignKey: 'paisId', as: 'pais' })
@@ -38,23 +38,23 @@ const setupAssociations = () => {
 
   // Relaciones de Experiencia
   Experiencia.belongsTo(User, { foreignKey: 'usuarioId', as: 'usuario' })
-  User.hasMany(Experiencia, { foreignKey: 'usuarioId' })
+  User.hasMany(Experiencia, { foreignKey: 'usuarioId', as: 'experiencias' })
 
   Experiencia.belongsTo(Ingenio, { foreignKey: 'ingenioId', as: 'ingenio' })
-  Ingenio.hasMany(Experiencia, { foreignKey: 'ingenioId' })
+  Ingenio.hasMany(Experiencia, { foreignKey: 'ingenioId', as: 'experiencias' })
 
   Experiencia.belongsTo(Area, { foreignKey: 'areaId', as: 'area' })
-  Area.hasMany(Experiencia, { foreignKey: 'areaId' })
+  Area.hasMany(Experiencia, { foreignKey: 'areaId', as: 'experiencias' })
 
   Experiencia.belongsTo(Pais, { foreignKey: 'paisId', as: 'pais' })
-  Pais.hasMany(Experiencia, { foreignKey: 'paisId' })
+  Pais.hasMany(Experiencia, { foreignKey: 'paisId', as: 'experiencias' })
 
   // Relaciones de Post
   Post.belongsTo(User, { foreignKey: 'usuarioId', as: 'autor' })
-  User.hasMany(Post, { foreignKey: 'usuarioId' })
+  User.hasMany(Post, { foreignKey: 'usuarioId', as: 'posts' })
 
   Post.belongsTo(Area, { foreignKey: 'areaId', as: 'area' })
-  Area.hasMany(Post, { foreignKey: 'areaId' })
+  Area.hasMany(Post, { foreignKey: 'areaId', as: 'posts' })
 
   // Relaciones de Comment
   Comment.belongsTo(User, { foreignKey: 'usuarioId', as: 'usuario' })
@@ -78,26 +78,26 @@ const setupAssociations = () => {
 
   // Relaciones de Empleo
   Empleo.belongsTo(User, { foreignKey: 'usuarioId', as: 'autor' })
-  User.hasMany(Empleo, { foreignKey: 'usuarioId' })
+  User.hasMany(Empleo, { foreignKey: 'usuarioId', as: 'empleos' })
 
   Empleo.belongsTo(Ingenio, { foreignKey: 'ingenioId', as: 'ingenio' })
-  Ingenio.hasMany(Empleo, { foreignKey: 'ingenioId' })
+  Ingenio.hasMany(Empleo, { foreignKey: 'ingenioId', as: 'empleos' })
 
   Empleo.belongsTo(Area, { foreignKey: 'areaId', as: 'area' })
-  Area.hasMany(Empleo, { foreignKey: 'areaId' })
+  Area.hasMany(Empleo, { foreignKey: 'areaId', as: 'empleos' })
 
   Empleo.belongsTo(Pais, { foreignKey: 'paisId', as: 'pais' })
-  Pais.hasMany(Empleo, { foreignKey: 'paisId' })
+  Pais.hasMany(Empleo, { foreignKey: 'paisId', as: 'empleos' })
 
   // Relaciones de Archivo
-  Archivo.belongsTo(Post, { foreignKey: 'postId' })
+  Archivo.belongsTo(Post, { foreignKey: 'postId', as: 'post' })
   Post.hasMany(Archivo, {
     foreignKey: 'postId',
     as: 'archivos',
     onDelete: 'CASCADE',
   })
 
-  Archivo.belongsTo(Empleo, { foreignKey: 'empleoId' })
+  Archivo.belongsTo(Empleo, { foreignKey: 'empleoId', as: 'empleos' })
   Empleo.hasMany(Archivo, {
     foreignKey: 'empleoId',
     as: 'archivos',
@@ -123,23 +123,23 @@ const setupAssociations = () => {
 
   // Relaciones de Maquinaria
   Maquinaria.belongsTo(User, { foreignKey: 'usuarioId', as: 'autor' })
-  User.hasMany(Maquinaria, { foreignKey: 'usuarioId' })
+  User.hasMany(Maquinaria, { foreignKey: 'usuarioId', as: 'maquinarias' })
 
   Maquinaria.belongsTo(Area, { foreignKey: 'areaId', as: 'area' })
-  Area.hasMany(Maquinaria, { foreignKey: 'areaId' })
+  Area.hasMany(Maquinaria, { foreignKey: 'areaId', as: 'maquinarias' })
 
   Maquinaria.belongsTo(Pais, { foreignKey: 'paisId', as: 'pais' })
-  Pais.hasMany(Maquinaria, { foreignKey: 'paisId' })
+  Pais.hasMany(Maquinaria, { foreignKey: 'paisId', as: 'maquinarias' })
 
   // Relaciones de Noticia
   Noticia.belongsTo(User, { foreignKey: 'usuarioId', as: 'autor' })
-  User.hasMany(Noticia, { foreignKey: 'usuarioId' })
+  User.hasMany(Noticia, { foreignKey: 'usuarioId', as: 'noticias' })
 
   Noticia.belongsTo(Area, { foreignKey: 'areaId', as: 'area' })
-  Area.hasMany(Noticia, { foreignKey: 'areaId' })
+  Area.hasMany(Noticia, { foreignKey: 'areaId', as: 'noticias' })
 
   // Relaciones de ZucarIA
-  ZucarIA.belongsTo(User, { foreignKey: 'usuarioId', as: 'user' })
+  ZucarIA.belongsTo(User, { foreignKey: 'usuarioId', as: 'users' })
   User.hasMany(ZucarIA, { foreignKey: 'usuarioId', as: 'zucarIA' })
 }
 

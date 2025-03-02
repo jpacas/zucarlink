@@ -1,5 +1,5 @@
 export interface User {
-  id: number
+  id: string
   nombre: string
   apellido: string
   email: string
@@ -8,6 +8,7 @@ export interface User {
   ingenio?: string | null
   area?: string | null
   proveedor?: string | null
+  acercaDe?: string | null
 }
 
 export interface Experience {
@@ -68,6 +69,7 @@ export interface Comment {
   usuarioId: string
   createdAt: string
   usuario: {
+    id: string
     nombre: string
     apellido: string
     avatarUrl?: string

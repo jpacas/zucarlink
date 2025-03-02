@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import axios from 'axios'
+import { formatDistanceToNow } from 'date-fns'
+import { es } from 'date-fns/locale'
 import {
   Box,
   Card,
@@ -15,6 +18,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Snackbar,
+  Alert,
 } from '@mui/material'
 import ThumbUpIcon from '@mui/icons-material/ThumbUp'
 import SendIcon from '@mui/icons-material/Send'
@@ -24,9 +29,6 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import DescriptionIcon from '@mui/icons-material/Description'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import { useAuth } from '../context/AuthContext'
-import axios from 'axios'
-import { formatDistanceToNow } from 'date-fns'
-import { es } from 'date-fns/locale'
 import { Post } from '../types/interfaces'
 
 const PostDetalle: React.FC = () => {
@@ -45,6 +47,15 @@ const PostDetalle: React.FC = () => {
   const [editedContent, setEditedContent] = useState('')
   const [editedArea, setEditedArea] = useState('')
   const [areas, setAreas] = useState<string[]>([])
+  const [openSnackbar, setOpenSnackbar] = useState(false)
+  const [visibleFiles, setVisibleFiles] = useState<Array<any>>([])
+
+  // Efecto para inicializar visibleFiles cuando el post se carga
+  useEffect(() => {
+    if (post?.archivos) {
+      setVisibleFiles(post.archivos)
+    }
+  }, [post?.archivos])
 
   // Verificar modo edición y cargar datos iniciales
   useEffect(() => {
@@ -99,6 +110,11 @@ const PostDetalle: React.FC = () => {
         setEditedTitle(response.data.titulo)
         setEditedContent(response.data.contenido)
         setEditedArea(response.data.area.nombre)
+      }
+
+      // Inicializar visibleFiles cuando el post se carga
+      if (response.data.archivos) {
+        setVisibleFiles(response.data.archivos)
       }
 
       setLoading(false)
@@ -190,6 +206,7 @@ const PostDetalle: React.FC = () => {
 
   const handleFileDelete = (fileId: number) => {
     setFilesToDelete((prev) => [...prev, fileId])
+    setVisibleFiles((prev) => prev.filter((archivo) => archivo.id !== fileId))
   }
 
   const handleRemoveNewFile = (index: number) => {
@@ -202,10 +219,12 @@ const PostDetalle: React.FC = () => {
       formData.append('titulo', editedTitle)
       formData.append('contenido', editedContent)
       formData.append('area', editedArea)
-      formData.append('usuarioId', user?.id || '')
-      formData.append('filesToDelete', JSON.stringify(filesToDelete))
+      formData.append('usuarioId', user?.id?.toString() || '')
 
-      // Agregar nuevos archivos
+      // Asegurarse de que filesToDelete sea un array válido
+      const filesToDeleteArray = Array.from(new Set(filesToDelete))
+      formData.append('filesToDelete', JSON.stringify(filesToDeleteArray))
+
       selectedFiles.forEach((file) => {
         formData.append('archivos', file)
       })
@@ -222,6 +241,9 @@ const PostDetalle: React.FC = () => {
 
       setPost(response.data)
       setEditMode(false)
+      setOpenSnackbar(true)
+      setFilesToDelete([])
+      setSelectedFiles([])
       navigate(`/foro/post/${postId}`)
     } catch (error) {
       console.error('Error al actualizar el post:', error)
@@ -292,6 +314,10 @@ const PostDetalle: React.FC = () => {
           {editMode ? (
             <Box
               component='form'
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleUpdate()
+              }}
               sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
             >
               <TextField
@@ -325,41 +351,47 @@ const PostDetalle: React.FC = () => {
                 </Select>
               </FormControl>
 
-              {/* Archivos existentes */}
-              {post?.archivos && post.archivos.length > 0 && (
+              {/* Sección de archivos existentes */}
+              {visibleFiles.length > 0 && (
                 <Box>
                   <Typography variant='subtitle1' gutterBottom>
-                    Archivos actuales
+                    Archivos actuales ({visibleFiles.length})
                   </Typography>
                   <Grid container spacing={1}>
-                    {post.archivos.map(
-                      (archivo) =>
-                        !filesToDelete.includes(archivo.id) && (
-                          <Grid item xs={12} sm={6} md={4} key={archivo.id}>
-                            <Card variant='outlined'>
-                              <CardContent sx={{ p: 1 }}>
-                                <Box
-                                  sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                  }}
-                                >
-                                  <Typography variant='body2' noWrap>
-                                    {archivo.nombre}
-                                  </Typography>
-                                  <IconButton
-                                    size='small'
-                                    onClick={() => handleFileDelete(archivo.id)}
-                                  >
-                                    <DeleteIcon fontSize='small' />
-                                  </IconButton>
-                                </Box>
-                              </CardContent>
-                            </Card>
-                          </Grid>
-                        )
-                    )}
+                    {visibleFiles.map((archivo) => (
+                      <Grid item xs={12} sm={6} md={4} key={archivo.id}>
+                        <Card variant='outlined'>
+                          <CardContent sx={{ p: 1 }}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                              }}
+                            >
+                              <Typography variant='body2' noWrap>
+                                {archivo.nombre}
+                              </Typography>
+                              <IconButton
+                                size='small'
+                                onClick={() => handleFileDelete(archivo.id)}
+                                color='error'
+                                sx={{
+                                  '&:hover': {
+                                    backgroundColor: 'error.light',
+                                    '& .MuiSvgIcon-root': {
+                                      color: 'white',
+                                    },
+                                  },
+                                }}
+                              >
+                                <DeleteIcon fontSize='small' />
+                              </IconButton>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    ))}
                   </Grid>
                 </Box>
               )}
@@ -429,7 +461,7 @@ const PostDetalle: React.FC = () => {
                 >
                   Cancelar
                 </Button>
-                <Button variant='contained' onClick={handleUpdate}>
+                <Button variant='contained' type='submit'>
                   Guardar cambios
                 </Button>
               </Box>
@@ -481,12 +513,12 @@ const PostDetalle: React.FC = () => {
                       <Typography>{post.views} vistas</Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Typography>
-                          {post.likes.filter((x) => x.activo).length}
+                          {post.likes?.filter((x) => x.activo).length || 0}
                         </Typography>
                         <IconButton
                           onClick={handleLikeToggle}
                           color={
-                            post.likes.some(
+                            post.likes?.some(
                               (like) =>
                                 like.usuarioId === user?.id && like.activo
                             )
@@ -632,7 +664,7 @@ const PostDetalle: React.FC = () => {
               {/* Sección de comentarios */}
               <Box sx={{ mt: 4 }}>
                 <Typography variant='h6' gutterBottom>
-                  Comentarios ({post.comments.length})
+                  Comentarios ({post.comments?.length})
                 </Typography>
 
                 {/* Formulario de nuevo comentario */}
@@ -678,13 +710,13 @@ const PostDetalle: React.FC = () => {
 
                 {/* Lista de comentarios */}
                 <Box sx={{ maxHeight: '600px', overflowY: 'auto', pr: 1 }}>
-                  {post.comments.map((comment) => (
+                  {post.comments?.map((comment) => (
                     <Card
                       key={comment.id}
                       sx={{
                         mb: 2,
                         bgcolor:
-                          user?.id === comment.usuarioId
+                          user?.id === comment.usuario.id
                             ? 'rgba(25, 118, 210, 0.04)'
                             : 'background.paper',
                         transition: 'all 0.2s',
@@ -745,7 +777,7 @@ const PostDetalle: React.FC = () => {
                                 </Typography>
                               </Box>
 
-                              {(user?.id === comment.usuarioId ||
+                              {(user?.id === comment.usuario.id ||
                                 user?.id === post.usuarioId) && (
                                 <IconButton
                                   size='small'
@@ -783,7 +815,7 @@ const PostDetalle: React.FC = () => {
                     </Card>
                   ))}
 
-                  {post.comments.length === 0 && (
+                  {post.comments?.length === 0 && (
                     <Box
                       sx={{
                         p: 3,
@@ -809,14 +841,39 @@ const PostDetalle: React.FC = () => {
                   mt: 2,
                 }}
               >
-                <Button variant='contained' onClick={() => setEditMode(true)}>
-                  Editar Post
-                </Button>
+                {user?.id === post.usuarioId && (
+                  <Button
+                    variant='contained'
+                    onClick={() => {
+                      setEditedTitle(post.titulo)
+                      setEditedContent(post.contenido)
+                      setEditedArea(post.area.nombre)
+                      setEditMode(true)
+                    }}
+                  >
+                    Editar Post
+                  </Button>
+                )}
               </Box>
             </>
           )}
         </CardContent>
       </Card>
+
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setOpenSnackbar(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setOpenSnackbar(false)}
+          severity='success'
+          sx={{ width: '100%' }}
+        >
+          Post actualizado exitosamente
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

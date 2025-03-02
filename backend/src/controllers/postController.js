@@ -95,7 +95,16 @@ const getPostById = async (req, res) => {
     const { postId } = req.params
 
     const post = await Post.findByPk(postId, {
-      attributes: ['id', 'titulo', 'contenido'],
+      attributes: [
+        'id',
+        'titulo',
+        'contenido',
+        'createdAt',
+        'updatedAt',
+        'views',
+        'areaId',
+        'usuarioId',
+      ],
       include: [
         {
           model: User,
@@ -106,7 +115,7 @@ const getPostById = async (req, res) => {
         {
           model: Comment,
           as: 'comments',
-          attributes: ['contenido'],
+          attributes: ['id', 'contenido', 'createdAt'],
           include: [
             {
               model: User,
@@ -129,7 +138,7 @@ const getPostById = async (req, res) => {
         {
           model: Archivo,
           as: 'archivos',
-          attributes: ['nombre', 'url', 'tipo'],
+          attributes: ['id', 'nombre', 'url', 'tipo'],
         },
       ],
     })
@@ -418,15 +427,23 @@ const updatePost = async (req, res) => {
       return res.status(404).json({ message: 'Post no encontrado' })
     }
 
-    if (post.usuarioId !== parseInt(usuarioId)) {
+    if (post.usuarioId !== usuarioId) {
       return res.status(403).json({ message: 'No autorizado' })
+    }
+
+    const areaFound = await Area.findOne({
+      where: { nombre: area },
+    })
+
+    if (!areaFound) {
+      return res.status(404).json({ message: 'El área especificada no existe' })
     }
 
     // Actualizar datos básicos
     await post.update({
       titulo,
       contenido,
-      area,
+      areaId: areaFound.id,
     })
 
     // Eliminar archivos marcados
@@ -472,6 +489,19 @@ const updatePost = async (req, res) => {
           model: Archivo,
           as: 'archivos',
           attributes: ['id', 'nombre', 'url', 'tipo'],
+        },
+        {
+          model: Like,
+          as: 'likes',
+          attributes: ['activo', 'usuarioId'],
+        },
+        {
+          model: Comment,
+          as: 'comments',
+          attributes: ['contenido', 'createdAt'],
+          include: [
+            { model: User, as: 'usuario', attributes: ['nombre', 'apellido'] },
+          ],
         },
       ],
     })

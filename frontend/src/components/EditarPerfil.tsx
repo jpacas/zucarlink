@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDropzone } from 'react-dropzone'
-
 import {
   Box,
   TextField,
@@ -12,6 +11,9 @@ import {
   Avatar,
   Autocomplete,
   CircularProgress,
+  Container,
+  Paper,
+  Grid,
 } from '@mui/material'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
@@ -183,220 +185,436 @@ const EditarPerfil: React.FC = () => {
 
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-        <CircularProgress />
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        }}
+      >
+        <CircularProgress sx={{ color: '#ff6347' }} />
       </Box>
     )
   }
 
   return (
     <Box
-      sx={{ maxWidth: '800px', margin: 'auto', padding: 4, marginTop: '64px' }}
+      sx={{
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        minHeight: '100vh',
+        pt: 10,
+        pb: 8,
+      }}
     >
-      {/* Formulario de perfil */}
-      <Box
-        sx={{ backgroundColor: '#fff', borderRadius: 2, boxShadow: 3, p: 3 }}
-      >
-        <Typography variant='h4' mb={3} textAlign='center'>
-          Editar Perfil
-        </Typography>
-        <Box
-          {...getRootProps()}
+      <Container maxWidth='lg'>
+        <Paper
+          elevation={0}
           sx={{
-            textAlign: 'center',
-            padding: 2,
-            border: '2px dashed gray',
-            borderRadius: 2,
-            cursor: 'pointer',
-            marginTop: 2,
-            marginBottom: 4,
-            backgroundColor: '#fafafa',
-            transition: 'border .24s ease-in-out',
-            maxWidth: '400px',
-            margin: '2rem auto',
-            '&:hover': {
-              border: '2px dashed #1976d2',
-              backgroundColor: '#f0f7ff',
-            },
+            backgroundColor: '#fff',
+            borderRadius: 3,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+            p: 4,
+            mb: 4,
           }}
         >
-          <input {...getInputProps()} />
-          <Typography variant='subtitle1' gutterBottom>
-            Foto de Perfil
-          </Typography>
-          {avatarPreview || formData.avatarUrl ? (
-            <Box>
-              <Avatar
-                src={avatarPreview || formData.avatarUrl}
-                sx={{ width: 100, height: 100, margin: 'auto', mb: 2 }}
-              />
-              <Typography variant='body2' color='textSecondary'>
-                Click o arrastra para cambiar la imagen
-              </Typography>
-            </Box>
-          ) : (
-            <Box>
-              <Avatar sx={{ width: 100, height: 100, margin: 'auto', mb: 2 }} />
-              <Typography variant='body1' gutterBottom>
-                Arrastra y suelta una imagen aquí
-              </Typography>
-              <Typography variant='body2' color='textSecondary'>
-                o haz click para seleccionar
-              </Typography>
-              <Typography
-                variant='caption'
-                display='block'
-                color='textSecondary'
-                sx={{ mt: 1 }}
-              >
-                Formatos permitidos: JPG, PNG (Máx. 2MB)
-              </Typography>
-            </Box>
-          )}
-        </Box>
-        <form onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            label='Nombre'
-            name='nombre'
-            value={formData.nombre}
-            onChange={handleChange}
-            margin='normal'
-          />
-          <TextField
-            fullWidth
-            label='Apellido'
-            name='apellido'
-            value={formData.apellido}
-            onChange={handleChange}
-            margin='normal'
-          />
-          <Autocomplete
-            options={paises}
-            value={paises.find((pais) => pais === formData.pais) || null}
-            onChange={(_, value) =>
-              setFormData((prev) => ({ ...prev, pais: value || '' }))
-            }
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label='País'
-                margin='normal'
-                fullWidth
-                required
-              />
-            )}
-            isOptionEqualToValue={(option, value) => option === value}
-          />
-
-          {formData.proveedor ? (
-            <Autocomplete
-              options={proveedores}
-              value={
-                proveedores.find((prov) => prov === formData.proveedor) || null
-              }
-              onChange={(_, value) =>
-                setFormData((prev) => ({ ...prev, proveedor: value || '' }))
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label='Empresa'
-                  margin='normal'
-                  fullWidth
-                />
-              )}
-              isOptionEqualToValue={(option, value) => option === value}
-            />
-          ) : (
-            <>
-              <Autocomplete
-                options={ingenios.filter(
-                  (ingenio) => ingenio.pais === formData.pais
-                )}
-                value={
-                  ingenios.find((ing) => ing.nombre === formData.ingenio) ||
-                  null
-                }
-                onChange={(_, value) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    ingenio: value ? value.nombre : '',
-                  }))
-                }
-                getOptionLabel={(option) => option.nombre}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label='Ingenio'
-                    margin='normal'
-                    fullWidth
-                  />
-                )}
-                isOptionEqualToValue={(option, value) =>
-                  option.nombre === (value?.nombre || value)
-                }
-              />
-
-              <Autocomplete
-                options={areas}
-                value={areas.find((a) => a === formData.area) || null}
-                onChange={(_, value) =>
-                  setFormData((prev) => ({ ...prev, area: value || '' }))
-                }
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label='Área de Trabajo'
-                    margin='normal'
-                    fullWidth
-                  />
-                )}
-                isOptionEqualToValue={(option, value) => option === value}
-              />
-            </>
-          )}
-
-          <TextField
-            fullWidth
-            label='Biografía'
-            name='acercaDe'
-            value={formData.acercaDe}
-            onChange={handleChange}
-            margin='normal'
-            multiline
-            rows={3}
-          />
-
-          <Button
-            type='submit'
-            variant='contained'
-            color='primary'
-            fullWidth
-            sx={{ mt: 3 }}
+          <Typography
+            variant='h4'
+            sx={{
+              textAlign: 'center',
+              mb: 4,
+              color: '#1a1a1a',
+              fontWeight: 700,
+              position: 'relative',
+              '&::after': {
+                content: '""',
+                display: 'block',
+                width: '60px',
+                height: '4px',
+                backgroundColor: '#ff6347',
+                margin: '16px auto',
+                borderRadius: '2px',
+              },
+            }}
           >
-            Guardar Cambios
-          </Button>
-        </form>
+            Editar Perfil
+          </Typography>
+
+          <Box
+            {...getRootProps()}
+            sx={{
+              textAlign: 'center',
+              padding: 3,
+              border: '2px dashed #e0e0e0',
+              borderRadius: 3,
+              cursor: 'pointer',
+              maxWidth: '400px',
+              margin: '2rem auto',
+              transition: 'all 0.3s ease',
+              backgroundColor: '#fafafa',
+              '&:hover': {
+                borderColor: '#ff6347',
+                backgroundColor: '#fff5f3',
+                transform: 'translateY(-2px)',
+              },
+            }}
+          >
+            <input {...getInputProps()} />
+            <Typography
+              variant='subtitle1'
+              gutterBottom
+              color='primary'
+              sx={{ fontWeight: 600 }}
+            >
+              Foto de Perfil
+            </Typography>
+            {avatarPreview || formData.avatarUrl ? (
+              <Box>
+                <Avatar
+                  src={avatarPreview || formData.avatarUrl}
+                  sx={{
+                    width: 120,
+                    height: 120,
+                    margin: 'auto',
+                    mb: 2,
+                    border: '3px solid #ff6347',
+                    boxShadow: '0 4px 15px rgba(255, 99, 71, 0.2)',
+                  }}
+                />
+                <Typography variant='body2' color='textSecondary'>
+                  Click o arrastra para cambiar la imagen
+                </Typography>
+              </Box>
+            ) : (
+              <Box>
+                <Avatar
+                  sx={{
+                    width: 120,
+                    height: 120,
+                    margin: 'auto',
+                    mb: 2,
+                    backgroundColor: '#ff634710',
+                    color: '#ff6347',
+                  }}
+                />
+                <Typography variant='body1' gutterBottom color='textPrimary'>
+                  Arrastra y suelta una imagen aquí
+                </Typography>
+                <Typography variant='body2' color='textSecondary'>
+                  o haz click para seleccionar
+                </Typography>
+                <Typography
+                  variant='caption'
+                  display='block'
+                  color='textSecondary'
+                  sx={{ mt: 1 }}
+                >
+                  Formatos permitidos: JPG, PNG (Máx. 2MB)
+                </Typography>
+              </Box>
+            )}
+          </Box>
+
+          <Box component='form' onSubmit={handleSubmit} sx={{ mt: 4 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label='Nombre'
+                  name='nombre'
+                  value={formData.nombre}
+                  onChange={handleChange}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#ff6347',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#ff6347',
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#ff6347',
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label='Apellido'
+                  name='apellido'
+                  value={formData.apellido}
+                  onChange={handleChange}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#ff6347',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#ff6347',
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#ff6347',
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Autocomplete
+                  options={paises}
+                  value={paises.find((pais) => pais === formData.pais) || null}
+                  onChange={(_, value) =>
+                    setFormData((prev) => ({ ...prev, pais: value || '' }))
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label='País'
+                      required
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: '#e0e0e0',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: '#ff6347',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#ff6347',
+                          },
+                        },
+                        '& .MuiInputLabel-root.Mui-focused': {
+                          color: '#ff6347',
+                        },
+                      }}
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) => option === value}
+                />
+              </Grid>
+
+              {formData.proveedor ? (
+                <Grid item xs={12}>
+                  <Autocomplete
+                    options={proveedores}
+                    value={
+                      proveedores.find(
+                        (prov) => prov.nombre === formData.proveedor
+                      ) || null
+                    }
+                    onChange={(_, value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        proveedor: value ? value.nombre : '',
+                      }))
+                    }
+                    getOptionLabel={(option) => option.nombre}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label='Empresa'
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '& fieldset': {
+                              borderColor: '#e0e0e0',
+                            },
+                            '&:hover fieldset': {
+                              borderColor: '#ff6347',
+                            },
+                            '&.Mui-focused fieldset': {
+                              borderColor: '#ff6347',
+                            },
+                          },
+                          '& .MuiInputLabel-root.Mui-focused': {
+                            color: '#ff6347',
+                          },
+                        }}
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) =>
+                      option.nombre === value?.nombre
+                    }
+                  />
+                </Grid>
+              ) : (
+                <>
+                  <Grid item xs={12} sm={6}>
+                    <Autocomplete
+                      options={ingenios.filter(
+                        (ingenio) => ingenio.pais === formData.pais
+                      )}
+                      value={
+                        ingenios.find(
+                          (ing) => ing.nombre === formData.ingenio
+                        ) || null
+                      }
+                      onChange={(_, value) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          ingenio: value ? value.nombre : '',
+                        }))
+                      }
+                      getOptionLabel={(option) => option.nombre}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label='Ingenio'
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              '& fieldset': {
+                                borderColor: '#e0e0e0',
+                              },
+                              '&:hover fieldset': {
+                                borderColor: '#ff6347',
+                              },
+                              '&.Mui-focused fieldset': {
+                                borderColor: '#ff6347',
+                              },
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                              color: '#ff6347',
+                            },
+                          }}
+                        />
+                      )}
+                      isOptionEqualToValue={(option, value) =>
+                        option.nombre === (value?.nombre || value)
+                      }
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Autocomplete
+                      options={areas}
+                      value={areas.find((a) => a === formData.area) || null}
+                      onChange={(_, value) =>
+                        setFormData((prev) => ({ ...prev, area: value || '' }))
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label='Área de Trabajo'
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              '& fieldset': {
+                                borderColor: '#e0e0e0',
+                              },
+                              '&:hover fieldset': {
+                                borderColor: '#ff6347',
+                              },
+                              '&.Mui-focused fieldset': {
+                                borderColor: '#ff6347',
+                              },
+                            },
+                            '& .MuiInputLabel-root.Mui-focused': {
+                              color: '#ff6347',
+                            },
+                          }}
+                        />
+                      )}
+                      isOptionEqualToValue={(option, value) => option === value}
+                    />
+                  </Grid>
+                </>
+              )}
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label='Biografía'
+                  name='acercaDe'
+                  value={formData.acercaDe}
+                  onChange={handleChange}
+                  multiline
+                  rows={4}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#ff6347',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#ff6347',
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#ff6347',
+                    },
+                  }}
+                />
+              </Grid>
+            </Grid>
+
+            <Button
+              type='submit'
+              variant='contained'
+              fullWidth
+              sx={{
+                mt: 4,
+                mb: 2,
+                backgroundColor: '#ff6347',
+                color: '#fff',
+                textTransform: 'none',
+                borderRadius: '50px',
+                padding: '12px',
+                boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  backgroundColor: '#e5533f',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
+                },
+              }}
+            >
+              Guardar Cambios
+            </Button>
+          </Box>
+        </Paper>
+
+        {/* Formulario de cambio de contraseña */}
+        <Paper
+          elevation={0}
+          sx={{
+            backgroundColor: '#fff',
+            borderRadius: 3,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+            p: 4,
+          }}
+        >
+          <PasswordChangeForm />
+        </Paper>
+
         {message && (
           <Snackbar
             open
             autoHideDuration={6000}
             onClose={() => setMessage(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           >
             <Alert
               onClose={() => setMessage(null)}
               severity={message.type}
-              sx={{ width: '100%' }}
+              sx={{
+                width: '100%',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                borderRadius: 2,
+              }}
             >
               {message.text}
             </Alert>
           </Snackbar>
         )}
-      </Box>
-
-      {/* Formulario de cambio de contraseña */}
-      <PasswordChangeForm />
+      </Container>
     </Box>
   )
 }

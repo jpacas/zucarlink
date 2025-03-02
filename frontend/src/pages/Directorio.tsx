@@ -11,6 +11,7 @@ import {
   FormControlLabel,
   Checkbox,
   FormGroup,
+  Container,
 } from '@mui/material'
 import { User, Ingenio, Area, Proveedor } from '../types/interfaces'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -170,15 +171,32 @@ const Directorio: React.FC<DirectorioProps> = () => {
     return (
       <Box
         sx={{
-          backgroundColor: '#fff',
-          padding: 3,
-          borderRadius: 2,
-          boxShadow: 3,
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+          p: 4,
+          borderRadius: '16px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
           position: 'sticky',
           top: '80px',
         }}
       >
-        <Typography variant='h5' marginBottom={2} color='primary'>
+        <Typography
+          variant='h5'
+          sx={{
+            mb: 3,
+            fontWeight: 700,
+            color: '#1a1a1a',
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              display: 'block',
+              width: '40px',
+              height: '3px',
+              backgroundColor: '#ff6347',
+              mt: 1,
+              borderRadius: '2px',
+            },
+          }}
+        >
           Filtros
         </Typography>
         <TextField
@@ -189,6 +207,19 @@ const Directorio: React.FC<DirectorioProps> = () => {
           onChange={handleFiltroChange}
           variant='outlined'
           margin='normal'
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              '&:hover fieldset': {
+                borderColor: '#ff6347',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#ff6347',
+              },
+            },
+            '& .MuiInputLabel-root.Mui-focused': {
+              color: '#ff6347',
+            },
+          }}
         />
         {(tipo === 'usuarios' || tipo === 'ingenios') && (
           <Autocomplete
@@ -198,7 +229,25 @@ const Directorio: React.FC<DirectorioProps> = () => {
               setFiltros({ ...filtros, pais: value || '' })
             }
             renderInput={(params) => (
-              <TextField {...params} label='País' margin='normal' fullWidth />
+              <TextField
+                {...params}
+                label='País'
+                margin='normal'
+                fullWidth
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#ff6347',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#ff6347',
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#ff6347',
+                  },
+                }}
+              />
             )}
           />
         )}
@@ -222,6 +271,19 @@ const Directorio: React.FC<DirectorioProps> = () => {
                       ? 'No hay ingenios disponibles para el país seleccionado'
                       : ''
                   }
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#ff6347',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#ff6347',
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#ff6347',
+                    },
+                  }}
                 />
               )}
             />
@@ -232,11 +294,36 @@ const Directorio: React.FC<DirectorioProps> = () => {
                 setFiltros({ ...filtros, area: value || '' })
               }
               renderInput={(params) => (
-                <TextField {...params} label='Área' margin='normal' fullWidth />
+                <TextField
+                  {...params}
+                  label='Área'
+                  margin='normal'
+                  fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#ff6347',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#ff6347',
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#ff6347',
+                    },
+                  }}
+                />
               )}
             />
-            <FormGroup sx={{ mt: 2 }}>
-              <Typography variant='subtitle1' gutterBottom fontWeight='bold'>
+            <FormGroup sx={{ mt: 3 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{
+                  fontWeight: 600,
+                  color: '#1a1a1a',
+                  mb: 1,
+                }}
+              >
                 Tipo de Usuario
               </Typography>
               <Box
@@ -252,6 +339,12 @@ const Directorio: React.FC<DirectorioProps> = () => {
                       checked={filtros.tipoUsuario.ingenio}
                       onChange={handleTipoUsuarioChange}
                       name='ingenio'
+                      sx={{
+                        color: '#ff6347',
+                        '&.Mui-checked': {
+                          color: '#ff6347',
+                        },
+                      }}
                     />
                   }
                   label='Ingenio'
@@ -262,6 +355,12 @@ const Directorio: React.FC<DirectorioProps> = () => {
                       checked={filtros.tipoUsuario.proveedor}
                       onChange={handleTipoUsuarioChange}
                       name='proveedor'
+                      sx={{
+                        color: '#ff6347',
+                        '&.Mui-checked': {
+                          color: '#ff6347',
+                        },
+                      }}
                     />
                   }
                   label='Proveedor'
@@ -281,12 +380,17 @@ const Directorio: React.FC<DirectorioProps> = () => {
         <Card
           sx={{
             cursor: 'pointer',
-            transition: 'transform 0.3s ease',
-            willChange: 'transform',
-            '&:hover': { transform: 'translateY(-5px)' },
+            transition: 'all 0.3s ease',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
+            '&:hover': {
+              transform: 'translateY(-8px)',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
+            },
           }}
           onClick={() => navigate(`/perfil/${usuario.id}`)}
         >
@@ -297,43 +401,108 @@ const Directorio: React.FC<DirectorioProps> = () => {
               alignItems: 'center',
               textAlign: 'center',
               flexGrow: 1,
-              minHeight: '300px',
-              padding: '24px',
+              p: 4,
             }}
           >
             {usuario.avatarUrl ? (
-              <img
-                src={usuario.avatarUrl}
-                alt={`${usuario.nombre} ${usuario.apellido}`}
-                style={{
-                  width: '100px',
-                  height: '100px',
+              <Box
+                sx={{
+                  width: 100,
+                  height: 100,
                   borderRadius: '50%',
-                  marginBottom: '1rem',
-                  objectFit: 'cover',
+                  mb: 3,
+                  overflow: 'hidden',
+                  border: '3px solid #ff6347',
+                  boxShadow: '0 4px 15px rgba(255, 99, 71, 0.2)',
                 }}
-              />
+              >
+                <img
+                  src={usuario.avatarUrl}
+                  alt={`${usuario.nombre} ${usuario.apellido}`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              </Box>
             ) : (
-              <Typography variant='body2' color='text.secondary'>
-                Sin foto
-              </Typography>
+              <Box
+                sx={{
+                  width: 100,
+                  height: 100,
+                  borderRadius: '50%',
+                  mb: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#f5f5f5',
+                  border: '3px solid #ff6347',
+                  boxShadow: '0 4px 15px rgba(255, 99, 71, 0.2)',
+                }}
+              >
+                <Typography variant='body2' color='text.secondary'>
+                  Sin foto
+                </Typography>
+              </Box>
             )}
-            <Typography variant='h6'>
+            <Typography
+              variant='h6'
+              sx={{
+                mb: 2,
+                fontWeight: 600,
+                color: '#1a1a1a',
+              }}
+            >
               {usuario.nombre} {usuario.apellido}
             </Typography>
-            <Typography variant='body2' color='text.secondary'>
+            <Typography
+              variant='body2'
+              sx={{
+                mb: 1,
+                color: '#4a4a4a',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+              }}
+            >
               <strong>País:</strong> {usuario.pais}
             </Typography>
             {usuario.proveedor ? (
-              <Typography variant='body2' color='text.secondary'>
+              <Typography
+                variant='body2'
+                sx={{
+                  color: '#4a4a4a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                }}
+              >
                 <strong>Empresa:</strong> {usuario.proveedor}
               </Typography>
             ) : (
               <>
-                <Typography variant='body2' color='text.secondary'>
+                <Typography
+                  variant='body2'
+                  sx={{
+                    mb: 1,
+                    color: '#4a4a4a',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                  }}
+                >
                   <strong>Ingenio:</strong> {usuario.ingenio}
                 </Typography>
-                <Typography variant='body2' color='text.secondary'>
+                <Typography
+                  variant='body2'
+                  sx={{
+                    color: '#4a4a4a',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                  }}
+                >
                   <strong>Área:</strong> {usuario.area}
                 </Typography>
               </>
@@ -350,8 +519,14 @@ const Directorio: React.FC<DirectorioProps> = () => {
             display: 'flex',
             flexDirection: 'column',
             cursor: 'pointer',
-            transition: 'transform 0.3s ease',
-            '&:hover': { transform: 'translateY(-5px)' },
+            transition: 'all 0.3s ease',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+            '&:hover': {
+              transform: 'translateY(-8px)',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
+            },
           }}
         >
           <CardContent
@@ -360,27 +535,54 @@ const Directorio: React.FC<DirectorioProps> = () => {
               flexDirection: 'column',
               alignItems: 'center',
               textAlign: 'center',
-              p: 3,
+              p: 4,
             }}
           >
-            <Typography variant='h6' gutterBottom>
+            <Typography
+              variant='h6'
+              sx={{
+                mb: 2,
+                fontWeight: 600,
+                color: '#1a1a1a',
+              }}
+            >
               {ingenio.nombre}
             </Typography>
-            <Typography variant='body1' color='text.secondary' gutterBottom>
+            <Typography
+              variant='body1'
+              sx={{
+                mb: 2,
+                color: '#4a4a4a',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+              }}
+            >
               <strong>País:</strong> {ingenio.pais}
             </Typography>
             {ingenio.webpage && (
               <Box
-                sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}
+                sx={{
+                  mt: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
               >
-                <LanguageIcon color='primary' />
+                <LanguageIcon sx={{ color: '#ff6347' }} />
                 <Typography
                   variant='body2'
                   component='a'
                   href={ingenio.webpage}
                   target='_blank'
                   rel='noopener noreferrer'
-                  sx={{ color: 'primary.main', textDecoration: 'none' }}
+                  sx={{
+                    color: '#ff6347',
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
                 >
                   Sitio web
                 </Typography>
@@ -388,14 +590,25 @@ const Directorio: React.FC<DirectorioProps> = () => {
             )}
             {ingenio.correo && (
               <Box
-                sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}
+                sx={{
+                  mt: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
               >
-                <EmailIcon color='primary' />
+                <EmailIcon sx={{ color: '#ff6347' }} />
                 <Typography
                   variant='body2'
                   component='a'
                   href={`mailto:${ingenio.correo}`}
-                  sx={{ color: 'primary.main', textDecoration: 'none' }}
+                  sx={{
+                    color: '#ff6347',
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
                 >
                   Contacto
                 </Typography>
@@ -413,8 +626,14 @@ const Directorio: React.FC<DirectorioProps> = () => {
             display: 'flex',
             flexDirection: 'column',
             cursor: 'pointer',
-            transition: 'transform 0.3s ease',
-            '&:hover': { transform: 'translateY(-5px)' },
+            transition: 'all 0.3s ease',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+            '&:hover': {
+              transform: 'translateY(-8px)',
+              boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
+            },
           }}
         >
           <CardContent
@@ -423,30 +642,41 @@ const Directorio: React.FC<DirectorioProps> = () => {
               flexDirection: 'column',
               alignItems: 'center',
               textAlign: 'center',
-              p: 3,
+              p: 4,
             }}
           >
             {proveedor.logo ? (
-              <img
-                src={proveedor.logo}
-                alt={proveedor.nombre}
-                style={{
-                  width: '120px',
-                  height: '120px',
-                  objectFit: 'contain',
-                  marginBottom: '1rem',
-                }}
-              />
-            ) : (
               <Box
                 sx={{
-                  width: '120px',
-                  height: '120px',
-                  backgroundColor: '#f5f5f5',
+                  width: 120,
+                  height: 120,
+                  mb: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: '1rem',
+                }}
+              >
+                <img
+                  src={proveedor.logo}
+                  alt={proveedor.nombre}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                  }}
+                />
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  width: 120,
+                  height: 120,
+                  mb: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: '8px',
                 }}
               >
                 <Typography variant='body2' color='text.secondary'>
@@ -454,19 +684,27 @@ const Directorio: React.FC<DirectorioProps> = () => {
                 </Typography>
               </Box>
             )}
-            <Typography variant='h6' gutterBottom>
+            <Typography
+              variant='h6'
+              sx={{
+                mb: 2,
+                fontWeight: 600,
+                color: '#1a1a1a',
+              }}
+            >
               {proveedor.nombre}
             </Typography>
             {proveedor.descripcion && (
               <Typography
                 variant='body2'
-                color='text.secondary'
                 sx={{
                   mb: 2,
+                  color: '#4a4a4a',
                   display: '-webkit-box',
                   WebkitLineClamp: 3,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
+                  lineHeight: 1.7,
                 }}
               >
                 {proveedor.descripcion}
@@ -474,16 +712,27 @@ const Directorio: React.FC<DirectorioProps> = () => {
             )}
             {proveedor.webpage && (
               <Box
-                sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}
+                sx={{
+                  mt: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
               >
-                <LanguageIcon color='primary' />
+                <LanguageIcon sx={{ color: '#ff6347' }} />
                 <Typography
                   variant='body2'
                   component='a'
                   href={proveedor.webpage}
                   target='_blank'
                   rel='noopener noreferrer'
-                  sx={{ color: 'primary.main', textDecoration: 'none' }}
+                  sx={{
+                    color: '#ff6347',
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
                 >
                   Sitio web
                 </Typography>
@@ -491,14 +740,25 @@ const Directorio: React.FC<DirectorioProps> = () => {
             )}
             {proveedor.email && (
               <Box
-                sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}
+                sx={{
+                  mt: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
               >
-                <EmailIcon color='primary' />
+                <EmailIcon sx={{ color: '#ff6347' }} />
                 <Typography
                   variant='body2'
                   component='a'
                   href={`mailto:${proveedor.email}`}
-                  sx={{ color: 'primary.main', textDecoration: 'none' }}
+                  sx={{
+                    color: '#ff6347',
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
                 >
                   Contacto
                 </Typography>
@@ -515,39 +775,44 @@ const Directorio: React.FC<DirectorioProps> = () => {
   return (
     <Box
       sx={{
-        backgroundColor: '#f9f9f9',
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
         minHeight: '100vh',
-        padding: 3,
-        marginTop: '64px',
+        pt: 10,
+        pb: 8,
       }}
     >
-      <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
-        {/* Sidebar de Filtros */}
-        <Grid
-          item
-          sx={{
-            flex: { xs: '1 1 auto', md: '0 0 25%' },
-            maxWidth: { xs: '100%', md: '25%' },
-          }}
-        >
-          {renderFiltros()}
-        </Grid>
-        {/* Resultados */}
-        <Grid item sx={{ flex: { xs: '1 1 auto', md: '1' }, maxWidth: '100%' }}>
-          {error && (
-            <Typography color='error' textAlign='center'>
-              {error}
-            </Typography>
-          )}
-          <Grid container spacing={3}>
-            {elementosFiltrados.map((item, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                {renderCard(item)}
-              </Grid>
-            ))}
+      <Container maxWidth='lg'>
+        <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
+          {/* Sidebar de Filtros */}
+          <Grid
+            item
+            sx={{
+              flex: { xs: '1 1 auto', md: '0 0 25%' },
+              maxWidth: { xs: '100%', md: '25%' },
+            }}
+          >
+            {renderFiltros()}
+          </Grid>
+          {/* Resultados */}
+          <Grid
+            item
+            sx={{ flex: { xs: '1 1 auto', md: '1' }, maxWidth: '100%' }}
+          >
+            {error && (
+              <Typography color='error' textAlign='center' sx={{ mb: 3 }}>
+                {error}
+              </Typography>
+            )}
+            <Grid container spacing={3}>
+              {elementosFiltrados.map((item, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  {renderCard(item)}
+                </Grid>
+              ))}
+            </Grid>
           </Grid>
         </Grid>
-      </Grid>
+      </Container>
     </Box>
   )
 }

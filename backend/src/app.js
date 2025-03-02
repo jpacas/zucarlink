@@ -20,15 +20,27 @@ app.use(cors({ origin: '*', credentials: true }))
 app.use(express.json())
 
 //Inicializando la base de datos y las asociaciones
-sequelize
-  .authenticate()
-  //.sync({ alter: true })
-  .then(() => {
+const initializeDatabase = async () => {
+  try {
+    // Primero autenticamos la conexión
+    await sequelize.authenticate()
     console.log('Conexión a la base de datos exitosa')
-    setupAssociations() // Configurar las asociaciones después de conectar
+
+    // Configuramos las asociaciones
+    setupAssociations()
     console.log('Asociaciones configuradas exitosamente')
-  })
-  .catch((err) => console.error('Error al conectar la base de datos:', err))
+
+    // Realizamos la sincronización
+    //await sequelize.sync({ alter: true })
+    //console.log('Base de datos sincronizada exitosamente')
+  } catch (error) {
+    console.error('Error al inicializar la base de datos:', error)
+    process.exit(1) // Terminar el proceso si hay un error crítico
+  }
+}
+
+// Inicializar la base de datos
+initializeDatabase()
 
 // Rutas
 app.use('/api/users', userRoutes)
