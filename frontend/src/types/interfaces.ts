@@ -129,8 +129,8 @@ export interface Maquinaria {
   anio: number
   vistas: number
   vigente: boolean
-  usuarioid: number
-  paisid: number
+  usuarioId: string
+  paisId: number
   pais?: { id: number; nombre: string }
   usuario?: User
   archivos?: Archivo[]
