@@ -8,9 +8,6 @@ import {
   Button,
   Dialog,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
   MenuItem,
   Autocomplete,
   CircularProgress,
@@ -26,7 +23,6 @@ import {
   DialogContentText,
   DialogTitle,
 } from '@mui/material'
-import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
 import { useSnackbar } from 'notistack'
@@ -58,7 +54,6 @@ const Empleos: React.FC = () => {
   const [selectedEmpleoId, setSelectedEmpleoId] = useState<number | null>(null)
   const { user } = useAuth()
   const { enqueueSnackbar } = useSnackbar()
-  const navigate = useNavigate()
 
   // Estados para filtros
   const [paises, setPaises] = useState<string[]>([])

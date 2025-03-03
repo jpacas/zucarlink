@@ -10,7 +10,7 @@ exports.getMaquinaria = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'usuario',
+          as: 'autor',
           attributes: ['id', 'nombre', 'apellido', 'email', 'avatarUrl'],
         },
         {

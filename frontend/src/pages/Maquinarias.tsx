@@ -8,7 +8,6 @@ import {
   Button,
   Dialog,
   TextField,
-  Autocomplete,
   CircularProgress,
   Divider,
   Chip,
@@ -17,14 +16,10 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Tooltip,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
-  FormControl,
-  InputLabel,
-  Select,
   InputAdornment,
   List,
   ListItem,
@@ -32,7 +27,7 @@ import {
   ListItemText,
   ListItemSecondaryAction,
 } from '@mui/material'
-import { useNavigate } from 'react-router-dom'
+
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
 import { useSnackbar } from 'notistack'
@@ -40,19 +35,14 @@ import {
   Engineering,
   LocationOn,
   Business,
-  Category,
   CalendarToday,
   FilterAlt,
   MoreVert,
   Edit,
   Delete,
-  Speed,
-  Straighten,
-  Timer,
   AttachMoney,
   PhotoCamera,
   AttachFile,
-  CloudUpload,
   Download,
   Close,
 } from '@mui/icons-material'
@@ -77,7 +67,6 @@ const Maquinarias: React.FC = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const { user } = useAuth()
   const { enqueueSnackbar } = useSnackbar()
-  const navigate = useNavigate()
 
   // Estados para filtros
   const [filtros, setFiltros] = useState({
@@ -241,7 +230,7 @@ const Maquinarias: React.FC = () => {
       marca: maquinaria.marca,
       modelo: maquinaria.modelo,
       anio: maquinaria.anio.toString(),
-      paisid: maquinaria.paisid.toString(),
+      paisid: maquinaria.paisId.toString(),
     })
     setPreviewUrl(maquinaria.foto || null)
     setEditMode(true)
@@ -400,7 +389,7 @@ const Maquinarias: React.FC = () => {
                     }}
                   >
                     {/* Menú de opciones (solo visible para el propietario) */}
-                    {user && maquinaria.usuarioid === user.id && (
+                    {user && maquinaria.usuarioId === user.id && (
                       <>
                         <IconButton
                           sx={{

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Box, Typography, Button } from '@mui/material'
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js'
 
@@ -18,7 +17,6 @@ const PaymentForm = ({
   const elements = useElements()
   const [error, setError] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
-  const navigate = useNavigate()
 
   useEffect(() => {
     if (!stripe || !elements) {

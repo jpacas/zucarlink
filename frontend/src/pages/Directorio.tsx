@@ -38,7 +38,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
   const [error, setError] = useState<string | null>(null)
   const [paises, setPaises] = useState<string[]>([])
   const [ingeniosList, setIngeniosList] = useState<Ingenio[]>([])
-  const [proveedoresList, setProveedoresList] = useState<Proveedor[]>([])
+  //const [proveedoresList, setProveedoresList] = useState<Proveedor[]>([])
   const [ingeniosFiltrados, setIngeniosFiltrados] = useState<Ingenio[]>([])
   const [areas, setAreas] = useState<Area[]>([])
   const navigate = useNavigate()
@@ -74,7 +74,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
             `${import.meta.env.VITE_API_URL}/helper/proveedores`
           )
           setProveedores(proveedoresRes.data)
-          setProveedoresList(proveedoresRes.data)
+          //setProveedoresList(proveedoresRes.data)
         }
       } catch (err) {
         if (axios.isAxiosError(err)) {
