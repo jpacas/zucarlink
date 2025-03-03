@@ -16,7 +16,17 @@ const setupAssociations = require('./models/associations')
 // Configuración General
 dotenv.config()
 const app = express()
-app.use(cors({ origin: '*', credentials: true }))
+app.use(
+  cors({
+    origin: [
+      'https://zucarlink.com',
+      'http://zucarlink.com',
+      'http://localhost:5173',
+      /\.zucarlink\.com$/,
+    ],
+    credentials: true,
+  })
+)
 app.use(express.json())
 
 //Inicializando la base de datos y las asociaciones
@@ -31,7 +41,7 @@ const initializeDatabase = async () => {
     console.log('Asociaciones configuradas exitosamente')
 
     // Realizamos la sincronización
-    //await sequelize.sync({ alter: true })
+    await sequelize.sync({ force: true })
     //console.log('Base de datos sincronizada exitosamente')
   } catch (error) {
     console.error('Error al inicializar la base de datos:', error)
