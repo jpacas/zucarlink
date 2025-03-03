@@ -158,11 +158,15 @@ const Directorio: React.FC<DirectorioProps> = () => {
         return matchNombre && matchPais
       })
     } else if (tipo === 'proveedores') {
-      return proveedores.filter((proveedor) =>
-        proveedor.nombre
+      return (proveedores || []).filter((proveedor) => {
+        const matchNombre = proveedor.nombre
           .toLowerCase()
           .includes(filtros.nombre.toLowerCase().trim())
-      )
+        const matchPais =
+          !filtros.pais ||
+          proveedor.pais?.toLowerCase() === filtros.pais?.toLowerCase()
+        return matchNombre && matchPais
+      })
     }
     return []
   }
@@ -221,7 +225,9 @@ const Directorio: React.FC<DirectorioProps> = () => {
             },
           }}
         />
-        {(tipo === 'usuarios' || tipo === 'ingenios') && (
+        {(tipo === 'usuarios' ||
+          tipo === 'ingenios' ||
+          tipo === 'proveedores') && (
           <Autocomplete
             options={paises}
             value={filtros.pais || null}
@@ -694,6 +700,20 @@ const Directorio: React.FC<DirectorioProps> = () => {
             >
               {proveedor.nombre}
             </Typography>
+            {proveedor.pais && (
+              <Typography
+                variant='body2'
+                sx={{
+                  mb: 1,
+                  color: '#4a4a4a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                }}
+              >
+                <strong>País:</strong> {proveedor.pais}
+              </Typography>
+            )}
             {proveedor.descripcion && (
               <Typography
                 variant='body2'
@@ -804,11 +824,58 @@ const Directorio: React.FC<DirectorioProps> = () => {
               </Typography>
             )}
             <Grid container spacing={3}>
-              {elementosFiltrados.map((item, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  {renderCard(item)}
+              {elementosFiltrados.length > 0 ? (
+                elementosFiltrados.map((item, index) => (
+                  <Grid item xs={12} sm={6} md={4} key={index}>
+                    {renderCard(item)}
+                  </Grid>
+                ))
+              ) : (
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      p: 4,
+                      textAlign: 'center',
+                      background:
+                        'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                      borderRadius: '16px',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                    }}
+                  >
+                    <Typography
+                      variant='h6'
+                      sx={{
+                        mb: 2,
+                        fontWeight: 600,
+                        color: '#1a1a1a',
+                      }}
+                    >
+                      {tipo === 'proveedores'
+                        ? 'No hay proveedores registrados'
+                        : tipo === 'ingenios'
+                        ? 'No hay ingenios registrados'
+                        : 'No hay usuarios registrados'}
+                    </Typography>
+                    <Typography
+                      variant='body1'
+                      sx={{
+                        color: '#4a4a4a',
+                        maxWidth: '600px',
+                      }}
+                    >
+                      {tipo === 'proveedores'
+                        ? 'Por el momento no hay proveedores registrados en el directorio. Vuelve más tarde para ver los proveedores disponibles.'
+                        : tipo === 'ingenios'
+                        ? 'Por el momento no hay ingenios registrados en el directorio. Vuelve más tarde para ver los ingenios disponibles.'
+                        : 'Por el momento no hay usuarios registrados en el directorio. Vuelve más tarde para ver los usuarios disponibles.'}
+                    </Typography>
+                  </Box>
                 </Grid>
-              ))}
+              )}
             </Grid>
           </Grid>
         </Grid>

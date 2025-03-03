@@ -33,6 +33,7 @@ export interface Proveedor {
   webpage?: string
   logo?: string
   descripcion?: string
+  pais?: string
 }
 
 export interface Archivo {

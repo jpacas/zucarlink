@@ -20,6 +20,7 @@ import {
   MenuItem,
   Snackbar,
   Alert,
+  Chip,
 } from '@mui/material'
 import ThumbUpIcon from '@mui/icons-material/ThumbUp'
 import SendIcon from '@mui/icons-material/Send'
@@ -300,16 +301,39 @@ const PostDetalle: React.FC = () => {
   }
 
   return (
-    <Box sx={{ padding: 3, marginTop: '64px' }}>
+    <Box
+      sx={{
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        minHeight: '100vh',
+        padding: 3,
+        marginTop: '64px',
+      }}
+    >
       <Button
         startIcon={<ArrowBackIcon />}
         onClick={() => navigate('/foro')}
-        sx={{ mb: 2 }}
+        sx={{
+          mb: 2,
+          color: '#4a4a4a',
+          '&:hover': {
+            backgroundColor: 'rgba(255, 99, 71, 0.1)',
+            color: '#ff6347',
+          },
+        }}
       >
         Volver al Foro
       </Button>
 
-      <Card>
+      <Card
+        sx={{
+          borderRadius: '16px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
+          },
+        }}
+      >
         <CardContent>
           {editMode ? (
             <Box
@@ -325,6 +349,19 @@ const PostDetalle: React.FC = () => {
                 label='Título'
                 value={editedTitle}
                 onChange={(e) => setEditedTitle(e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#ff6347',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#ff6347',
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#ff6347',
+                  },
+                }}
               />
 
               <TextField
@@ -334,6 +371,19 @@ const PostDetalle: React.FC = () => {
                 label='Contenido'
                 value={editedContent}
                 onChange={(e) => setEditedContent(e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#ff6347',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#ff6347',
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#ff6347',
+                  },
+                }}
               />
 
               <FormControl fullWidth>
@@ -342,6 +392,16 @@ const PostDetalle: React.FC = () => {
                   value={editedArea}
                   label='Área'
                   onChange={(e) => setEditedArea(e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#ff6347',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#ff6347',
+                      },
+                    },
+                  }}
                 >
                   {areas.map((area) => (
                     <MenuItem key={area} value={area}>
@@ -354,13 +414,45 @@ const PostDetalle: React.FC = () => {
               {/* Sección de archivos existentes */}
               {visibleFiles.length > 0 && (
                 <Box>
-                  <Typography variant='subtitle1' gutterBottom>
+                  <Typography
+                    variant='subtitle1'
+                    gutterBottom
+                    sx={{
+                      color: '#1a1a1a',
+                      fontWeight: 600,
+                      position: 'relative',
+                      '&::after': {
+                        content: '""',
+                        display: 'block',
+                        width: '40px',
+                        height: '3px',
+                        backgroundColor: '#ff6347',
+                        mt: 1,
+                        borderRadius: '2px',
+                      },
+                    }}
+                  >
                     Archivos actuales ({visibleFiles.length})
                   </Typography>
                   <Grid container spacing={1}>
                     {visibleFiles.map((archivo) => (
-                      <Grid item xs={12} sm={6} md={4} key={archivo.id}>
-                        <Card variant='outlined'>
+                      <Grid
+                        item
+                        xs={12}
+                        sm={6}
+                        md={4}
+                        key={`visible-file-${archivo.id}`}
+                      >
+                        <Card
+                          variant='outlined'
+                          sx={{
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                              transform: 'translateY(-2px)',
+                              boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                            },
+                          }}
+                        >
                           <CardContent sx={{ p: 1 }}>
                             <Box
                               sx={{
@@ -410,6 +502,14 @@ const PostDetalle: React.FC = () => {
                     variant='outlined'
                     component='span'
                     startIcon={<CloudUploadIcon />}
+                    sx={{
+                      color: '#ff6347',
+                      borderColor: '#ff6347',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                        borderColor: '#ff6347',
+                      },
+                    }}
                   >
                     Agregar archivos
                   </Button>
@@ -417,13 +517,45 @@ const PostDetalle: React.FC = () => {
 
                 {selectedFiles.length > 0 && (
                   <Box sx={{ mt: 2 }}>
-                    <Typography variant='subtitle1' gutterBottom>
+                    <Typography
+                      variant='subtitle1'
+                      gutterBottom
+                      sx={{
+                        color: '#1a1a1a',
+                        fontWeight: 600,
+                        position: 'relative',
+                        '&::after': {
+                          content: '""',
+                          display: 'block',
+                          width: '40px',
+                          height: '3px',
+                          backgroundColor: '#ff6347',
+                          mt: 1,
+                          borderRadius: '2px',
+                        },
+                      }}
+                    >
                       Nuevos archivos
                     </Typography>
                     <Grid container spacing={1}>
                       {selectedFiles.map((file, index) => (
-                        <Grid item xs={12} sm={6} md={4} key={index}>
-                          <Card variant='outlined'>
+                        <Grid
+                          item
+                          xs={12}
+                          sm={6}
+                          md={4}
+                          key={`selected-file-${index}`}
+                        >
+                          <Card
+                            variant='outlined'
+                            sx={{
+                              transition: 'all 0.3s ease',
+                              '&:hover': {
+                                transform: 'translateY(-2px)',
+                                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                              },
+                            }}
+                          >
                             <CardContent sx={{ p: 1 }}>
                               <Box
                                 sx={{
@@ -438,6 +570,12 @@ const PostDetalle: React.FC = () => {
                                 <IconButton
                                   size='small'
                                   onClick={() => handleRemoveNewFile(index)}
+                                  sx={{
+                                    color: '#ff6347',
+                                    '&:hover': {
+                                      backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                                    },
+                                  }}
                                 >
                                   <DeleteIcon fontSize='small' />
                                 </IconButton>
@@ -458,17 +596,43 @@ const PostDetalle: React.FC = () => {
                     setEditMode(false)
                     navigate(`/foro/post/${postId}`)
                   }}
+                  sx={{
+                    color: '#4a4a4a',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                      color: '#ff6347',
+                    },
+                  }}
                 >
                   Cancelar
                 </Button>
-                <Button variant='contained' type='submit'>
+                <Button
+                  variant='contained'
+                  type='submit'
+                  sx={{
+                    backgroundColor: '#ff6347',
+                    '&:hover': {
+                      backgroundColor: '#e5533f',
+                    },
+                  }}
+                >
                   Guardar cambios
                 </Button>
               </Box>
             </Box>
           ) : (
             <>
-              <Card sx={{ mb: 2 }}>
+              <Card
+                sx={{
+                  mb: 2,
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
+                  },
+                }}
+              >
                 <CardContent>
                   <Box
                     sx={{
@@ -477,21 +641,63 @@ const PostDetalle: React.FC = () => {
                       mb: 2,
                     }}
                   >
-                    <Typography variant='h4'>{post.titulo}</Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography>
+                    <Typography
+                      variant='h4'
+                      sx={{
+                        color: '#1a1a1a',
+                        fontWeight: 700,
+                        position: 'relative',
+                        '&::after': {
+                          content: '""',
+                          display: 'block',
+                          width: '60px',
+                          height: '4px',
+                          backgroundColor: '#ff6347',
+                          mt: 1,
+                          borderRadius: '2px',
+                        },
+                      }}
+                    >
+                      {post.titulo}
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                        },
+                      }}
+                    >
+                      <Typography sx={{ color: '#4a4a4a' }}>
                         {post.autor.nombre} {post.autor.apellido}
                       </Typography>
                       <Avatar
                         src={post.autor.avatarUrl || ''}
                         alt={`${post.autor.nombre} ${post.autor.apellido}`}
                         onClick={() => navigate(`/perfil/${post.usuarioId}`)}
-                        sx={{ cursor: 'pointer' }}
+                        sx={{
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'scale(1.1)',
+                            boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                          },
+                        }}
                       />
                     </Box>
                   </Box>
 
-                  <Typography variant='body1' sx={{ mb: 3 }}>
+                  <Typography
+                    variant='body1'
+                    sx={{
+                      mb: 3,
+                      color: '#4a4a4a',
+                      lineHeight: 1.7,
+                    }}
+                  >
                     {post.contenido}
                   </Typography>
 
@@ -502,29 +708,70 @@ const PostDetalle: React.FC = () => {
                       alignItems: 'center',
                     }}
                   >
-                    <Typography variant='body2' color='textSecondary'>
-                      {post.area.nombre} -{' '}
-                      {formatDistanceToNow(new Date(post.createdAt), {
-                        locale: es,
-                        addSuffix: true,
-                      })}
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Typography>{post.views} vistas</Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
+                    >
+                      <Chip
+                        label={post.area.nombre}
+                        size='small'
+                        sx={{
+                          backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                          color: '#ff6347',
+                          '&:hover': {
+                            backgroundColor: 'rgba(255, 99, 71, 0.2)',
+                          },
+                        }}
+                      />
+                      <Typography
+                        variant='body2'
+                        sx={{
+                          color: '#4a4a4a',
+                        }}
+                      >
+                        {formatDistanceToNow(new Date(post.createdAt), {
+                          locale: es,
+                          addSuffix: true,
+                        })}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                      }}
+                    >
+                      <Typography sx={{ color: '#4a4a4a' }}>
+                        {post.views} vistas
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                        }}
+                      >
+                        <Typography sx={{ color: '#4a4a4a' }}>
                           {post.likes?.filter((x) => x.activo).length || 0}
                         </Typography>
                         <IconButton
                           onClick={handleLikeToggle}
-                          color={
-                            post.likes?.some(
+                          sx={{
+                            color: post.likes?.some(
                               (like) =>
                                 like.usuarioId === user?.id && like.activo
                             )
-                              ? 'primary'
-                              : 'default'
-                          }
+                              ? '#ff6347'
+                              : '#4a4a4a',
+                            '&:hover': {
+                              backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                              color: '#ff6347',
+                            },
+                          }}
                         >
                           <ThumbUpIcon />
                         </IconButton>
@@ -534,25 +781,62 @@ const PostDetalle: React.FC = () => {
                 </CardContent>
               </Card>
 
-              {/* Card de Archivos Adjuntos - Si existen */}
+              {/* Card de Archivos Adjuntos */}
               {post.archivos && post.archivos.length > 0 && (
-                <Card sx={{ mb: 2 }}>
+                <Card
+                  sx={{
+                    mb: 2,
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
+                    },
+                  }}
+                >
                   <CardContent>
                     <Typography
                       variant='subtitle1'
-                      sx={{ mb: 2, fontWeight: 500 }}
+                      sx={{
+                        mb: 2,
+                        color: '#1a1a1a',
+                        fontWeight: 600,
+                        position: 'relative',
+                        '&::after': {
+                          content: '""',
+                          display: 'block',
+                          width: '40px',
+                          height: '3px',
+                          backgroundColor: '#ff6347',
+                          mt: 1,
+                          borderRadius: '2px',
+                        },
+                      }}
                     >
                       Archivos adjuntos ({post.archivos.length})
                     </Typography>
                     <Grid container spacing={1}>
                       {post.archivos.map((archivo, index) => (
-                        <Grid item xs={12} sm={6} md={4} key={index}>
+                        <Grid
+                          item
+                          xs={12}
+                          sm={6}
+                          md={4}
+                          key={`archivo-${archivo.id || index}`}
+                        >
                           {archivo.tipo.startsWith('image/') ? (
                             <Box
                               sx={{
                                 position: 'relative',
                                 height: '150px',
-                                '&:hover': { '& .overlay': { opacity: 1 } },
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                  transform: 'translateY(-2px)',
+                                  boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                                  '& .overlay': { opacity: 1 },
+                                },
                               }}
                             >
                               <img
@@ -562,7 +846,6 @@ const PostDetalle: React.FC = () => {
                                   width: '100%',
                                   height: '100%',
                                   objectFit: 'cover',
-                                  borderRadius: '4px',
                                 }}
                               />
                               <Box
@@ -579,7 +862,6 @@ const PostDetalle: React.FC = () => {
                                   alignItems: 'center',
                                   opacity: 0,
                                   transition: 'opacity 0.2s',
-                                  borderRadius: '4px',
                                 }}
                               >
                                 <Button
@@ -588,6 +870,12 @@ const PostDetalle: React.FC = () => {
                                   onClick={() =>
                                     window.open(archivo.url, '_blank')
                                   }
+                                  sx={{
+                                    backgroundColor: '#ff6347',
+                                    '&:hover': {
+                                      backgroundColor: '#e5533f',
+                                    },
+                                  }}
                                 >
                                   Ver
                                 </Button>
@@ -597,8 +885,13 @@ const PostDetalle: React.FC = () => {
                             <Box
                               sx={{
                                 height: '150px',
-                                borderRadius: '4px',
+                                borderRadius: '8px',
                                 overflow: 'hidden',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                  transform: 'translateY(-2px)',
+                                  boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                                },
                               }}
                             >
                               <video
@@ -621,30 +914,33 @@ const PostDetalle: React.FC = () => {
                                 alignItems: 'center',
                                 p: 1,
                                 cursor: 'pointer',
-                                '&:hover': { bgcolor: 'action.hover' },
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                  transform: 'translateY(-2px)',
+                                  boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                                  bgcolor: 'rgba(255, 99, 71, 0.1)',
+                                },
                               }}
                               onClick={() => window.open(archivo.url, '_blank')}
                             >
                               {archivo.tipo.includes('pdf') ? (
                                 <PictureAsPdfIcon
-                                  color='error'
-                                  sx={{ fontSize: 24 }}
+                                  sx={{ fontSize: 24, color: '#ff6347' }}
                                 />
                               ) : archivo.tipo.includes('word') ? (
                                 <DescriptionIcon
-                                  color='primary'
-                                  sx={{ fontSize: 24 }}
+                                  sx={{ fontSize: 24, color: '#ff6347' }}
                                 />
                               ) : (
                                 <DescriptionIcon
-                                  color='action'
-                                  sx={{ fontSize: 24 }}
+                                  sx={{ fontSize: 24, color: '#4a4a4a' }}
                                 />
                               )}
                               <Typography
                                 variant='body2'
                                 sx={{
                                   ml: 1,
+                                  color: '#4a4a4a',
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
                                   whiteSpace: 'nowrap',
@@ -663,7 +959,24 @@ const PostDetalle: React.FC = () => {
 
               {/* Sección de comentarios */}
               <Box sx={{ mt: 4 }}>
-                <Typography variant='h6' gutterBottom>
+                <Typography
+                  variant='h6'
+                  gutterBottom
+                  sx={{
+                    color: '#1a1a1a',
+                    fontWeight: 700,
+                    position: 'relative',
+                    '&::after': {
+                      content: '""',
+                      display: 'block',
+                      width: '40px',
+                      height: '3px',
+                      backgroundColor: '#ff6347',
+                      mt: 1,
+                      borderRadius: '2px',
+                    },
+                  }}
+                >
                   Comentarios ({post.comments?.length})
                 </Typography>
 
@@ -674,15 +987,26 @@ const PostDetalle: React.FC = () => {
                     gap: 2,
                     mb: 3,
                     p: 2,
-                    bgcolor: 'background.paper',
-                    borderRadius: 1,
-                    boxShadow: 1,
+                    bgcolor: '#fff',
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
+                    },
                   }}
                 >
                   <Avatar
                     src={user?.avatarUrl || ''}
                     alt={user?.nombre || 'Usuario'}
-                    sx={{ width: 40, height: 40 }}
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'scale(1.1)',
+                      },
+                    }}
                   />
                   <TextField
                     fullWidth
@@ -693,13 +1017,30 @@ const PostDetalle: React.FC = () => {
                     onChange={(e) => setNewComment(e.target.value)}
                     multiline
                     rows={2}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&:hover fieldset': {
+                          borderColor: '#ff6347',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#ff6347',
+                        },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#ff6347',
+                      },
+                    }}
                     InputProps={{
                       endAdornment: (
                         <IconButton
                           onClick={handleCommentSubmit}
                           disabled={!newComment.trim()}
-                          color='primary'
-                          sx={{ ml: 1 }}
+                          sx={{
+                            color: '#ff6347',
+                            '&:hover': {
+                              backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                            },
+                          }}
                         >
                           <SendIcon />
                         </IconButton>
@@ -715,13 +1056,15 @@ const PostDetalle: React.FC = () => {
                       key={comment.id}
                       sx={{
                         mb: 2,
+                        borderRadius: '12px',
                         bgcolor:
                           user?.id === comment.usuario.id
-                            ? 'rgba(25, 118, 210, 0.04)'
-                            : 'background.paper',
-                        transition: 'all 0.2s',
+                            ? 'rgba(255, 99, 71, 0.04)'
+                            : '#fff',
+                        transition: 'all 0.3s ease',
                         '&:hover': {
-                          boxShadow: 2,
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
                           '& .delete-button': {
                             opacity: 1,
                           },
@@ -739,7 +1082,14 @@ const PostDetalle: React.FC = () => {
                           <Avatar
                             src={comment.usuario?.avatarUrl || ''}
                             alt={comment.usuario?.nombre || 'Usuario'}
-                            sx={{ width: 36, height: 36 }}
+                            sx={{
+                              width: 36,
+                              height: 36,
+                              transition: 'all 0.3s ease',
+                              '&:hover': {
+                                transform: 'scale(1.1)',
+                              },
+                            }}
                           />
 
                           <Box sx={{ flex: 1 }}>
@@ -756,7 +1106,7 @@ const PostDetalle: React.FC = () => {
                                   component='span'
                                   sx={{
                                     fontWeight: 600,
-                                    color: 'text.primary',
+                                    color: '#1a1a1a',
                                   }}
                                 >
                                   {comment.usuario?.nombre}{' '}
@@ -765,7 +1115,7 @@ const PostDetalle: React.FC = () => {
                                 <Typography
                                   variant='caption'
                                   component='span'
-                                  sx={{ ml: 1, color: 'text.secondary' }}
+                                  sx={{ ml: 1, color: '#4a4a4a' }}
                                 >
                                   {formatDistanceToNow(
                                     new Date(comment.createdAt),
@@ -787,10 +1137,13 @@ const PostDetalle: React.FC = () => {
                                   className='delete-button'
                                   sx={{
                                     opacity: 0,
-                                    transition: 'opacity 0.2s',
-                                    color: 'error.main',
+                                    transition: 'all 0.3s ease',
+                                    color: '#ff6347',
                                     p: 0.5,
                                     ml: 1,
+                                    '&:hover': {
+                                      backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                                    },
                                   }}
                                 >
                                   <DeleteIcon fontSize='small' />
@@ -803,7 +1156,7 @@ const PostDetalle: React.FC = () => {
                               sx={{
                                 mt: 0.5,
                                 whiteSpace: 'pre-wrap',
-                                color: 'text.primary',
+                                color: '#4a4a4a',
                                 lineHeight: 1.5,
                               }}
                             >
@@ -820,9 +1173,14 @@ const PostDetalle: React.FC = () => {
                       sx={{
                         p: 3,
                         textAlign: 'center',
-                        color: 'text.secondary',
-                        bgcolor: 'background.paper',
-                        borderRadius: 1,
+                        color: '#4a4a4a',
+                        bgcolor: '#fff',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
+                        },
                       }}
                     >
                       <Typography variant='body1'>
@@ -850,6 +1208,12 @@ const PostDetalle: React.FC = () => {
                       setEditedArea(post.area.nombre)
                       setEditMode(true)
                     }}
+                    sx={{
+                      backgroundColor: '#ff6347',
+                      '&:hover': {
+                        backgroundColor: '#e5533f',
+                      },
+                    }}
                   >
                     Editar Post
                   </Button>
@@ -869,7 +1233,14 @@ const PostDetalle: React.FC = () => {
         <Alert
           onClose={() => setOpenSnackbar(false)}
           severity='success'
-          sx={{ width: '100%' }}
+          sx={{
+            width: '100%',
+            backgroundColor: '#4caf50',
+            color: '#fff',
+            '& .MuiAlert-icon': {
+              color: '#fff',
+            },
+          }}
         >
           Post actualizado exitosamente
         </Alert>

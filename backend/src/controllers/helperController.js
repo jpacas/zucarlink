@@ -48,13 +48,31 @@ const getAreas = async (req, res) => {
 
 const getProveedores = async (req, res) => {
   try {
-    const proveedores = await Proveedor.findAll({ attributes: ['nombre'] })
+    const proveedores = await Proveedor.findAll({
+      attributes: ['nombre', 'email', 'webpage', 'logo', 'descripcion'],
+      include: [
+        {
+          model: Pais,
+          as: 'pais',
+          attributes: ['nombre'],
+        },
+      ],
+    })
 
     if (!proveedores.length) {
-      return res.status(204).send() // No hay contenido
+      return res.status(204).send([]) // No hay contenido
     }
 
-    res.status(200).json(proveedores)
+    const proveedoresFormateados = proveedores.map((proveedor) => ({
+      nombre: proveedor.nombre,
+      email: proveedor.email,
+      webpage: proveedor.webpage,
+      logo: proveedor.logo,
+      descripcion: proveedor.descripcion,
+      pais: proveedor.pais?.nombre,
+    }))
+
+    res.status(200).json(proveedoresFormateados)
   } catch (error) {
     console.error('Error al obtener proveedores:', error)
     res.status(500).json({ error: error.message })

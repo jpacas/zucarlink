@@ -192,6 +192,29 @@ const Register: React.FC = () => {
   const handleUserTypeSelection = (
     type: 'ingenio' | 'proveedor' | 'empresa_proveedora'
   ) => {
+    // Primero limpiamos el estado del formulario
+    setFormData({
+      nombre: '',
+      apellido: '',
+      email: '',
+      fecha_nacimiento: '',
+      pais: '',
+      avatarUrl: null,
+      ingenio: '',
+      area: null,
+      proveedor: '',
+      password: '',
+      confirmPassword: '',
+      paginaWeb: '',
+      descripcion: '',
+    })
+    setPreview(null)
+    setMessage(null)
+    setFormPart(1)
+    setRegistrationStep('form')
+    setSelectedPlan(null)
+    setClientSecret(null)
+    // Luego actualizamos el tipo de usuario y el paso
     setUserType(type)
     setStep('form')
   }
@@ -216,45 +239,30 @@ const Register: React.FC = () => {
     },
   })
 
-  // Maneja la selección de la foto de perfil
-  /* const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const file = e.target.files[0]
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg']
-      if (!allowedTypes.includes(file.type)) {
-        setMessage({
-          type: 'error',
-          text: 'Tipo de archivo no permitido. Solo se aceptan imágenes (JPEG/PNG).',
-        })
-        return
-      }
-      if (file.size > 2 * 1024 * 1024) {
-        setMessage({
-          type: 'error',
-          text: 'El archivo es demasiado grande. Máximo 2 MB.',
-        })
-        return
-      }
-      setFormData((prev) => ({ ...prev, fotoPerfil: file }))
-      setPreview(URL.createObjectURL(file))
-    }
-  } */
-
   // Maneja la navegación entre partes del formulario
   const handleNext = () => {
     if (formPart === 1) {
+      // Solo validamos si estamos en el paso 1 y el usuario ha interactuado con el formulario
       if (
-        !formData.nombre ||
-        !formData.apellido ||
-        !formData.email ||
-        !formData.fecha_nacimiento ||
-        !formData.pais
+        formData.nombre ||
+        formData.apellido ||
+        formData.email ||
+        formData.fecha_nacimiento ||
+        formData.pais
       ) {
-        setMessage({
-          type: 'error',
-          text: 'Por favor completa todos los campos obligatorios.',
-        })
-        return
+        if (
+          !formData.nombre ||
+          !formData.apellido ||
+          !formData.email ||
+          !formData.fecha_nacimiento ||
+          !formData.pais
+        ) {
+          setMessage({
+            type: 'error',
+            text: 'Por favor completa todos los campos obligatorios.',
+          })
+          return
+        }
       }
       setFormPart(2)
     }
@@ -391,24 +399,28 @@ const Register: React.FC = () => {
           return
         }
 
+        // Agregar todos los campos al FormData
         Object.keys(formData).forEach((key) => {
           const value = (formData as any)[key]
-          // Enviar area como null si es proveedor o no está definido
-          if (key === 'area' && userType === 'proveedor') {
-            formDataToSend.append(key, '') // Enviar como cadena vacía o null según lo que acepte tu backend
+          if (key === 'avatarUrl' && value) {
+            // Asegurarse de que la imagen se envíe con el nombre correcto 'avatar'
+            formDataToSend.append('avatar', value)
+          } else if (key === 'area' && userType === 'proveedor') {
+            formDataToSend.append(key, '')
           } else {
             formDataToSend.append(key, value !== null ? value : '')
           }
         })
-        if (formData.avatarUrl) {
-          formDataToSend.append('avatar', formData.avatarUrl)
-        }
 
         await axios.post(
           `${import.meta.env.VITE_API_URL}/users/register`,
           formDataToSend,
           {
-            headers: { 'Content-Type': 'multipart/form-data' },
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              // Asegurarse de que no se envíe el Content-Type automático
+              Accept: 'application/json',
+            },
           }
         )
 
@@ -481,7 +493,7 @@ const Register: React.FC = () => {
 
           <Grid container spacing={4} justifyContent='center'>
             <Grid item xs={12} md={4}>
-              <Card
+              <Box
                 sx={{
                   height: '100%',
                   display: 'flex',
@@ -497,99 +509,126 @@ const Register: React.FC = () => {
                   },
                 }}
               >
-                <CardContent
+                <Card
                   sx={{
-                    flexGrow: 1,
-                    textAlign: 'center',
-                    p: 4,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
                     borderRadius: 3,
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                    overflow: 'visible',
+                    background: 'transparent',
+                    boxShadow: 'none',
                   }}
                 >
-                  <Box
+                  <CardContent
                     sx={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: '50%',
-                      backgroundColor: 'primary.light',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 24px',
+                      flexGrow: 1,
+                      textAlign: 'center',
+                      p: 4,
+                      borderRadius: 3,
                       transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'rotate(10deg)',
-                      },
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                      backgroundColor: '#fff',
+                      border: '1px solid',
+                      borderColor: 'primary.light',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: '100%',
                     }}
                   >
-                    <Factory sx={{ fontSize: 40, color: 'primary.main' }} />
-                  </Box>
-                  <Typography
-                    variant='h5'
-                    gutterBottom
-                    fontWeight='bold'
-                    color='primary.main'
-                  >
-                    Usuarios de Ingenios
-                  </Typography>
-                  <Typography
-                    variant='body1'
-                    color='text.secondary'
-                    paragraph
-                    sx={{ mb: 3 }}
-                  >
-                    Personal que trabaja en ingenios azucareros. Accede al
-                    modelo de inteligencia artificial ZucarIA. Obtén información
-                    detallada sobre proveedores y gestiona relaciones
-                    comerciales.
-                  </Typography>
-                  <List sx={{ mb: 3 }}>
-                    {[
-                      'Acceso a ZucarIA',
-                      'Gestión de proveedores',
-                      'Análisis detallado',
-                      'Soporte prioritario',
-                    ].map((feature) => (
-                      <ListItem key={feature} sx={{ py: 0.5 }}>
-                        <ListItemIcon sx={{ minWidth: 36 }}>
-                          <CheckCircleOutline
-                            color='primary'
-                            fontSize='small'
-                          />
-                        </ListItemIcon>
-                        <ListItemText primary={feature} />
-                      </ListItem>
-                    ))}
-                  </List>
-                </CardContent>
-                <CardActions sx={{ p: 3, pt: 0 }}>
-                  <Button
-                    variant='contained'
-                    color='primary'
-                    fullWidth
-                    size='large'
-                    onClick={() => handleUserTypeSelection('ingenio')}
-                    sx={{
-                      py: 1.5,
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontSize: '1.1rem',
-                      fontWeight: 'bold',
-                      boxShadow: 2,
-                      '&:hover': {
-                        boxShadow: 4,
-                      },
-                    }}
-                  >
-                    Registrarse como Usuario de Ingenio
-                  </Button>
-                </CardActions>
-              </Card>
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        backgroundColor: 'primary.light',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 24px',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'rotate(10deg)',
+                          backgroundColor: 'primary.main',
+                        },
+                      }}
+                    >
+                      <Factory sx={{ fontSize: 40, color: '#fff' }} />
+                    </Box>
+                    <Typography
+                      variant='h5'
+                      gutterBottom
+                      fontWeight='bold'
+                      color='primary.main'
+                      sx={{ mb: 2 }}
+                    >
+                      Usuarios de Ingenios
+                    </Typography>
+                    <Typography
+                      variant='body1'
+                      color='text.secondary'
+                      paragraph
+                      sx={{ mb: 3, flexGrow: 1 }}
+                    >
+                      Personal que trabaja en ingenios azucareros. Accede al
+                      modelo de inteligencia artificial ZucarIA. Obtén
+                      información detallada sobre proveedores y gestiona
+                      relaciones comerciales.
+                    </Typography>
+                    <List sx={{ mb: 3, flexGrow: 1 }}>
+                      {[
+                        'Acceso a ZucarIA',
+                        'Compra/Venta de equipos',
+                        'Foro tecnico',
+                        'Directorios azucareros',
+                      ].map((feature) => (
+                        <ListItem key={feature} sx={{ py: 0.5 }}>
+                          <ListItemIcon sx={{ minWidth: 36 }}>
+                            <CheckCircleOutline
+                              color='primary'
+                              fontSize='small'
+                              sx={{
+                                color: 'primary.main',
+                                opacity: 0.8,
+                                '&:hover': {
+                                  opacity: 1,
+                                },
+                              }}
+                            />
+                          </ListItemIcon>
+                          <ListItemText primary={feature} />
+                        </ListItem>
+                      ))}
+                    </List>
+                    <Button
+                      variant='contained'
+                      color='primary'
+                      fullWidth
+                      size='large'
+                      onClick={() => handleUserTypeSelection('ingenio')}
+                      sx={{
+                        py: 1.5,
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontSize: '1.1rem',
+                        fontWeight: 'bold',
+                        boxShadow: 2,
+                        backgroundColor: 'primary.light',
+                        '&:hover': {
+                          boxShadow: 4,
+                          backgroundColor: 'primary.main',
+                        },
+                      }}
+                    >
+                      Registrarse
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Box>
             </Grid>
 
             <Grid item xs={12} md={4}>
-              <Card
+              <Box
                 sx={{
                   height: '100%',
                   display: 'flex',
@@ -605,98 +644,127 @@ const Register: React.FC = () => {
                   },
                 }}
               >
-                <CardContent
+                <Card
                   sx={{
-                    flexGrow: 1,
-                    textAlign: 'center',
-                    p: 4,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
                     borderRadius: 3,
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                    overflow: 'visible',
+                    background: 'transparent',
+                    boxShadow: 'none',
                   }}
                 >
-                  <Box
+                  <CardContent
                     sx={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: '50%',
-                      backgroundColor: 'secondary.light',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 24px',
+                      flexGrow: 1,
+                      textAlign: 'center',
+                      p: 4,
+                      borderRadius: 3,
                       transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'rotate(10deg)',
-                      },
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                      backgroundColor: '#fff',
+                      border: '1px solid',
+                      borderColor: 'secondary.light',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: '100%',
                     }}
                   >
-                    <Business sx={{ fontSize: 40, color: 'secondary.main' }} />
-                  </Box>
-                  <Typography
-                    variant='h5'
-                    gutterBottom
-                    fontWeight='bold'
-                    color='secondary.main'
-                  >
-                    Usuarios de Proveedores
-                  </Typography>
-                  <Typography
-                    variant='body1'
-                    color='text.secondary'
-                    paragraph
-                    sx={{ mb: 3 }}
-                  >
-                    Empleados de empresas proveedoras de la industria azucarera.
-                    Gestiona tu perfil empresarial y mantén actualizada la
-                    información de productos y servicios.
-                  </Typography>
-                  <List sx={{ mb: 3 }}>
-                    {[
-                      'Gestión de perfil',
-                      'Catálogo de productos',
-                      'Conexión con ingenios',
-                      'Estadísticas de interacción',
-                    ].map((feature) => (
-                      <ListItem key={feature} sx={{ py: 0.5 }}>
-                        <ListItemIcon sx={{ minWidth: 36 }}>
-                          <CheckCircleOutline
-                            color='secondary'
-                            fontSize='small'
-                          />
-                        </ListItemIcon>
-                        <ListItemText primary={feature} />
-                      </ListItem>
-                    ))}
-                  </List>
-                </CardContent>
-                <CardActions sx={{ p: 3, pt: 0 }}>
-                  <Button
-                    variant='contained'
-                    color='secondary'
-                    fullWidth
-                    size='large'
-                    onClick={() => handleUserTypeSelection('proveedor')}
-                    sx={{
-                      py: 1.5,
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontSize: '1.1rem',
-                      fontWeight: 'bold',
-                      boxShadow: 2,
-                      '&:hover': {
-                        boxShadow: 4,
-                      },
-                    }}
-                  >
-                    Registrarse como Usuario de Proveedor
-                  </Button>
-                </CardActions>
-              </Card>
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        backgroundColor: 'secondary.light',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 24px',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'rotate(10deg)',
+                          backgroundColor: 'secondary.main',
+                        },
+                      }}
+                    >
+                      <Business sx={{ fontSize: 40, color: '#fff' }} />
+                    </Box>
+                    <Typography
+                      variant='h5'
+                      gutterBottom
+                      fontWeight='bold'
+                      color='secondary.main'
+                      sx={{ mb: 2 }}
+                    >
+                      Usuarios de Proveedores
+                    </Typography>
+                    <Typography
+                      variant='body1'
+                      color='text.secondary'
+                      paragraph
+                      sx={{ mb: 3, flexGrow: 1 }}
+                    >
+                      Empleados de empresas proveedoras de la industria
+                      azucarera. Gestiona tu perfil empresarial y mantén
+                      actualizada la información de productos y servicios.
+                    </Typography>
+                    <List sx={{ mb: 3, flexGrow: 1 }}>
+                      {[
+                        'Interactua con tecnicos',
+                        'Aumenta tu visibilidad',
+                        'Conoce necesidades de ingenios',
+                        'Incrementa tus ventas',
+                      ].map((feature) => (
+                        <ListItem key={feature} sx={{ py: 0.5 }}>
+                          <ListItemIcon sx={{ minWidth: 36 }}>
+                            <CheckCircleOutline
+                              color='secondary'
+                              fontSize='small'
+                              sx={{
+                                color: 'secondary.main',
+                                opacity: 0.8,
+                                '&:hover': {
+                                  opacity: 1,
+                                },
+                              }}
+                            />
+                          </ListItemIcon>
+                          <ListItemText primary={feature} />
+                        </ListItem>
+                      ))}
+                    </List>
+                    <Button
+                      variant='contained'
+                      color='secondary'
+                      fullWidth
+                      size='large'
+                      disabled={true} // TODO: Desbloquear cuando se tenga el formulario de proveedor
+                      onClick={() => handleUserTypeSelection('proveedor')}
+                      sx={{
+                        py: 1.5,
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontSize: '1.1rem',
+                        fontWeight: 'bold',
+                        boxShadow: 2,
+
+                        backgroundColor: 'secondary.light',
+                        '&:hover': {
+                          boxShadow: 4,
+                          backgroundColor: 'secondary.main',
+                        },
+                      }}
+                    >
+                      Registrarse
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Box>
             </Grid>
 
             <Grid item xs={12} md={4}>
-              <Card
+              <Box
                 sx={{
                   height: '100%',
                   display: 'flex',
@@ -712,93 +780,124 @@ const Register: React.FC = () => {
                   },
                 }}
               >
-                <CardContent
+                <Card
                   sx={{
-                    flexGrow: 1,
-                    textAlign: 'center',
-                    p: 4,
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
                     borderRadius: 3,
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                    overflow: 'visible',
+                    background: 'transparent',
+                    boxShadow: 'none',
                   }}
                 >
-                  <Box
+                  <CardContent
                     sx={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: '50%',
-                      backgroundColor: 'info.light',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 24px',
+                      flexGrow: 1,
+                      textAlign: 'center',
+                      p: 4,
+                      borderRadius: 3,
                       transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'rotate(10deg)',
-                      },
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                      backgroundColor: '#fff',
+                      border: '1px solid',
+                      borderColor: 'info.light',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: '100%',
                     }}
                   >
-                    <Store sx={{ fontSize: 40, color: 'info.main' }} />
-                  </Box>
-                  <Typography
-                    variant='h5'
-                    gutterBottom
-                    fontWeight='bold'
-                    color='info.main'
-                  >
-                    Empresa Proveedora
-                  </Typography>
-                  <Typography
-                    variant='body1'
-                    color='text.secondary'
-                    paragraph
-                    sx={{ mb: 3 }}
-                  >
-                    Registra tu empresa proveedora. Obtén un perfil destacado,
-                    aparece en el directorio de proveedores y aprovecha
-                    herramientas exclusivas de marketing.
-                  </Typography>
-                  <List sx={{ mb: 3 }}>
-                    {[
-                      'Perfil destacado',
-                      'Directorio premium',
-                      'Marketing avanzado',
-                      'Análisis de mercado',
-                    ].map((feature) => (
-                      <ListItem key={feature} sx={{ py: 0.5 }}>
-                        <ListItemIcon sx={{ minWidth: 36 }}>
-                          <CheckCircleOutline color='info' fontSize='small' />
-                        </ListItemIcon>
-                        <ListItemText primary={feature} />
-                      </ListItem>
-                    ))}
-                  </List>
-                </CardContent>
-                <CardActions sx={{ p: 3, pt: 0 }}>
-                  <Button
-                    variant='contained'
-                    color='info'
-                    fullWidth
-                    size='large'
-                    onClick={() =>
-                      handleUserTypeSelection('empresa_proveedora')
-                    }
-                    sx={{
-                      py: 1.5,
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontSize: '1.1rem',
-                      fontWeight: 'bold',
-                      boxShadow: 2,
-                      '&:hover': {
-                        boxShadow: 4,
-                      },
-                    }}
-                  >
-                    Registrar Empresa Proveedora
-                  </Button>
-                </CardActions>
-              </Card>
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        backgroundColor: 'info.light',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 24px',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'rotate(10deg)',
+                          backgroundColor: 'info.main',
+                        },
+                      }}
+                    >
+                      <Store sx={{ fontSize: 40, color: '#fff' }} />
+                    </Box>
+                    <Typography
+                      variant='h5'
+                      gutterBottom
+                      fontWeight='bold'
+                      color='info.main'
+                      sx={{ mb: 2 }}
+                    >
+                      Empresa Proveedora
+                    </Typography>
+                    <Typography
+                      variant='body1'
+                      color='text.secondary'
+                      paragraph
+                      sx={{ mb: 3, flexGrow: 1 }}
+                    >
+                      Registra tu empresa proveedora. Obtén un perfil destacado,
+                      aparece en el directorio de proveedores y aprovecha
+                      herramientas exclusivas de mercadeo.
+                    </Typography>
+                    <List sx={{ mb: 3, flexGrow: 1 }}>
+                      {[
+                        'Directorio de proveedores',
+                        'Registra tus empleados',
+                        'Fortalece tu marca',
+                        'Análisis de mercado',
+                      ].map((feature) => (
+                        <ListItem key={feature} sx={{ py: 0.5 }}>
+                          <ListItemIcon sx={{ minWidth: 36 }}>
+                            <CheckCircleOutline
+                              color='info'
+                              fontSize='small'
+                              sx={{
+                                color: 'info.main',
+                                opacity: 0.8,
+                                '&:hover': {
+                                  opacity: 1,
+                                },
+                              }}
+                            />
+                          </ListItemIcon>
+                          <ListItemText primary={feature} />
+                        </ListItem>
+                      ))}
+                    </List>
+                    <Button
+                      variant='contained'
+                      color='info'
+                      fullWidth
+                      disabled={true} // TODO: Desbloquear cuando se tenga el formulario de proveedor
+                      size='large'
+                      onClick={() =>
+                        handleUserTypeSelection('empresa_proveedora')
+                      }
+                      sx={{
+                        py: 1.5,
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontSize: '1.1rem',
+                        fontWeight: 'bold',
+                        boxShadow: 2,
+                        backgroundColor: 'info.light',
+                        '&:hover': {
+                          boxShadow: 4,
+                          backgroundColor: 'info.main',
+                        },
+                      }}
+                    >
+                      Registrarse
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Box>
             </Grid>
           </Grid>
         </Box>
@@ -1273,20 +1372,28 @@ const Register: React.FC = () => {
 
                 {formPart === 2 && userType === 'proveedor' && (
                   <>
-                    <Typography variant='h6' mb={2}>
+                    <Typography
+                      variant='h6'
+                      mb={3}
+                      sx={{
+                        fontWeight: 'bold',
+                        color: 'primary.main',
+                        textAlign: 'center',
+                      }}
+                    >
                       Detalles de Usuario
                     </Typography>
                     <Autocomplete
                       options={proveedores}
                       value={
                         proveedores.find(
-                          (prov) => prov === formData.proveedor
+                          (prov) => prov.nombre === formData.proveedor
                         ) || null
                       }
                       onChange={(_, value) =>
                         setFormData((prev) => ({
                           ...prev,
-                          proveedor: value || '',
+                          proveedor: value ? value.nombre : '',
                         }))
                       }
                       renderInput={(params) => (
@@ -1296,9 +1403,20 @@ const Register: React.FC = () => {
                           margin='normal'
                           fullWidth
                           required
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: 2,
+                              backgroundColor: 'background.paper',
+                              '&:hover fieldset': {
+                                borderColor: 'primary.main',
+                              },
+                            },
+                          }}
                         />
                       )}
-                      isOptionEqualToValue={(option, value) => option === value}
+                      isOptionEqualToValue={(option, value) =>
+                        option.nombre === value?.nombre
+                      }
                     />
                     <TextField
                       fullWidth
@@ -1309,11 +1427,26 @@ const Register: React.FC = () => {
                       onChange={handleChange}
                       margin='normal'
                       required
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          backgroundColor: 'background.paper',
+                          '&:hover fieldset': {
+                            borderColor: 'primary.main',
+                          },
+                        },
+                      }}
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position='end'>
                             <IconButton
                               onClick={() => setShowPassword(!showPassword)}
+                              sx={{
+                                color: 'primary.main',
+                                '&:hover': {
+                                  backgroundColor: 'primary.light',
+                                },
+                              }}
                             >
                               {showPassword ? (
                                 <Visibility />
@@ -1334,11 +1467,26 @@ const Register: React.FC = () => {
                       onChange={handleChange}
                       margin='normal'
                       required
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          backgroundColor: 'background.paper',
+                          '&:hover fieldset': {
+                            borderColor: 'primary.main',
+                          },
+                        },
+                      }}
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position='end'>
                             <IconButton
                               onClick={() => setShowPassword(!showPassword)}
+                              sx={{
+                                color: 'primary.main',
+                                '&:hover': {
+                                  backgroundColor: 'primary.light',
+                                },
+                              }}
                             >
                               {showPassword ? (
                                 <Visibility />
@@ -1350,12 +1498,22 @@ const Register: React.FC = () => {
                         ),
                       }}
                     />
-                    <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
+                    <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
                       <Button
                         variant='outlined'
                         color='secondary'
                         fullWidth
                         onClick={() => setFormPart(1)}
+                        sx={{
+                          py: 1.5,
+                          borderRadius: 2,
+                          textTransform: 'none',
+                          fontSize: '1.1rem',
+                          boxShadow: 1,
+                          '&:hover': {
+                            boxShadow: 2,
+                          },
+                        }}
                       >
                         Volver
                       </Button>
@@ -1365,12 +1523,21 @@ const Register: React.FC = () => {
                         color='primary'
                         fullWidth
                         disabled={loading}
+                        startIcon={loading && <CircularProgress size={20} />}
+                        sx={{
+                          py: 1.5,
+                          borderRadius: 2,
+                          textTransform: 'none',
+                          fontSize: '1.1rem',
+                          boxShadow: 2,
+                          '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: 4,
+                          },
+                          transition: 'all 0.3s ease',
+                        }}
                       >
-                        {loading ? (
-                          <CircularProgress size={24} />
-                        ) : (
-                          'Registrarse'
-                        )}
+                        {loading ? 'Registrando...' : 'Registrarse'}
                       </Button>
                     </Box>
                   </>

@@ -1,6 +1,13 @@
 import { useEffect, useState, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { Box, Typography, CircularProgress } from '@mui/material'
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  Paper,
+  Container,
+} from '@mui/material'
+import { CheckCircleOutline } from '@mui/icons-material'
 import axios from 'axios'
 
 const RegistroExitoso = () => {
@@ -99,61 +106,115 @@ const RegistroExitoso = () => {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '60vh',
-        }}
-      >
-        <CircularProgress />
-        <Typography variant='h6' sx={{ mt: 2 }}>
-          Procesando su registro...
-        </Typography>
-      </Box>
+      <Container maxWidth='sm'>
+        <Paper
+          elevation={3}
+          sx={{
+            p: 4,
+            mt: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            borderRadius: 2,
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+          }}
+        >
+          <CircularProgress size={60} sx={{ color: 'primary.main', mb: 2 }} />
+          <Typography variant='h6' sx={{ mt: 2, color: 'text.primary' }}>
+            Procesando su registro...
+          </Typography>
+        </Paper>
+      </Container>
     )
   }
 
   if (error) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '60vh',
-        }}
-      >
-        <Typography variant='h6' color='error'>
-          {error}
-        </Typography>
-      </Box>
+      <Container maxWidth='sm'>
+        <Paper
+          elevation={3}
+          sx={{
+            p: 4,
+            mt: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            borderRadius: 2,
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+          }}
+        >
+          <Typography variant='h6' color='error' align='center'>
+            {error}
+          </Typography>
+        </Paper>
+      </Container>
     )
   }
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '60vh',
-      }}
-    >
-      <Typography variant='h4' gutterBottom>
-        ¡Registro Exitoso!
-      </Typography>
-      <Typography variant='subtitle1'>
-        Su empresa ha sido registrada correctamente.
-      </Typography>
-      <Typography variant='body1' sx={{ mt: 2 }}>
-        Será redirigido al inicio de sesión en unos momentos...
-      </Typography>
-    </Box>
+    <Container maxWidth='sm'>
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
+          mt: 8,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          borderRadius: 2,
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            transform: 'translateY(-4px)',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.1)',
+          },
+        }}
+      >
+        <Box
+          sx={{
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            backgroundColor: 'success.light',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            mb: 3,
+          }}
+        >
+          <CheckCircleOutline sx={{ fontSize: 50, color: 'success.main' }} />
+        </Box>
+        <Typography
+          variant='h4'
+          gutterBottom
+          sx={{
+            fontWeight: 'bold',
+            background: 'linear-gradient(45deg, #2e7d32, #4caf50)',
+            backgroundClip: 'text',
+            textFillColor: 'transparent',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
+          ¡Registro Exitoso!
+        </Typography>
+        <Typography
+          variant='h6'
+          sx={{ mt: 2, color: 'text.secondary', textAlign: 'center' }}
+        >
+          Su empresa ha sido registrada correctamente
+        </Typography>
+        <Typography
+          variant='body1'
+          sx={{ mt: 3, color: 'text.secondary', textAlign: 'center' }}
+        >
+          Será redirigido al inicio de sesión en unos momentos...
+        </Typography>
+      </Paper>
+    </Container>
   )
 }
 
