@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Container,
 } from '@mui/material'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
@@ -32,7 +33,6 @@ import {
   Business,
   Category,
   CalendarToday,
-  FilterAlt,
   MoreVert,
   Edit,
   Delete,
@@ -492,288 +492,401 @@ const Empleos: React.FC = () => {
   }
 
   return (
-    <Box sx={{ padding: 3, marginTop: '64px' }}>
-      <Grid container spacing={3}>
-        {/* Sección de filtros (a la izquierda en pantallas grandes) */}
-        <Grid item xs={12} md={3} lg={2}>
-          <Paper
-            elevation={3}
+    <Box
+      sx={{
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        minHeight: '100vh',
+        pt: 10,
+        pb: 8,
+      }}
+    >
+      <Container maxWidth='lg'>
+        <Typography
+          variant='h3'
+          align='center'
+          sx={{
+            mb: 6,
+            fontWeight: 700,
+            color: '#1a1a1a',
+            letterSpacing: '-0.5px',
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              display: 'block',
+              width: '60px',
+              height: '4px',
+              backgroundColor: '#ff6347',
+              margin: '16px auto',
+              borderRadius: '2px',
+            },
+          }}
+        >
+          Empleos
+        </Typography>
+
+        <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
+          {/* Sección de filtros (a la izquierda en pantallas grandes) */}
+          <Grid
+            item
             sx={{
-              p: 2,
-              position: { md: 'sticky' },
-              top: { md: '80px' },
+              flex: { xs: '1 1 auto', md: '0 0 25%' },
+              maxWidth: { xs: '100%', md: '25%' },
+              pl: { md: 0 },
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <FilterAlt color='primary' sx={{ mr: 1 }} />
-              <Typography variant='h6'>Filtros</Typography>
-            </Box>
-
-            <TextField
-              fullWidth
-              label='Buscar por palabra clave'
-              name='busqueda'
-              value={filtros.busqueda}
-              onChange={handleFiltroChange}
-              variant='outlined'
-              size='small'
-              sx={{ mb: 2 }}
-            />
-
-            <Autocomplete
-              options={paises}
-              value={filtros.pais || null}
-              onChange={(_, value) =>
-                setFiltros({ ...filtros, pais: value || '' })
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label='País'
-                  size='small'
-                  fullWidth
-                  sx={{ mb: 2 }}
-                />
-              )}
-            />
-
-            <Autocomplete
-              options={ingeniosFiltrados.map((ing) => ing.nombre)}
-              value={filtros.ingenio || null}
-              onChange={(_, value) =>
-                setFiltros({ ...filtros, ingenio: value || '' })
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label='Ingenio'
-                  size='small'
-                  fullWidth
-                  disabled={ingeniosFiltrados.length === 0}
-                  sx={{ mb: 2 }}
-                />
-              )}
-            />
-
-            <Autocomplete
-              options={areas}
-              value={filtros.area || null}
-              onChange={(_, value) =>
-                setFiltros({ ...filtros, area: value || '' })
-              }
-              renderInput={(params) => (
-                <TextField {...params} label='Área' size='small' fullWidth />
-              )}
-            />
-
-            <Divider sx={{ my: 3 }} />
-
-            <Button
-              variant='contained'
-              onClick={() => {
-                setEditMode(false)
-                setModalOpen(true)
-              }}
-              fullWidth
-              startIcon={<Business />}
+            <Paper
+              elevation={0}
               sx={{
-                mt: 2,
-                py: 1.5,
-                fontWeight: 'bold',
-                boxShadow: 2,
+                p: 3,
+                borderRadius: 2,
+                backgroundColor: '#fff',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                position: 'sticky',
+                top: '80px',
+                transition: 'all 0.3s ease',
                 '&:hover': {
-                  boxShadow: 4,
-                  transform: 'translateY(-2px)',
-                  transition: 'all 0.2s ease',
+                  boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
                 },
+                ml: { md: -2 },
               }}
             >
-              Publicar Oferta
-            </Button>
-          </Paper>
-        </Grid>
-
-        {/* Sección de empleos (a la derecha) */}
-        <Grid item xs={12} md={9} lg={10}>
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : empleosFiltrados.length === 0 ? (
-            <Box sx={{ textAlign: 'center', my: 4 }}>
-              <Typography variant='h6'>
-                No se encontraron empleos con los criterios seleccionados
+              <Typography
+                variant='h5'
+                sx={{
+                  mb: 3,
+                  color: '#1a1a1a',
+                  fontWeight: 700,
+                  position: 'relative',
+                  '&::after': {
+                    content: '""',
+                    display: 'block',
+                    width: '40px',
+                    height: '3px',
+                    backgroundColor: '#ff6347',
+                    mt: 1,
+                    borderRadius: '2px',
+                  },
+                }}
+              >
+                Filtros
               </Typography>
-            </Box>
-          ) : (
-            <Grid container spacing={3}>
-              {empleosFiltrados.map((empleo) => (
-                <Grid item xs={12} sm={6} md={6} lg={4} key={empleo.id}>
-                  <Card
-                    sx={{
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                      '&:hover': {
-                        transform: 'translateY(-5px)',
-                        boxShadow: 6,
-                      },
-                      position: 'relative',
-                    }}
-                  >
-                    {/* Menú de opciones (solo visible para el creador) */}
-                    {user && empleo.autor && user.id === empleo.autor.id && (
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          top: 8,
-                          right: 8,
-                          zIndex: 1,
-                        }}
-                      >
-                        <Tooltip title='Opciones'>
-                          <IconButton
-                            size='small'
-                            onClick={(e) => handleMenuOpen(e, empleo.id || 0)}
-                            sx={{
-                              bgcolor: 'background.paper',
-                              '&:hover': { bgcolor: 'action.hover' },
-                            }}
-                          >
-                            <MoreVert fontSize='small' />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    )}
 
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Typography
-                        variant='h6'
-                        gutterBottom
-                        align='center'
-                        sx={{ fontWeight: 'bold', mb: 2 }}
-                      >
-                        {empleo.nombre}
-                      </Typography>
+              <TextField
+                fullWidth
+                label='Buscar por palabra clave'
+                name='busqueda'
+                value={filtros.busqueda}
+                onChange={handleFiltroChange}
+                variant='outlined'
+                size='small'
+                sx={{ mb: 2 }}
+              />
 
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
-                      >
-                        <Business
-                          fontSize='small'
-                          color='primary'
-                          sx={{ mr: 1 }}
-                        />
-                        <Typography variant='subtitle1' color='primary'>
-                          {empleo.ingenio?.nombre || 'Ingenio no especificado'}
-                        </Typography>
-                      </Box>
+              <Autocomplete
+                options={paises}
+                value={filtros.pais || null}
+                onChange={(_, value) =>
+                  setFiltros({ ...filtros, pais: value || '' })
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label='País'
+                    size='small'
+                    fullWidth
+                    sx={{ mb: 2 }}
+                  />
+                )}
+              />
 
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
-                      >
-                        <LocationOn
-                          fontSize='small'
-                          color='action'
-                          sx={{ mr: 1 }}
-                        />
-                        <Typography variant='body2' color='text.secondary'>
-                          {empleo.pais?.nombre || 'País no especificado'}
-                        </Typography>
-                      </Box>
+              <Autocomplete
+                options={ingeniosFiltrados.map((ing) => ing.nombre)}
+                value={filtros.ingenio || null}
+                onChange={(_, value) =>
+                  setFiltros({ ...filtros, ingenio: value || '' })
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label='Ingenio'
+                    size='small'
+                    fullWidth
+                    disabled={ingeniosFiltrados.length === 0}
+                    sx={{ mb: 2 }}
+                  />
+                )}
+              />
 
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
-                      >
-                        <Category
-                          fontSize='small'
-                          color='action'
-                          sx={{ mr: 1 }}
-                        />
-                        <Typography variant='body2' color='text.secondary'>
-                          {empleo.area?.nombre || 'Área no especificada'}
-                        </Typography>
-                      </Box>
+              <Autocomplete
+                options={areas}
+                value={filtros.area || null}
+                onChange={(_, value) =>
+                  setFiltros({ ...filtros, area: value || '' })
+                }
+                renderInput={(params) => (
+                  <TextField {...params} label='Área' size='small' fullWidth />
+                )}
+              />
 
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 2 }}
-                      >
-                        <CalendarToday
-                          fontSize='small'
-                          color='action'
-                          sx={{ mr: 1 }}
-                        />
-                        <Typography variant='body2' color='text.secondary'>
-                          Publicado: {formatFecha(empleo.createdAt)}
-                        </Typography>
-                      </Box>
+              <Divider sx={{ my: 3 }} />
 
-                      <Divider sx={{ my: 1.5 }} />
+              <Button
+                variant='contained'
+                onClick={() => {
+                  setEditMode(false)
+                  setModalOpen(true)
+                }}
+                fullWidth
+                startIcon={<Business />}
+                sx={{
+                  mt: 2,
+                  py: 1.5,
+                  fontWeight: 'bold',
+                  bgcolor: '#ff6347',
+                  '&:hover': {
+                    bgcolor: '#e5533f',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 15px rgba(255,99,71,0.3)',
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                Publicar Oferta
+              </Button>
+            </Paper>
+          </Grid>
 
-                      <Typography
-                        variant='body2'
-                        sx={{
-                          mt: 2,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: 'vertical',
-                        }}
-                      >
-                        {empleo.descripcion}
-                      </Typography>
-
-                      {empleo.contacto && (
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                          sx={{ mt: 1, fontStyle: 'italic' }}
-                        >
-                          Contacto: {empleo.contacto}
-                        </Typography>
-                      )}
-
-                      {empleo.vigente ? (
-                        <Chip
-                          label='Vacante activa'
-                          color='success'
-                          size='small'
-                          sx={{ mt: 2 }}
-                        />
-                      ) : (
-                        <Chip
-                          label='Vacante cerrada'
-                          color='error'
-                          size='small'
-                          sx={{ mt: 2 }}
-                        />
-                      )}
-
-                      {empleo.autor && (
+          {/* Sección de empleos (a la derecha) */}
+          <Grid
+            item
+            sx={{
+              flex: { xs: '1 1 auto', md: '1' },
+              maxWidth: '100%',
+              pl: { md: 2 },
+            }}
+          >
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                <CircularProgress sx={{ color: '#ff6347' }} />
+              </Box>
+            ) : empleosFiltrados.length === 0 ? (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 4,
+                  textAlign: 'center',
+                  borderRadius: 2,
+                  backgroundColor: '#fff',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                }}
+              >
+                <Typography
+                  variant='h6'
+                  sx={{
+                    color: '#4a4a4a',
+                    fontWeight: 500,
+                  }}
+                >
+                  No se encontraron empleos con los criterios seleccionados
+                </Typography>
+              </Paper>
+            ) : (
+              <Grid container spacing={3}>
+                {empleosFiltrados.map((empleo) => (
+                  <Grid item xs={12} sm={6} md={6} key={empleo.id}>
+                    <Card
+                      sx={{
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        transition: 'all 0.3s ease',
+                        backgroundColor: '#fff',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                        '&:hover': {
+                          transform: 'translateY(-5px)',
+                          boxShadow: '0 8px 30px rgba(0,0,0,0.1)',
+                        },
+                        position: 'relative',
+                        mx: 1,
+                      }}
+                    >
+                      {/* Menú de opciones (solo visible para el creador) */}
+                      {user && empleo.autor && user.id === empleo.autor.id && (
                         <Box
-                          sx={{ display: 'flex', alignItems: 'center', mt: 2 }}
+                          sx={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            zIndex: 1,
+                          }}
                         >
-                          <Avatar
-                            src={empleo.autor.avatarUrl}
-                            alt={empleo.autor.nombre}
-                            sx={{ width: 24, height: 24, mr: 1 }}
-                          />
-                          <Typography variant='caption' color='text.secondary'>
-                            Publicado por: {empleo.autor.nombre}{' '}
-                            {empleo.autor.apellido}
-                          </Typography>
+                          <Tooltip title='Opciones'>
+                            <IconButton
+                              size='small'
+                              onClick={(e) => handleMenuOpen(e, empleo.id || 0)}
+                              sx={{
+                                bgcolor: 'background.paper',
+                                '&:hover': { bgcolor: '#ff634710' },
+                              }}
+                            >
+                              <MoreVert fontSize='small' />
+                            </IconButton>
+                          </Tooltip>
                         </Box>
                       )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          )}
+
+                      <CardContent sx={{ flexGrow: 1 }}>
+                        <Typography
+                          variant='h6'
+                          gutterBottom
+                          align='center'
+                          sx={{
+                            fontWeight: 700,
+                            color: '#1a1a1a',
+                            mb: 2,
+                            position: 'relative',
+                            '&::after': {
+                              content: '""',
+                              display: 'block',
+                              width: '40px',
+                              height: '3px',
+                              backgroundColor: '#ff6347',
+                              margin: '8px auto',
+                              borderRadius: '2px',
+                            },
+                          }}
+                        >
+                          {empleo.nombre}
+                        </Typography>
+
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                        >
+                          <Business
+                            fontSize='small'
+                            sx={{ mr: 1, color: '#ff6347' }}
+                          />
+                          <Typography
+                            variant='subtitle1'
+                            sx={{ color: '#1a1a1a', fontWeight: 500 }}
+                          >
+                            {empleo.ingenio?.nombre ||
+                              'Ingenio no especificado'}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                        >
+                          <LocationOn
+                            fontSize='small'
+                            sx={{ mr: 1, color: '#4a4a4a' }}
+                          />
+                          <Typography variant='body2' color='text.secondary'>
+                            {empleo.pais?.nombre || 'País no especificado'}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                        >
+                          <Category
+                            fontSize='small'
+                            sx={{ mr: 1, color: '#4a4a4a' }}
+                          />
+                          <Typography variant='body2' color='text.secondary'>
+                            {empleo.area?.nombre || 'Área no especificada'}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', mb: 2 }}
+                        >
+                          <CalendarToday
+                            fontSize='small'
+                            sx={{ mr: 1, color: '#4a4a4a' }}
+                          />
+                          <Typography variant='body2' color='text.secondary'>
+                            Publicado: {formatFecha(empleo.createdAt)}
+                          </Typography>
+                        </Box>
+
+                        <Divider sx={{ my: 1.5 }} />
+
+                        <Typography
+                          variant='body2'
+                          sx={{
+                            mt: 2,
+                            color: '#4a4a4a',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                          }}
+                        >
+                          {empleo.descripcion}
+                        </Typography>
+
+                        {empleo.contacto && (
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                            sx={{ mt: 1, fontStyle: 'italic' }}
+                          >
+                            Contacto: {empleo.contacto}
+                          </Typography>
+                        )}
+
+                        {empleo.vigente ? (
+                          <Chip
+                            label='Vacante activa'
+                            color='success'
+                            size='small'
+                            sx={{ mt: 2 }}
+                          />
+                        ) : (
+                          <Chip
+                            label='Vacante cerrada'
+                            color='error'
+                            size='small'
+                            sx={{ mt: 2 }}
+                          />
+                        )}
+
+                        {empleo.autor && (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              mt: 2,
+                            }}
+                          >
+                            <Avatar
+                              src={empleo.autor.avatarUrl}
+                              alt={empleo.autor.nombre}
+                              sx={{ width: 24, height: 24, mr: 1 }}
+                            />
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              Publicado por: {empleo.autor.nombre}{' '}
+                              {empleo.autor.apellido}
+                            </Typography>
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </Grid>
         </Grid>
-      </Grid>
+      </Container>
 
       {/* Menú de opciones para editar/eliminar */}
       <Menu
@@ -792,19 +905,14 @@ const Empleos: React.FC = () => {
         <MenuItem
           onClick={() => {
             const empleo = empleos.find((e) => e.id === selectedEmpleoId)
-            console.log(`Editando empleo ID: ${selectedEmpleoId}`)
             if (empleo) handleEditClick(empleo)
-            else
-              console.error(
-                `No se encontró el empleo con ID: ${selectedEmpleoId}`
-              )
           }}
-          sx={{ color: 'primary.main' }}
+          sx={{ color: '#ff6347' }}
         >
           <Edit fontSize='small' sx={{ mr: 1 }} />
           Editar oferta
         </MenuItem>
-        <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
+        <MenuItem onClick={handleDeleteClick} sx={{ color: '#ff6347' }}>
           <Delete fontSize='small' sx={{ mr: 1 }} />
           Eliminar oferta
         </MenuItem>
@@ -816,7 +924,6 @@ const Empleos: React.FC = () => {
         onClose={() => {
           if (!formLoading) {
             setDeleteDialogOpen(false)
-            // No reseteamos selectedEmpleoId aquí
           }
         }}
       >
@@ -831,7 +938,6 @@ const Empleos: React.FC = () => {
           <Button
             onClick={() => {
               setDeleteDialogOpen(false)
-              // No reseteamos selectedEmpleoId aquí
             }}
             color='primary'
             disabled={formLoading}
@@ -840,10 +946,15 @@ const Empleos: React.FC = () => {
           </Button>
           <Button
             onClick={handleDeleteConfirm}
-            color='error'
             variant='contained'
             disabled={formLoading}
             startIcon={formLoading ? <CircularProgress size={20} /> : null}
+            sx={{
+              bgcolor: '#ff6347',
+              '&:hover': {
+                bgcolor: '#e5533f',
+              },
+            }}
           >
             {formLoading ? 'Eliminando...' : 'Eliminar'}
           </Button>
@@ -858,7 +969,24 @@ const Empleos: React.FC = () => {
         fullWidth
       >
         <Box component='form' onSubmit={handleSubmit} sx={{ p: 3 }}>
-          <Typography variant='h5' gutterBottom>
+          <Typography
+            variant='h5'
+            gutterBottom
+            sx={{
+              fontWeight: 700,
+              color: '#1a1a1a',
+              position: 'relative',
+              '&::after': {
+                content: '""',
+                display: 'block',
+                width: '40px',
+                height: '3px',
+                backgroundColor: '#ff6347',
+                mt: 1,
+                borderRadius: '2px',
+              },
+            }}
+          >
             {editMode
               ? 'Editar oferta de empleo'
               : 'Publicar nueva oferta de empleo'}
@@ -872,6 +1000,19 @@ const Empleos: React.FC = () => {
             onChange={handleFormChange}
             margin='normal'
             required
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': {
+                  borderColor: '#ff6347',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#ff6347',
+                },
+              },
+              '& .MuiInputLabel-root.Mui-focused': {
+                color: '#ff6347',
+              },
+            }}
           />
 
           <TextField
@@ -885,6 +1026,19 @@ const Empleos: React.FC = () => {
             rows={4}
             required
             helperText='Describe los requisitos, responsabilidades y beneficios del puesto'
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': {
+                  borderColor: '#ff6347',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#ff6347',
+                },
+              },
+              '& .MuiInputLabel-root.Mui-focused': {
+                color: '#ff6347',
+              },
+            }}
           />
 
           <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -899,7 +1053,6 @@ const Empleos: React.FC = () => {
                     ingenio: '',
                   }))
 
-                  // Filtrar ingenios por país seleccionado
                   if (value) {
                     const ingeniosPorPais = ingenios.filter(
                       (ingenio) =>
@@ -911,7 +1064,25 @@ const Empleos: React.FC = () => {
                   }
                 }}
                 renderInput={(params) => (
-                  <TextField {...params} label='País' required fullWidth />
+                  <TextField
+                    {...params}
+                    label='País'
+                    required
+                    fullWidth
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&:hover fieldset': {
+                          borderColor: '#ff6347',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#ff6347',
+                        },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#ff6347',
+                      },
+                    }}
+                  />
                 )}
               />
             </Grid>
@@ -937,6 +1108,19 @@ const Empleos: React.FC = () => {
                         ? 'No hay ingenios disponibles para este país'
                         : ''
                     }
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&:hover fieldset': {
+                          borderColor: '#ff6347',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#ff6347',
+                        },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#ff6347',
+                      },
+                    }}
                   />
                 )}
               />
@@ -950,7 +1134,25 @@ const Empleos: React.FC = () => {
                   setFormData((prev) => ({ ...prev, area: value || '' }))
                 }
                 renderInput={(params) => (
-                  <TextField {...params} label='Área' required fullWidth />
+                  <TextField
+                    {...params}
+                    label='Área'
+                    required
+                    fullWidth
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&:hover fieldset': {
+                          borderColor: '#ff6347',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#ff6347',
+                        },
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#ff6347',
+                      },
+                    }}
+                  />
                 )}
               />
             </Grid>
@@ -965,11 +1167,41 @@ const Empleos: React.FC = () => {
             margin='normal'
             required
             helperText='Correo electrónico o teléfono para que los candidatos puedan contactarte'
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': {
+                  borderColor: '#ff6347',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#ff6347',
+                },
+              },
+              '& .MuiInputLabel-root.Mui-focused': {
+                color: '#ff6347',
+              },
+            }}
           />
 
-          {/* Sección para carga de archivos (ahora disponible tanto en creación como en edición) */}
+          {/* Sección para carga de archivos */}
           <Box sx={{ mt: 3 }}>
-            <Typography variant='subtitle1' gutterBottom>
+            <Typography
+              variant='subtitle1'
+              gutterBottom
+              sx={{
+                color: '#1a1a1a',
+                fontWeight: 600,
+                position: 'relative',
+                '&::after': {
+                  content: '""',
+                  display: 'block',
+                  width: '40px',
+                  height: '3px',
+                  backgroundColor: '#ff6347',
+                  mt: 1,
+                  borderRadius: '2px',
+                },
+              }}
+            >
               {editMode
                 ? 'Documentos adjuntos (los archivos nuevos reemplazarán a los existentes)'
                 : 'Documentos adjuntos (opcional)'}
@@ -986,7 +1218,15 @@ const Empleos: React.FC = () => {
               variant='outlined'
               onClick={() => fileInputRef.current?.click()}
               startIcon={<Business />}
-              sx={{ mb: 2 }}
+              sx={{
+                mb: 2,
+                borderColor: '#ff6347',
+                color: '#ff6347',
+                '&:hover': {
+                  borderColor: '#e5533f',
+                  backgroundColor: '#ff634710',
+                },
+              }}
             >
               Seleccionar archivos
             </Button>
@@ -1017,8 +1257,13 @@ const Empleos: React.FC = () => {
                       </Typography>
                       <Button
                         size='small'
-                        color='error'
                         onClick={() => handleRemoveFile(index)}
+                        sx={{
+                          color: '#ff6347',
+                          '&:hover': {
+                            backgroundColor: '#ff634710',
+                          },
+                        }}
                       >
                         Eliminar
                       </Button>
@@ -1047,6 +1292,14 @@ const Empleos: React.FC = () => {
               variant='outlined'
               onClick={handleCloseModal}
               disabled={formLoading}
+              sx={{
+                borderColor: '#ff6347',
+                color: '#ff6347',
+                '&:hover': {
+                  borderColor: '#e5533f',
+                  backgroundColor: '#ff634710',
+                },
+              }}
             >
               Cancelar
             </Button>
@@ -1055,6 +1308,12 @@ const Empleos: React.FC = () => {
               variant='contained'
               disabled={formLoading}
               startIcon={formLoading ? <CircularProgress size={20} /> : null}
+              sx={{
+                bgcolor: '#ff6347',
+                '&:hover': {
+                  bgcolor: '#e5533f',
+                },
+              }}
             >
               {formLoading
                 ? editMode

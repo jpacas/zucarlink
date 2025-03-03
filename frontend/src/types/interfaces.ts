@@ -130,8 +130,7 @@ export interface Maquinaria {
   vistas: number
   vigente: boolean
   usuarioId: string
-  paisId: number
-  pais?: { id: number; nombre: string }
+  pais: { id: number; nombre: string }
   usuario?: User
   archivos?: Archivo[]
   createdAt: Date

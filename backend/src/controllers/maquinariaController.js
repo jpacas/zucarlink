@@ -2,9 +2,13 @@ const Maquinaria = require('../models/Maquinaria')
 const User = require('../models/User')
 const Pais = require('../models/Pais')
 const Archivo = require('../models/Archivo')
-const s3 = require('../config/s3')
+const { uploadToS3 } = require('./serverFunctions')
 
-exports.getMaquinaria = async (req, res) => {
+////////////////////////////////////////////////////////////
+// Obtener todas las maquinarias
+////////////////////////////////////////////////////////////
+
+const getMaquinaria = async (req, res) => {
   try {
     const maquinarias = await Maquinaria.findAll({
       include: [
@@ -33,7 +37,11 @@ exports.getMaquinaria = async (req, res) => {
   }
 }
 
-exports.getMaquinariaById = async (req, res) => {
+////////////////////////////////////////////////////////////
+// Obtener maquinaria por ID
+////////////////////////////////////////////////////////////
+
+const getMaquinariaById = async (req, res) => {
   try {
     const maquinaria = await Maquinaria.findByPk(req.params.id, {
       include: [
@@ -69,20 +77,14 @@ exports.getMaquinariaById = async (req, res) => {
   }
 }
 
-exports.createMaquinaria = async (req, res) => {
-  try {
-    const {
-      nombre,
-      descripcion,
-      precio,
-      contacto,
-      marca,
-      modelo,
-      anio,
-      paisid,
-    } = req.body
+////////////////////////////////////////////////////////////
+// Crear maquinaria
+////////////////////////////////////////////////////////////
 
-    console.log(req.body)
+const createMaquinaria = async (req, res) => {
+  try {
+    const { nombre, descripcion, precio, contacto, marca, modelo, anio, pais } =
+      req.body
 
     // Validar campos requeridos
     if (
@@ -93,27 +95,48 @@ exports.createMaquinaria = async (req, res) => {
       !marca ||
       !modelo ||
       !anio ||
-      !paisid
+      !pais
     ) {
       return res.status(400).json({
         error: 'Todos los campos requeridos deben ser proporcionados.',
+        camposFaltantes: {
+          nombre: !nombre,
+          descripcion: !descripcion,
+          precio: !precio,
+          contacto: !contacto,
+          marca: !marca,
+          modelo: !modelo,
+          anio: !anio,
+          pais: !pais,
+        },
+      })
+    }
+
+    const paisId = await Pais.findOne({ where: { nombre: pais } })
+
+    // Convertir tipos de datos
+    const precioNum = parseFloat(precio)
+    const anioNum = parseInt(anio)
+
+    if (isNaN(precioNum) || isNaN(anioNum) || !paisId) {
+      return res.status(400).json({
+        error:
+          'Error en el formato de los datos numéricos o país no encontrado.',
       })
     }
 
     // Manejar la foto principal
     let fotoUrl = null
     if (req.files && req.files.foto) {
-      const fotoFile = req.files.foto[0]
-      const fotoParams = {
-        Bucket: process.env.AWS_S3_BUCKET,
-        Key: `maquinarias/fotos/${Date.now()}-${fotoFile.originalname}`,
-        Body: fotoFile.buffer,
-        ContentType: fotoFile.mimetype,
-        ACL: 'public-read',
+      try {
+        fotoUrl = await uploadToS3(req.files.foto[0])
+      } catch (error) {
+        console.error('Error al subir la foto:', error)
+        return res.status(500).json({
+          error: 'Error al subir la foto.',
+          details: error.message,
+        })
       }
-
-      const uploadResult = await s3.upload(fotoParams).promise()
-      fotoUrl = uploadResult.Location
     }
 
     // Crear la maquinaria
@@ -121,37 +144,38 @@ exports.createMaquinaria = async (req, res) => {
       nombre,
       descripcion,
       foto: fotoUrl,
-      precio,
+      precio: precioNum,
       contacto,
       marca,
       modelo,
-      anio,
-      paisid,
-      usuarioid: req.user.id,
+      anio: anioNum,
+      paisId: paisId.id,
+      usuarioId: req.user.id,
     })
 
     // Manejar archivos adjuntos
     if (req.files && req.files.archivos) {
       const archivosPromises = req.files.archivos.map(async (archivo) => {
-        const archivoParams = {
-          Bucket: process.env.AWS_S3_BUCKET,
-          Key: `maquinarias/archivos/${Date.now()}-${archivo.originalname}`,
-          Body: archivo.buffer,
-          ContentType: archivo.mimetype,
-          ACL: 'public-read',
+        try {
+          const url = await uploadToS3(archivo)
+          return Archivo.create({
+            nombre: archivo.originalname,
+            url,
+            tipo: archivo.mimetype,
+            maquinariaId: nuevaMaquinaria.id,
+          })
+        } catch (error) {
+          console.error('Error al subir archivo adjunto:', error)
+          return null
         }
-
-        const uploadResult = await s3.upload(archivoParams).promise()
-
-        return Archivo.create({
-          nombre: archivo.originalname,
-          url: uploadResult.Location,
-          tipo: archivo.mimetype,
-          maquinariaId: nuevaMaquinaria.id,
-        })
       })
 
-      await Promise.all(archivosPromises)
+      const resultados = await Promise.all(archivosPromises)
+      const archivosExitosos = resultados.filter(Boolean)
+
+      if (archivosExitosos.length < req.files.archivos.length) {
+        console.warn('Algunos archivos no se pudieron subir correctamente')
+      }
     }
 
     // Obtener la maquinaria con sus relaciones
@@ -190,13 +214,26 @@ exports.createMaquinaria = async (req, res) => {
         details: error.errors.map((err) => err.message),
       })
     }
-    res.status(500).json({ error: 'Error al crear la maquinaria.' })
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return res.status(400).json({
+        error: 'Error de clave foránea.',
+        details: 'El país o usuario especificado no existe.',
+      })
+    }
+    res.status(500).json({
+      error: 'Error al crear la maquinaria.',
+      details: error.message,
+    })
   }
 }
 
-exports.updateMaquinaria = async (req, res) => {
+////////////////////////////////////////////////////////////
+// Actualizar maquinaria
+////////////////////////////////////////////////////////////
+
+const updateMaquinaria = async (req, res) => {
   const { id } = req.params
-  const { nombre, descripcion, precio, contacto, marca, modelo, anio, paisid } =
+  const { nombre, descripcion, precio, contacto, marca, modelo, anio, pais } =
     req.body
 
   try {
@@ -210,7 +247,7 @@ exports.updateMaquinaria = async (req, res) => {
     const usuarioId = req.user?.id || req.user?.userId || null
 
     // Verificar que el usuario es el propietario
-    if (maquinaria.usuarioid !== usuarioId) {
+    if (maquinaria.usuarioId !== usuarioId) {
       return res
         .status(403)
         .json({ error: 'No autorizado para editar esta maquinaria.' })
@@ -223,10 +260,10 @@ exports.updateMaquinaria = async (req, res) => {
       if (maquinaria.foto) {
         try {
           const oldKey = maquinaria.foto.split('/').pop()
-          if (process.env.AWS_S3_BUCKET) {
+          if (process.env.AWS_BUCKET_NAME) {
             await s3
               .deleteObject({
-                Bucket: process.env.AWS_S3_BUCKET,
+                Bucket: process.env.AWS_BUCKET_NAME,
                 Key: `maquinarias/fotos/${oldKey}`,
               })
               .promise()
@@ -238,18 +275,8 @@ exports.updateMaquinaria = async (req, res) => {
       }
 
       // Subir nueva foto
-      const fotoFile = req.files.foto[0]
-      const fotoParams = {
-        Bucket: process.env.AWS_S3_BUCKET,
-        Key: `maquinarias/fotos/${Date.now()}-${fotoFile.originalname}`,
-        Body: fotoFile.buffer,
-        ContentType: fotoFile.mimetype,
-        ACL: 'public-read',
-      }
-
       try {
-        const uploadResult = await s3.upload(fotoParams).promise()
-        fotoUrl = uploadResult.Location
+        fotoUrl = await uploadToS3(req.files.foto[0])
       } catch (error) {
         console.error('Error al subir nueva foto:', error)
         return res.status(500).json({ error: 'Error al subir la nueva foto' })
@@ -265,26 +292,18 @@ exports.updateMaquinaria = async (req, res) => {
       marca,
       modelo,
       anio,
-      paisid,
+      paisId: pais.id,
       foto: fotoUrl,
     })
 
     // Manejar archivos adjuntos nuevos
     if (req.files && req.files.archivos) {
       const archivosPromises = req.files.archivos.map(async (archivo) => {
-        const archivoParams = {
-          Bucket: process.env.AWS_S3_BUCKET,
-          Key: `maquinarias/archivos/${Date.now()}-${archivo.originalname}`,
-          Body: archivo.buffer,
-          ContentType: archivo.mimetype,
-          ACL: 'public-read',
-        }
-
         try {
-          const uploadResult = await s3.upload(archivoParams).promise()
+          const url = await uploadToS3(archivo)
           return Archivo.create({
             nombre: archivo.originalname,
-            url: uploadResult.Location,
+            url,
             tipo: archivo.mimetype,
             maquinariaId: maquinaria.id,
           })
@@ -339,7 +358,11 @@ exports.updateMaquinaria = async (req, res) => {
   }
 }
 
-exports.deleteMaquinaria = async (req, res) => {
+////////////////////////////////////////////////////////////
+// Eliminar maquinaria
+////////////////////////////////////////////////////////////
+
+const deleteMaquinaria = async (req, res) => {
   try {
     const maquinaria = await Maquinaria.findByPk(req.params.id, {
       include: [
@@ -355,7 +378,7 @@ exports.deleteMaquinaria = async (req, res) => {
     }
 
     // Verificar que el usuario es el propietario
-    if (maquinaria.usuarioid !== req.user.id) {
+    if (maquinaria.usuarioId !== req.user.id) {
       return res
         .status(403)
         .json({ error: 'No autorizado para eliminar esta maquinaria.' })
@@ -363,25 +386,37 @@ exports.deleteMaquinaria = async (req, res) => {
 
     // Eliminar foto principal si existe
     if (maquinaria.foto) {
-      const fotoKey = maquinaria.foto.split('/').pop()
-      await s3
-        .deleteObject({
-          Bucket: process.env.AWS_S3_BUCKET,
-          Key: `maquinarias/fotos/${fotoKey}`,
-        })
-        .promise()
+      try {
+        const oldKey = maquinaria.foto.split('/').pop()
+        if (process.env.AWS_BUCKET_NAME) {
+          await s3
+            .deleteObject({
+              Bucket: process.env.AWS_BUCKET_NAME,
+              Key: `maquinarias/fotos/${oldKey}`,
+            })
+            .promise()
+        }
+      } catch (error) {
+        console.error('Error al eliminar foto:', error)
+      }
     }
 
     // Eliminar archivos adjuntos
     if (maquinaria.archivos && maquinaria.archivos.length > 0) {
       const deletePromises = maquinaria.archivos.map(async (archivo) => {
-        const archivoKey = archivo.url.split('/').pop()
-        await s3
-          .deleteObject({
-            Bucket: process.env.AWS_S3_BUCKET,
-            Key: `maquinarias/archivos/${archivoKey}`,
-          })
-          .promise()
+        try {
+          const archivoKey = archivo.url.split('/').pop()
+          if (process.env.AWS_BUCKET_NAME) {
+            await s3
+              .deleteObject({
+                Bucket: process.env.AWS_BUCKET_NAME,
+                Key: `maquinarias/archivos/${archivoKey}`,
+              })
+              .promise()
+          }
+        } catch (error) {
+          console.error('Error al eliminar archivo:', error)
+        }
       })
 
       await Promise.all(deletePromises)
@@ -394,4 +429,12 @@ exports.deleteMaquinaria = async (req, res) => {
     console.error('Error al eliminar maquinaria:', error)
     res.status(500).json({ error: 'Error al eliminar la maquinaria.' })
   }
+}
+
+module.exports = {
+  getMaquinaria,
+  getMaquinariaById,
+  createMaquinaria,
+  updateMaquinaria,
+  deleteMaquinaria,
 }

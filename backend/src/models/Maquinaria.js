@@ -42,6 +42,14 @@ const Maquinaria = sequelize.define(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
+    marca: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    modelo: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     vigente: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,

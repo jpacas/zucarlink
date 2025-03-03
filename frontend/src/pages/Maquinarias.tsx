@@ -26,6 +26,10 @@ import {
   ListItemIcon,
   ListItemText,
   ListItemSecondaryAction,
+  Container,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material'
 
 import axios from 'axios'
@@ -36,7 +40,6 @@ import {
   LocationOn,
   Business,
   CalendarToday,
-  FilterAlt,
   MoreVert,
   Edit,
   Delete,
@@ -47,7 +50,7 @@ import {
   Close,
 } from '@mui/icons-material'
 
-import { Maquinaria } from '../types/interfaces'
+import { Maquinaria, Pais } from '../types/interfaces'
 
 const Maquinarias: React.FC = () => {
   const [maquinarias, setMaquinarias] = useState<Maquinaria[]>([])
@@ -65,6 +68,7 @@ const Maquinarias: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [paises, setPaises] = useState<Pais[]>([])
   const { user } = useAuth()
   const { enqueueSnackbar } = useSnackbar()
 
@@ -84,7 +88,7 @@ const Maquinarias: React.FC = () => {
     marca: '',
     modelo: '',
     anio: '',
-    paisid: '',
+    pais: '',
   })
 
   const resetForm = () => {
@@ -96,11 +100,18 @@ const Maquinarias: React.FC = () => {
       marca: '',
       modelo: '',
       anio: '',
-      paisid: '',
+      pais: '',
     })
     setSelectedFile(null)
     setSelectedFiles([])
     setPreviewUrl(null)
+  }
+
+  const fetchPaises = async () => {
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_URL}/helper/paises`
+    )
+    setPaises(response.data)
   }
 
   const fetchMaquinarias = async () => {
@@ -120,6 +131,7 @@ const Maquinarias: React.FC = () => {
 
   useEffect(() => {
     fetchMaquinarias()
+    fetchPaises()
   }, [])
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -230,7 +242,7 @@ const Maquinarias: React.FC = () => {
       marca: maquinaria.marca,
       modelo: maquinaria.modelo,
       anio: maquinaria.anio.toString(),
-      paisid: maquinaria.paisId.toString(),
+      pais: maquinaria.pais?.nombre || '',
     })
     setPreviewUrl(maquinaria.foto || null)
     setEditMode(true)
@@ -263,333 +275,423 @@ const Maquinarias: React.FC = () => {
   })
 
   return (
-    <Box sx={{ padding: 3, marginTop: '64px' }}>
-      <Grid container spacing={3}>
-        {/* Sección de filtros */}
-        <Grid item xs={12} md={3} lg={2}>
-          <Paper
-            elevation={3}
+    <Box
+      sx={{
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        minHeight: '100vh',
+        pt: 10,
+        pb: 8,
+      }}
+    >
+      <Container maxWidth='lg'>
+        <Typography
+          variant='h3'
+          align='center'
+          sx={{
+            mb: 6,
+            fontWeight: 700,
+            color: '#1a1a1a',
+            letterSpacing: '-0.5px',
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              display: 'block',
+              width: '60px',
+              height: '4px',
+              backgroundColor: '#ff6347',
+              margin: '16px auto',
+              borderRadius: '2px',
+            },
+          }}
+        >
+          Maquinarias
+        </Typography>
+
+        <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
+          {/* Sección de filtros */}
+          <Grid
+            item
             sx={{
-              p: 2,
-              position: { md: 'sticky' },
-              top: { md: '80px' },
+              flex: { xs: '1 1 auto', md: '0 0 25%' },
+              maxWidth: { xs: '100%', md: '25%' },
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <FilterAlt color='primary' sx={{ mr: 1 }} />
-              <Typography variant='h6'>Filtros</Typography>
-            </Box>
-
-            <TextField
-              fullWidth
-              label='Buscar'
-              name='busqueda'
-              value={filtros.busqueda}
-              onChange={(e) =>
-                setFiltros({ ...filtros, busqueda: e.target.value })
-              }
-              variant='outlined'
-              size='small'
-              sx={{ mb: 2 }}
-            />
-
-            <TextField
-              fullWidth
-              label='Precio mínimo'
-              name='precioMin'
-              type='number'
-              value={filtros.precioMin}
-              onChange={(e) =>
-                setFiltros({ ...filtros, precioMin: e.target.value })
-              }
-              variant='outlined'
-              size='small'
-              sx={{ mb: 2 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>$</InputAdornment>
-                ),
-              }}
-            />
-
-            <TextField
-              fullWidth
-              label='Precio máximo'
-              name='precioMax'
-              type='number'
-              value={filtros.precioMax}
-              onChange={(e) =>
-                setFiltros({ ...filtros, precioMax: e.target.value })
-              }
-              variant='outlined'
-              size='small'
-              sx={{ mb: 2 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>$</InputAdornment>
-                ),
-              }}
-            />
-
-            <Divider sx={{ my: 3 }} />
-
-            <Button
-              variant='contained'
-              onClick={() => {
-                setEditMode(false)
-                resetForm()
-                setModalOpen(true)
-              }}
-              fullWidth
-              startIcon={<Engineering />}
+            <Paper
+              elevation={0}
               sx={{
-                mt: 2,
-                py: 1.5,
-                fontWeight: 'bold',
-                boxShadow: 2,
+                p: 3,
+                borderRadius: 2,
+                backgroundColor: '#fff',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                position: 'sticky',
+                top: '80px',
+                transition: 'all 0.3s ease',
                 '&:hover': {
-                  boxShadow: 4,
-                  transform: 'translateY(-2px)',
-                  transition: 'all 0.2s ease',
+                  boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
                 },
               }}
             >
-              Publicar Maquinaria
-            </Button>
-          </Paper>
-        </Grid>
-
-        {/* Sección de maquinarias */}
-        <Grid item xs={12} md={9} lg={10}>
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : maquinariasFiltradas.length === 0 ? (
-            <Box sx={{ textAlign: 'center', my: 4 }}>
-              <Typography variant='h6'>
-                No se encontraron maquinarias con los criterios seleccionados
+              <Typography
+                variant='h5'
+                marginBottom={2}
+                sx={{
+                  color: '#1a1a1a',
+                  fontWeight: 700,
+                  position: 'relative',
+                  '&::after': {
+                    content: '""',
+                    display: 'block',
+                    width: '40px',
+                    height: '3px',
+                    backgroundColor: '#ff6347',
+                    marginTop: '8px',
+                    borderRadius: '2px',
+                  },
+                }}
+              >
+                Filtros
               </Typography>
-            </Box>
-          ) : (
-            <Grid container spacing={3}>
-              {maquinariasFiltradas.map((maquinaria) => (
-                <Grid item xs={12} sm={6} md={6} lg={4} key={maquinaria.id}>
-                  <Card
-                    sx={{
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                      '&:hover': {
-                        transform: 'translateY(-5px)',
-                        boxShadow: 6,
-                      },
-                      position: 'relative',
-                    }}
-                  >
-                    {/* Menú de opciones (solo visible para el propietario) */}
-                    {user && maquinaria.usuarioId === user.id && (
-                      <>
-                        <IconButton
-                          sx={{
-                            position: 'absolute',
-                            top: 8,
-                            right: 8,
-                            zIndex: 1,
-                          }}
-                          onClick={(e) => {
-                            setSelectedMaquinariaId(maquinaria.id)
-                            setMenuAnchorEl(e.currentTarget)
-                          }}
-                        >
-                          <MoreVert />
-                        </IconButton>
-                        <Menu
-                          anchorEl={menuAnchorEl}
-                          open={Boolean(menuAnchorEl)}
-                          onClose={() => setMenuAnchorEl(null)}
-                        >
-                          <MenuItem onClick={() => handleEdit(maquinaria)}>
-                            <Edit sx={{ mr: 1 }} /> Editar
-                          </MenuItem>
-                          <MenuItem
-                            onClick={() => {
-                              setDeleteDialogOpen(true)
-                              setMenuAnchorEl(null)
+
+              <TextField
+                fullWidth
+                label='Buscar'
+                name='busqueda'
+                value={filtros.busqueda}
+                onChange={(e) =>
+                  setFiltros({ ...filtros, busqueda: e.target.value })
+                }
+                variant='outlined'
+                size='small'
+                sx={{ mb: 2 }}
+              />
+
+              <TextField
+                fullWidth
+                label='Precio mínimo'
+                name='precioMin'
+                type='number'
+                value={filtros.precioMin}
+                onChange={(e) =>
+                  setFiltros({ ...filtros, precioMin: e.target.value })
+                }
+                variant='outlined'
+                size='small'
+                sx={{ mb: 2 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position='start'>$</InputAdornment>
+                  ),
+                }}
+              />
+
+              <TextField
+                fullWidth
+                label='Precio máximo'
+                name='precioMax'
+                type='number'
+                value={filtros.precioMax}
+                onChange={(e) =>
+                  setFiltros({ ...filtros, precioMax: e.target.value })
+                }
+                variant='outlined'
+                size='small'
+                sx={{ mb: 2 }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position='start'>$</InputAdornment>
+                  ),
+                }}
+              />
+
+              <Divider sx={{ my: 3 }} />
+
+              <Button
+                variant='contained'
+                onClick={() => {
+                  setEditMode(false)
+                  resetForm()
+                  setModalOpen(true)
+                }}
+                fullWidth
+                startIcon={<Engineering />}
+                sx={{
+                  mt: 2,
+                  py: 1.5,
+                  fontWeight: 'bold',
+                  bgcolor: '#ff6347',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                  '&:hover': {
+                    bgcolor: '#e5533f',
+                    boxShadow: '0 6px 25px rgba(0,0,0,0.15)',
+                    transform: 'translateY(-2px)',
+                    transition: 'all 0.2s ease',
+                  },
+                }}
+              >
+                Publicar Equipos
+              </Button>
+            </Paper>
+          </Grid>
+
+          {/* Sección de maquinarias */}
+          <Grid
+            item
+            sx={{ flex: { xs: '1 1 auto', md: '1' }, maxWidth: '100%' }}
+          >
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                <CircularProgress sx={{ color: '#ff6347' }} />
+              </Box>
+            ) : maquinariasFiltradas.length === 0 ? (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 4,
+                  textAlign: 'center',
+                  borderRadius: 2,
+                  backgroundColor: '#fff',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                }}
+              >
+                <Typography
+                  variant='h6'
+                  sx={{
+                    color: '#4a4a4a',
+                    fontWeight: 500,
+                  }}
+                >
+                  No se encontraron equipos con los criterios seleccionados
+                </Typography>
+              </Paper>
+            ) : (
+              <Grid container spacing={3}>
+                {maquinariasFiltradas.map((maquinaria) => (
+                  <Grid item xs={12} sm={6} md={6} lg={4} key={maquinaria.id}>
+                    <Card
+                      sx={{
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-5px)',
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                        },
+                        position: 'relative',
+                      }}
+                    >
+                      {/* Menú de opciones (solo visible para el propietario) */}
+                      {user && maquinaria.usuarioId === user.id && (
+                        <>
+                          <IconButton
+                            sx={{
+                              position: 'absolute',
+                              top: 8,
+                              right: 8,
+                              zIndex: 1,
                             }}
-                            sx={{ color: 'error.main' }}
+                            onClick={(e) => {
+                              setSelectedMaquinariaId(maquinaria.id)
+                              setMenuAnchorEl(e.currentTarget)
+                            }}
                           >
-                            <Delete sx={{ mr: 1 }} /> Eliminar
-                          </MenuItem>
-                        </Menu>
-                      </>
-                    )}
+                            <MoreVert />
+                          </IconButton>
+                          <Menu
+                            anchorEl={menuAnchorEl}
+                            open={Boolean(menuAnchorEl)}
+                            onClose={() => setMenuAnchorEl(null)}
+                          >
+                            <MenuItem onClick={() => handleEdit(maquinaria)}>
+                              <Edit sx={{ mr: 1 }} /> Editar
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => {
+                                setDeleteDialogOpen(true)
+                                setMenuAnchorEl(null)
+                              }}
+                              sx={{ color: 'error.main' }}
+                            >
+                              <Delete sx={{ mr: 1 }} /> Eliminar
+                            </MenuItem>
+                          </Menu>
+                        </>
+                      )}
 
-                    {/* Imagen de la maquinaria */}
-                    {maquinaria.foto && (
-                      <Box
-                        sx={{
-                          height: 200,
-                          overflow: 'hidden',
-                          position: 'relative',
-                        }}
-                      >
-                        <img
-                          src={maquinaria.foto}
-                          alt={maquinaria.nombre}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                          }}
-                        />
-                      </Box>
-                    )}
-
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Typography
-                        variant='h6'
-                        gutterBottom
-                        sx={{ fontWeight: 'bold', mb: 2 }}
-                      >
-                        {maquinaria.nombre}
-                      </Typography>
-
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
-                      >
-                        <AttachMoney color='primary' sx={{ mr: 1 }} />
-                        <Typography variant='h6' color='primary'>
-                          ${maquinaria.precio.toLocaleString()}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
-                      >
-                        <Business
-                          fontSize='small'
-                          color='action'
-                          sx={{ mr: 1 }}
-                        />
-                        <Typography variant='body2' color='text.secondary'>
-                          {maquinaria.marca} - {maquinaria.modelo}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
-                      >
-                        <LocationOn
-                          fontSize='small'
-                          color='action'
-                          sx={{ mr: 1 }}
-                        />
-                        <Typography variant='body2' color='text.secondary'>
-                          {maquinaria.pais?.nombre}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
-                      >
-                        <CalendarToday
-                          fontSize='small'
-                          color='action'
-                          sx={{ mr: 1 }}
-                        />
-                        <Typography variant='body2' color='text.secondary'>
-                          Año: {maquinaria.anio}
-                        </Typography>
-                      </Box>
-
-                      <Divider sx={{ my: 1.5 }} />
-
-                      <Typography
-                        variant='body2'
-                        sx={{
-                          mt: 2,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: 'vertical',
-                        }}
-                      >
-                        {maquinaria.descripcion}
-                      </Typography>
-
-                      <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                        {maquinaria.vigente ? (
-                          <Chip
-                            label='Disponible'
-                            color='success'
-                            size='small'
-                          />
-                        ) : (
-                          <Chip
-                            label='No disponible'
-                            color='error'
-                            size='small'
-                          />
-                        )}
-                      </Box>
-
-                      {maquinaria.usuario && (
+                      {/* Imagen de la maquinaria */}
+                      {maquinaria.foto && (
                         <Box
-                          sx={{ display: 'flex', alignItems: 'center', mt: 2 }}
+                          sx={{
+                            height: 200,
+                            overflow: 'hidden',
+                            position: 'relative',
+                          }}
                         >
-                          <Avatar
-                            src={maquinaria.usuario.avatarUrl}
-                            alt={maquinaria.usuario.nombre}
-                            sx={{ width: 24, height: 24, mr: 1 }}
+                          <img
+                            src={maquinaria.foto}
+                            alt={maquinaria.nombre}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
                           />
-                          <Typography variant='caption' color='text.secondary'>
-                            Publicado por: {maquinaria.usuario.nombre}{' '}
-                            {maquinaria.usuario.apellido}
-                          </Typography>
                         </Box>
                       )}
 
-                      {/* Mostrar archivos adjuntos */}
-                      {maquinaria.archivos &&
-                        maquinaria.archivos.length > 0 && (
-                          <>
-                            <Divider sx={{ my: 1.5 }} />
-                            <Typography variant='subtitle2' gutterBottom>
-                              Archivos adjuntos:
+                      <CardContent sx={{ flexGrow: 1 }}>
+                        <Typography
+                          variant='h6'
+                          gutterBottom
+                          sx={{ fontWeight: 'bold', mb: 2 }}
+                        >
+                          {maquinaria.nombre}
+                        </Typography>
+
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                        >
+                          <AttachMoney color='primary' sx={{ mr: 1 }} />
+                          <Typography variant='h6' color='primary'>
+                            ${maquinaria.precio.toLocaleString()}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                        >
+                          <Business
+                            fontSize='small'
+                            color='action'
+                            sx={{ mr: 1 }}
+                          />
+                          <Typography variant='body2' color='text.secondary'>
+                            {maquinaria.marca} - {maquinaria.modelo}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                        >
+                          <LocationOn
+                            fontSize='small'
+                            color='action'
+                            sx={{ mr: 1 }}
+                          />
+                          <Typography variant='body2' color='text.secondary'>
+                            {maquinaria.pais?.nombre || 'País no especificado'}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                        >
+                          <CalendarToday
+                            fontSize='small'
+                            color='action'
+                            sx={{ mr: 1 }}
+                          />
+                          <Typography variant='body2' color='text.secondary'>
+                            Año: {maquinaria.anio}
+                          </Typography>
+                        </Box>
+
+                        <Divider sx={{ my: 1.5 }} />
+
+                        <Typography
+                          variant='body2'
+                          sx={{
+                            mt: 2,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical',
+                          }}
+                        >
+                          {maquinaria.descripcion}
+                        </Typography>
+
+                        <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                          {maquinaria.vigente ? (
+                            <Chip
+                              label='Disponible'
+                              color='success'
+                              size='small'
+                            />
+                          ) : (
+                            <Chip
+                              label='No disponible'
+                              color='error'
+                              size='small'
+                            />
+                          )}
+                        </Box>
+
+                        {maquinaria.usuario && (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              mt: 2,
+                            }}
+                          >
+                            <Avatar
+                              src={maquinaria.usuario.avatarUrl}
+                              alt={maquinaria.usuario.nombre}
+                              sx={{ width: 24, height: 24, mr: 1 }}
+                            />
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              Publicado por: {maquinaria.usuario.nombre}{' '}
+                              {maquinaria.usuario.apellido}
                             </Typography>
-                            <List dense>
-                              {maquinaria.archivos.map((archivo) => (
-                                <ListItem key={archivo.id}>
-                                  <ListItemIcon>
-                                    <AttachFile />
-                                  </ListItemIcon>
-                                  <ListItemText primary={archivo.nombre} />
-                                  <ListItemSecondaryAction>
-                                    <IconButton
-                                      edge='end'
-                                      href={archivo.url}
-                                      target='_blank'
-                                      download
-                                    >
-                                      <Download />
-                                    </IconButton>
-                                  </ListItemSecondaryAction>
-                                </ListItem>
-                              ))}
-                            </List>
-                          </>
+                          </Box>
                         )}
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          )}
+
+                        {/* Mostrar archivos adjuntos */}
+                        {maquinaria.archivos &&
+                          maquinaria.archivos.length > 0 && (
+                            <>
+                              <Divider sx={{ my: 1.5 }} />
+                              <Typography variant='subtitle2' gutterBottom>
+                                Archivos adjuntos:
+                              </Typography>
+                              <List dense>
+                                {maquinaria.archivos.map((archivo) => (
+                                  <ListItem key={archivo.id}>
+                                    <ListItemIcon>
+                                      <AttachFile />
+                                    </ListItemIcon>
+                                    <ListItemText primary={archivo.nombre} />
+                                    <ListItemSecondaryAction>
+                                      <IconButton
+                                        edge='end'
+                                        href={archivo.url}
+                                        target='_blank'
+                                        download
+                                      >
+                                        <Download />
+                                      </IconButton>
+                                    </ListItemSecondaryAction>
+                                  </ListItem>
+                                ))}
+                              </List>
+                            </>
+                          )}
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </Grid>
         </Grid>
-      </Grid>
+      </Container>
 
       {/* Modal de creación/edición */}
       <Dialog
@@ -600,8 +702,29 @@ const Maquinarias: React.FC = () => {
         }}
         maxWidth='md'
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+          },
+        }}
       >
-        <DialogTitle>
+        <DialogTitle
+          sx={{
+            fontWeight: 700,
+            color: '#1a1a1a',
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              display: 'block',
+              width: '40px',
+              height: '3px',
+              backgroundColor: '#ff6347',
+              mt: 1,
+              borderRadius: '2px',
+            },
+          }}
+        >
           {editMode ? 'Editar Maquinaria' : 'Publicar Nueva Maquinaria'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
@@ -722,6 +845,25 @@ const Maquinarias: React.FC = () => {
                 />
               </Grid>
 
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel>País</InputLabel>
+                  <Select
+                    value={formData.pais}
+                    label='País'
+                    onChange={(e) =>
+                      setFormData({ ...formData, pais: e.target.value })
+                    }
+                  >
+                    {paises.map((pais) => (
+                      <MenuItem key={pais} value={pais}>
+                        {pais}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
               <Grid item xs={12}>
                 <TextField
                   required
@@ -800,10 +942,26 @@ const Maquinarias: React.FC = () => {
                 setModalOpen(false)
                 resetForm()
               }}
+              sx={{
+                color: '#4a4a4a',
+                '&:hover': {
+                  backgroundColor: '#ff634710',
+                  color: '#ff6347',
+                },
+              }}
             >
               Cancelar
             </Button>
-            <Button type='submit' variant='contained'>
+            <Button
+              type='submit'
+              variant='contained'
+              sx={{
+                bgcolor: '#ff6347',
+                '&:hover': {
+                  bgcolor: '#e5533f',
+                },
+              }}
+            >
               {editMode ? 'Guardar Cambios' : 'Publicar'}
             </Button>
           </DialogActions>
@@ -814,17 +972,60 @@ const Maquinarias: React.FC = () => {
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+          },
+        }}
       >
-        <DialogTitle>Confirmar Eliminación</DialogTitle>
+        <DialogTitle
+          sx={{
+            fontWeight: 700,
+            color: '#1a1a1a',
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              display: 'block',
+              width: '40px',
+              height: '3px',
+              backgroundColor: '#ff6347',
+              mt: 1,
+              borderRadius: '2px',
+            },
+          }}
+        >
+          Confirmar Eliminación
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText sx={{ color: '#4a4a4a' }}>
             ¿Estás seguro de que deseas eliminar esta maquinaria? Esta acción no
             se puede deshacer.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
-          <Button onClick={handleDelete} color='error' variant='contained'>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            sx={{
+              color: '#4a4a4a',
+              '&:hover': {
+                backgroundColor: '#ff634710',
+                color: '#ff6347',
+              },
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleDelete}
+            variant='contained'
+            sx={{
+              bgcolor: '#ff6347',
+              '&:hover': {
+                bgcolor: '#e5533f',
+              },
+            }}
+          >
             Eliminar
           </Button>
         </DialogActions>
