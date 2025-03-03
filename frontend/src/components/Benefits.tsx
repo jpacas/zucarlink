@@ -22,30 +22,62 @@ const BenefitCard: React.FC<{
 }> = ({ title, description, Icon }) => (
   <Card
     sx={{
-      boxShadow: 3,
+      boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
       textAlign: 'center',
-      borderRadius: 3,
-      padding: 2,
+      borderRadius: '16px',
+      padding: 3,
       minWidth: '280px',
       maxWidth: '320px',
       margin: '0 auto',
+      background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+      transition: 'all 0.3s ease',
+      '&:hover': {
+        transform: 'translateY(-5px)',
+        boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
+      },
     }}
   >
     <CardContent>
       <Avatar
         sx={{
           margin: '0 auto',
-          bgcolor: 'primary.main',
-          width: 56,
-          height: 56,
+          bgcolor: '#ff6347',
+          width: 70,
+          height: 70,
+          boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            transform: 'scale(1.05)',
+            boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
+          },
         }}
       >
-        <Icon fontSize='large' />
+        <Icon sx={{ fontSize: 35 }} />
       </Avatar>
-      <Typography variant='h6' sx={{ mt: 2, fontWeight: 'bold' }}>
+      <Typography
+        variant='h6'
+        sx={{
+          mt: 2.5,
+          fontWeight: 700,
+          color: '#1a1a1a',
+          position: 'relative',
+          '&::after': {
+            content: '""',
+            display: 'block',
+            width: '40px',
+            height: '3px',
+            backgroundColor: '#ff6347',
+            margin: '8px auto',
+            borderRadius: '2px',
+          },
+        }}
+      >
         {title}
       </Typography>
-      <Typography variant='body2' sx={{ mt: 1, color: 'text.secondary' }}>
+      <Typography
+        variant='body2'
+        sx={{ mt: 1.5, color: '#4a4a4a', lineHeight: 1.7 }}
+      >
         {description}
       </Typography>
     </CardContent>
@@ -80,9 +112,10 @@ const Benefits: React.FC = () => {
         style={{
           width: '10px',
           height: '10px',
-          border: '1px solid #333',
+          border: '1px solid #ff6347',
           borderRadius: '50%',
-          background: '#ddd',
+          background: 'transparent',
+          transition: 'all 0.3s ease',
         }}
       />
     ),
@@ -161,18 +194,51 @@ const Benefits: React.FC = () => {
   ]
 
   return (
-    <Box sx={{ py: 5, backgroundColor: '#f9f9f9' }}>
+    <Box
+      sx={{
+        py: 8,
+        px: '5%',
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        borderRadius: { xs: 0, md: '16px' },
+        maxWidth: '1800px',
+        mx: 'auto',
+        my: 4,
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+      }}
+    >
       <Typography
-        variant='h4'
+        variant='h3'
         align='center'
-        sx={{ mb: 4, fontWeight: 'bold' }}
+        sx={{
+          mb: 6,
+          fontWeight: 700,
+          color: '#1a1a1a',
+          letterSpacing: '-0.5px',
+          position: 'relative',
+          '&::after': {
+            content: '""',
+            display: 'block',
+            width: '60px',
+            height: '4px',
+            backgroundColor: '#ff6347',
+            margin: '16px auto',
+            borderRadius: '2px',
+          },
+        }}
       >
         Nuestros Beneficios
       </Typography>
       <Slider {...sliderSettings}>
         {groups.map((group, index) => (
           <Box key={index} sx={{ textAlign: 'center', px: 2, mb: 3 }}>
-            <Typography variant='h5' sx={{ mb: 3, color: 'primary.main' }}>
+            <Typography
+              variant='h4'
+              sx={{
+                mb: 4,
+                color: '#ff6347',
+                fontWeight: 600,
+              }}
+            >
               {group.title}
             </Typography>
             <Box
@@ -180,7 +246,7 @@ const Benefits: React.FC = () => {
                 display: 'flex',
                 justifyContent: 'center',
                 flexWrap: 'wrap',
-                gap: 2,
+                gap: 4,
               }}
             >
               {group.benefits.map((benefit, idx) => (

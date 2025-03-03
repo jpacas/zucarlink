@@ -37,15 +37,15 @@ const Navbar: React.FC = () => {
     return initials.toUpperCase()
   }
 
-  const isActive = (path: string) => location.pathname === path // Verifica si la ruta coincide con la URL actual
+  const isActive = (path: string) => location.pathname === path
 
   return (
     <AppBar
       position='fixed'
       sx={{
-        backgroundColor: '#fff',
-        boxShadow: 1,
-        color: '#333',
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+        color: '#1a1a1a',
         px: '5%',
       }}
     >
@@ -54,6 +54,7 @@ const Navbar: React.FC = () => {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          py: 1,
         }}
       >
         <Box
@@ -61,7 +62,11 @@ const Navbar: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             textDecoration: 'none',
-            color: '#333',
+            color: '#1a1a1a',
+            transition: 'transform 0.3s ease',
+            '&:hover': {
+              transform: 'scale(1.02)',
+            },
           }}
           component={Link}
           to='/'
@@ -100,6 +105,12 @@ const Navbar: React.FC = () => {
               )
                 ? 'bold'
                 : 'normal',
+              color: '#4a4a4a',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                color: '#ff6347',
+                transform: 'translateY(-2px)',
+              },
             }}
           >
             {isAuthenticated ? 'Perfil' : 'Inicio'}
@@ -113,6 +124,12 @@ const Navbar: React.FC = () => {
                 sx={{
                   fontSize: '1rem',
                   fontWeight: isActive('/directorio') ? 'bold' : 'normal',
+                  color: '#4a4a4a',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    color: '#ff6347',
+                    transform: 'translateY(-2px)',
+                  },
                 }}
               >
                 Directorio
@@ -125,6 +142,12 @@ const Navbar: React.FC = () => {
                 sx={{
                   fontSize: '1rem',
                   fontWeight: isActive('/foro') ? 'bold' : 'normal',
+                  color: '#4a4a4a',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    color: '#ff6347',
+                    transform: 'translateY(-2px)',
+                  },
                 }}
               >
                 Foro
@@ -137,6 +160,12 @@ const Navbar: React.FC = () => {
                 sx={{
                   fontSize: '1rem',
                   fontWeight: isActive('/zucaria') ? 'bold' : 'normal',
+                  color: '#4a4a4a',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    color: '#ff6347',
+                    transform: 'translateY(-2px)',
+                  },
                 }}
               >
                 ZucarIA
@@ -148,7 +177,15 @@ const Navbar: React.FC = () => {
               component={Link}
               to='/services'
               color='inherit'
-              sx={{ fontSize: '1rem' }}
+              sx={{
+                fontSize: '1rem',
+                color: '#4a4a4a',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  color: '#ff6347',
+                  transform: 'translateY(-2px)',
+                },
+              }}
             >
               Servicios
             </Button>
@@ -160,6 +197,12 @@ const Navbar: React.FC = () => {
             sx={{
               fontSize: '1rem',
               fontWeight: isActive('/contact') ? 'bold' : 'normal',
+              color: '#4a4a4a',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                color: '#ff6347',
+                transform: 'translateY(-2px)',
+              },
             }}
           >
             Contacto
@@ -174,18 +217,24 @@ const Navbar: React.FC = () => {
               }}
             >
               <Avatar
-                src={user.avatar || ''}
+                src={user.avatarUrl || ''}
                 alt={user.nombre}
-                onClick={() => navigate(`/perfil/${user.id}`)} // Redirigir al perfil
+                onClick={() => navigate(`/perfil/${user.id}`)}
                 sx={{
                   cursor: 'pointer',
                   width: 40,
                   height: 40,
                   backgroundColor: '#ff6347',
                   color: '#fff',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'scale(1.05)',
+                    boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
+                  },
                 }}
               >
-                {!user.avatar && getInitials(`${user.nombre} ${user.apellido}`)}
+                {!user.avatarUrl &&
+                  getInitials(`${user.nombre} ${user.apellido}`)}
               </Avatar>
             </Box>
           )}
@@ -194,13 +243,21 @@ const Navbar: React.FC = () => {
               color='error'
               variant='contained'
               onClick={() => {
-                logout() // Cierra sesión
-                navigate('/') // Redirige a la página de inicio después de cerrar sesión
+                logout()
+                navigate('/')
               }}
               sx={{
                 backgroundColor: '#ff6347',
+                color: '#fff',
+                textTransform: 'none',
+                borderRadius: '50px',
+                padding: '8px 24px',
+                boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
+                transition: 'all 0.3s ease',
                 '&:hover': {
                   backgroundColor: '#e5533f',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
                 },
               }}
               startIcon={<ExitToAppIcon />}
@@ -213,14 +270,17 @@ const Navbar: React.FC = () => {
                 component={Link}
                 to='/login'
                 sx={{
-                  color: '#333',
+                  color: '#4a4a4a',
                   textTransform: 'none',
-                  border: '1px solid #333',
-                  borderRadius: '4px',
-                  padding: '6px 16px',
+                  border: '2px solid #ff6347',
+                  borderRadius: '50px',
+                  padding: '6px 20px',
+                  transition: 'all 0.3s ease',
                   '&:hover': {
-                    backgroundColor: '#333',
+                    backgroundColor: '#ff6347',
                     color: '#fff',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
                   },
                 }}
                 startIcon={<LoginIcon />}
@@ -229,15 +289,19 @@ const Navbar: React.FC = () => {
               </Button>
               <Button
                 component={Link}
-                to='/contact'
+                to='/register'
                 sx={{
                   backgroundColor: '#ff6347',
                   color: '#fff',
                   textTransform: 'none',
-                  borderRadius: '4px',
-                  padding: '6px 16px',
+                  borderRadius: '50px',
+                  padding: '8px 24px',
+                  boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
+                  transition: 'all 0.3s ease',
                   '&:hover': {
                     backgroundColor: '#e5533f',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
                   },
                 }}
                 startIcon={<PersonAddIcon />}
@@ -250,8 +314,13 @@ const Navbar: React.FC = () => {
 
         {/* Icono del menú para pantallas pequeñas */}
         <IconButton
-          color='inherit'
-          sx={{ display: { xs: 'block', md: 'none' } }}
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            color: '#4a4a4a',
+            '&:hover': {
+              color: '#ff6347',
+            },
+          }}
           onClick={() => toggleDrawer(true)}
         >
           <MenuIcon />
@@ -263,97 +332,262 @@ const Navbar: React.FC = () => {
         anchor='right'
         open={drawerOpen}
         onClose={() => toggleDrawer(false)}
+        PaperProps={{
+          sx: {
+            width: 280,
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+          },
+        }}
       >
-        <Box sx={{ width: 250 }} role='presentation'>
-          <List>
-            {/* Si el usuario está autenticado, muestra "Perfil" en lugar de "Inicio" */}
-            <ListItemButton
-              component={Link}
-              to={isAuthenticated && user ? `/perfil/${user.id}` : '/'}
-              onClick={() => toggleDrawer(false)}
-            >
-              <ListItemText primary={isAuthenticated ? 'Perfil' : 'Inicio'} />
-            </ListItemButton>
+        <List sx={{ p: 2 }}>
+          <ListItemButton
+            component={Link}
+            to={isAuthenticated && user ? `/perfil/${user.id}` : '/'}
+            onClick={() => toggleDrawer(false)}
+            sx={{
+              borderRadius: '8px',
+              mb: 1,
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                transform: 'translateX(8px)',
+              },
+            }}
+          >
+            <ListItemText
+              primary={isAuthenticated ? 'Perfil' : 'Inicio'}
+              primaryTypographyProps={{
+                sx: {
+                  color: '#4a4a4a',
+                  fontWeight: isActive(
+                    isAuthenticated && user ? `/perfil/${user.id}` : '/'
+                  )
+                    ? 'bold'
+                    : 'normal',
+                },
+              }}
+            />
+          </ListItemButton>
 
-            {isAuthenticated && (
-              <>
-                <ListItemButton
-                  component={Link}
-                  to='/directorio'
-                  onClick={() => toggleDrawer(false)}
-                >
-                  <ListItemText primary='Directorio' />
-                </ListItemButton>
-
-                <ListItemButton
-                  component={Link}
-                  to='/foro'
-                  onClick={() => toggleDrawer(false)}
-                >
-                  <ListItemText primary='Foro' />
-                </ListItemButton>
-
-                <ListItemButton
-                  component={Link}
-                  to='/zucaria'
-                  onClick={() => toggleDrawer(false)}
-                >
-                  <ListItemText primary='ZucarIA' />
-                </ListItemButton>
-              </>
-            )}
-
-            {/* Solo mostrar "Servicios" si el usuario NO está autenticado */}
-            {!isAuthenticated && (
+          {isAuthenticated && (
+            <>
               <ListItemButton
                 component={Link}
-                to='/services'
+                to='/directorio'
                 onClick={() => toggleDrawer(false)}
-              >
-                <ListItemText primary='Servicios' />
-              </ListItemButton>
-            )}
-
-            <ListItemButton
-              component={Link}
-              to='/contact'
-              onClick={() => toggleDrawer(false)}
-            >
-              <ListItemText primary='Contacto' />
-            </ListItemButton>
-
-            {isAuthenticated ? (
-              <ListItemButton
-                onClick={() => {
-                  logout()
-                  toggleDrawer(false)
+                sx={{
+                  borderRadius: '8px',
+                  mb: 1,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                    transform: 'translateX(8px)',
+                  },
                 }}
               >
-                <ExitToAppIcon sx={{ marginRight: 1 }} />
-                <ListItemText primary='Salir' />
+                <ListItemText
+                  primary='Directorio'
+                  primaryTypographyProps={{
+                    sx: {
+                      color: '#4a4a4a',
+                      fontWeight: isActive('/directorio') ? 'bold' : 'normal',
+                    },
+                  }}
+                />
               </ListItemButton>
-            ) : (
-              <>
-                <ListItemButton
-                  component={Link}
-                  to='/login'
-                  onClick={() => toggleDrawer(false)}
-                >
-                  <LoginIcon sx={{ marginRight: 1 }} />
-                  <ListItemText primary='Ingreso' />
-                </ListItemButton>
-                <ListItemButton
-                  component={Link}
-                  to='/contact'
-                  onClick={() => toggleDrawer(false)}
-                >
-                  <PersonAddIcon sx={{ marginRight: 1 }} />
-                  <ListItemText primary='Registro' />
-                </ListItemButton>
-              </>
-            )}
-          </List>
-        </Box>
+
+              <ListItemButton
+                component={Link}
+                to='/foro'
+                onClick={() => toggleDrawer(false)}
+                sx={{
+                  borderRadius: '8px',
+                  mb: 1,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                    transform: 'translateX(8px)',
+                  },
+                }}
+              >
+                <ListItemText
+                  primary='Foro'
+                  primaryTypographyProps={{
+                    sx: {
+                      color: '#4a4a4a',
+                      fontWeight: isActive('/foro') ? 'bold' : 'normal',
+                    },
+                  }}
+                />
+              </ListItemButton>
+
+              <ListItemButton
+                component={Link}
+                to='/zucaria'
+                onClick={() => toggleDrawer(false)}
+                sx={{
+                  borderRadius: '8px',
+                  mb: 1,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                    transform: 'translateX(8px)',
+                  },
+                }}
+              >
+                <ListItemText
+                  primary='ZucarIA'
+                  primaryTypographyProps={{
+                    sx: {
+                      color: '#4a4a4a',
+                      fontWeight: isActive('/zucaria') ? 'bold' : 'normal',
+                    },
+                  }}
+                />
+              </ListItemButton>
+            </>
+          )}
+
+          {!isAuthenticated && (
+            <ListItemButton
+              component={Link}
+              to='/services'
+              onClick={() => toggleDrawer(false)}
+              sx={{
+                borderRadius: '8px',
+                mb: 1,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                  transform: 'translateX(8px)',
+                },
+              }}
+            >
+              <ListItemText
+                primary='Servicios'
+                primaryTypographyProps={{
+                  sx: {
+                    color: '#4a4a4a',
+                  },
+                }}
+              />
+            </ListItemButton>
+          )}
+
+          <ListItemButton
+            component={Link}
+            to='/contact'
+            onClick={() => toggleDrawer(false)}
+            sx={{
+              borderRadius: '8px',
+              mb: 1,
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                transform: 'translateX(8px)',
+              },
+            }}
+          >
+            <ListItemText
+              primary='Contacto'
+              primaryTypographyProps={{
+                sx: {
+                  color: '#4a4a4a',
+                  fontWeight: isActive('/contact') ? 'bold' : 'normal',
+                },
+              }}
+            />
+          </ListItemButton>
+
+          {isAuthenticated ? (
+            <ListItemButton
+              onClick={() => {
+                logout()
+                toggleDrawer(false)
+                navigate('/')
+              }}
+              sx={{
+                borderRadius: '8px',
+                mb: 1,
+                backgroundColor: '#ff6347',
+                color: '#fff',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  backgroundColor: '#e5533f',
+                  transform: 'translateX(8px)',
+                },
+              }}
+            >
+              <ExitToAppIcon sx={{ mr: 2 }} />
+              <ListItemText
+                primary='Salir'
+                primaryTypographyProps={{
+                  sx: {
+                    color: '#fff',
+                  },
+                }}
+              />
+            </ListItemButton>
+          ) : (
+            <>
+              <ListItemButton
+                component={Link}
+                to='/login'
+                onClick={() => toggleDrawer(false)}
+                sx={{
+                  borderRadius: '8px',
+                  mb: 1,
+                  border: '2px solid #ff6347',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: '#ff6347',
+                    transform: 'translateX(8px)',
+                    '& .MuiListItemText-primary': {
+                      color: '#fff',
+                    },
+                  },
+                }}
+              >
+                <LoginIcon sx={{ mr: 2, color: '#ff6347' }} />
+                <ListItemText
+                  primary='Ingreso'
+                  primaryTypographyProps={{
+                    sx: {
+                      color: '#4a4a4a',
+                    },
+                  }}
+                />
+              </ListItemButton>
+              <ListItemButton
+                component={Link}
+                to='/register'
+                onClick={() => toggleDrawer(false)}
+                sx={{
+                  borderRadius: '8px',
+                  mb: 1,
+                  backgroundColor: '#ff6347',
+                  color: '#fff',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: '#e5533f',
+                    transform: 'translateX(8px)',
+                  },
+                }}
+              >
+                <PersonAddIcon sx={{ mr: 2 }} />
+                <ListItemText
+                  primary='Registro'
+                  primaryTypographyProps={{
+                    sx: {
+                      color: '#fff',
+                    },
+                  }}
+                />
+              </ListItemButton>
+            </>
+          )}
+        </List>
       </Drawer>
     </AppBar>
   )

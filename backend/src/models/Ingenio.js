@@ -4,31 +4,21 @@ const sequelize = require('../config/database')
 const Ingenio = sequelize.define(
   'Ingenio',
   {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
     nombre: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    pais: {
-      type: DataTypes.ENUM(
-        'El Salvador',
-        'Guatemala',
-        'Costa Rica',
-        'Honduras',
-        'Nicaragua',
-        'Panama',
-        'Belice'
-      ),
+    email: {
+      type: DataTypes.STRING,
       allowNull: false,
     },
-    usuariosIds: {
-      type: DataTypes.JSON,
+    webpage: {
+      type: DataTypes.STRING,
       allowNull: true,
-      defaultValue: [],
+    },
+    logo: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   },
   {

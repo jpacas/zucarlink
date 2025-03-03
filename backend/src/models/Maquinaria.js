@@ -1,74 +1,63 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
-const User = require('./User')
 
 const Maquinaria = sequelize.define(
   'Maquinaria',
   {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-    },
-    user_id: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      references: {
-        model: User,
-        key: 'id',
-      },
-    },
     nombre: {
       type: DataTypes.STRING,
       allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [3, 100],
+      },
+    },
+    descripcion: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [10, 2000],
+      },
     },
     foto: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    descripcion: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
     precio: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
+      validate: {
+        min: 0,
+      },
     },
     contacto: {
       type: DataTypes.STRING,
       allowNull: false,
-    },
-    likes: {
-      type: DataTypes.JSON,
-      defaultValue: [],
-    },
-    comentarios: {
-      type: DataTypes.JSON,
-      defaultValue: [],
+      validate: {
+        notEmpty: true,
+      },
     },
     vistas: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
-    categoria: {
-      type: DataTypes.ENUM(
-        'Campo',
-        'Molinos',
-        'Fabrica',
-        'Calderas',
-        'Energia',
-        'Alcohol'
-      ),
-      allowNull: false,
+    marca: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    modelo: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    vigente: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
     },
   },
   {
     timestamps: true,
-    tableName: 'Maquinaria',
   }
 )
-
-// Relación con User
-Maquinaria.belongsTo(User, { foreignKey: 'user_id', as: 'usuario' })
 
 module.exports = Maquinaria

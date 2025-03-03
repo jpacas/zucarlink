@@ -1,23 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react'
-
-interface User {
-  id: string
-  nombre: string
-  apellido: string
-  avatar: string
-  pais: string
-  area: string
-  ingenio: string
-  empleador: string
-  acercaDe: string
-}
-
-interface AuthContextType {
-  isAuthenticated: boolean
-  user: User | null
-  login: (user: User) => void // Acepta un objeto `User`
-  logout: () => void
-}
+import { User } from '../types/interfaces'
+import { AuthContextType } from '../types/interfaces'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 

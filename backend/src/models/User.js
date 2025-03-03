@@ -1,7 +1,6 @@
 const { DataTypes } = require('sequelize')
 const sequelize = require('../config/database')
 const { v4: uuidv4 } = require('uuid')
-const Ingenio = require('./Ingenio')
 
 const User = sequelize.define(
   'User',
@@ -16,10 +15,6 @@ const User = sequelize.define(
       allowNull: false,
     },
     apellido: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    pais: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -39,50 +34,26 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
-    area: {
-      type: DataTypes.ENUM(
-        'Campo',
-        'Molinos',
-        'Fabrica',
-        'Calderas',
-        'Energia',
-        'Alcohol',
-        'Laboratorio',
-        'Instrumentacion',
-        'Mantenimiento',
-        'Seguridad',
-        'Medio Ambiente',
-        'Recursos Humanos',
-        'Otros'
-      ),
-      allowNull: true,
-    },
-    ingenio: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    empleador: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
     acercaDe: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    tipoUsuario: {
-      type: DataTypes.ENUM('Ingenio', 'Proveedor'),
-      allowNull: false,
+    fecha_nacimiento: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    ingenioId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    proveedorId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
   },
   {
     timestamps: true,
-    tableName: 'Users',
   }
 )
 
 module.exports = User
-
-// ✅ IMPORTA `Experiencia` DESPUÉS DE EXPORTAR `User`
-const Experiencia = require('./Experiencia')
-User.hasMany(Experiencia, { foreignKey: 'userId', as: 'experiencias' })
-Ingenio.hasMany(User, { foreignKey: 'ingenioId', as: 'usuarios' })

@@ -16,41 +16,17 @@ import {
   Button,
   Modal,
   Chip,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormControlLabel,
-  Checkbox,
+  Container,
 } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import IconButton from '@mui/material/IconButton'
-import DeleteIcon from '@mui/icons-material/Delete'
-
-interface User {
-  id: string
-  nombre: string
-  apellido: string
-  pais: string
-  email: string
-  avatarUrl?: string
-  area: string
-  acercaDe: string
-  ingenio: string
-  empleador: string
-}
-
-interface Experience {
-  id: string | null
-  cargo: string
-  acercaDe: string
-  ingenio: string
-  area: string
-  fechaInicio: string
-  fechaFin: string
-  actualmenteTrabaja: boolean
-}
+import { User, Experience, Area, Ingenio } from '../types/interfaces'
+import {
+  fetchAreas,
+  fetchIngenios,
+  fetchPaises,
+} from '../functions/fetchFunctions'
+import ExperienceModal from './ExperienceModal'
 
 const Perfil: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -60,12 +36,16 @@ const Perfil: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [areas, setAreas] = useState<Area[]>([])
+  const [ingenios, setIngenios] = useState<Ingenio[]>([])
+  const [paises, setPaises] = useState<string[]>([])
   const [experienceData, setExperienceData] = useState<Experience>({
-    id: null,
+    id: '',
     ingenio: '',
     fechaInicio: '',
     fechaFin: '',
     cargo: '',
+    pais: '',
     area: '',
     acercaDe: '',
     actualmenteTrabaja: false,
@@ -74,22 +54,6 @@ const Perfil: React.FC = () => {
   const { user } = useAuth() // Usuario autenticado
   const esPropietario = user?.id === id // Verifica si es su propio perfil
 
-  const areas = [
-    'Campo',
-    'Molinos',
-    'Fabrica',
-    'Calderas',
-    'Energia',
-    'Alcohol',
-    'Laboratorio',
-    'Instrumentacion',
-    'Mantenimiento',
-    'Seguridad',
-    'Medio Ambiente',
-    'Recursos Humanos',
-    'Otros',
-  ]
-
   const formatearFecha = (fecha: string) => {
     return format(new Date(fecha), 'MMM yyyy', { locale: es }) // Ejemplo: "Feb 2025"
   }
@@ -97,6 +61,33 @@ const Perfil: React.FC = () => {
   const formatDate = (isoString: string) => {
     return isoString.split('T')[0] // Extrae solo la parte de la fecha (YYYY-MM-DD)
   }
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { areas, error: areasError } = await fetchAreas()
+      const { ingenios, error: ingeniosError } = await fetchIngenios()
+      const { paises, error: paisesError } = await fetchPaises()
+
+      if (areasError) {
+        setError(areasError)
+      } else {
+        setAreas(areas || [])
+      }
+
+      if (ingeniosError) {
+        setError(ingeniosError)
+      } else {
+        setIngenios(ingenios || [])
+      }
+
+      if (paisesError) {
+        setError(paisesError)
+      } else {
+        setPaises(paises || [])
+      }
+    }
+    fetchData()
+  }, [])
 
   useEffect(() => {
     const fetchUsuarioYExperiencias = async () => {
@@ -129,12 +120,13 @@ const Perfil: React.FC = () => {
     return () => {
       setExperienceData(
         experience || {
-          id: null,
+          id: '',
           ingenio: '',
           fechaInicio: '',
           fechaFin: '',
           cargo: '',
           area: '',
+          pais: '',
           acercaDe: '',
           actualmenteTrabaja: false,
         }
@@ -146,12 +138,13 @@ const Perfil: React.FC = () => {
   const handleCloseModal = () => {
     setModalOpen(false)
     setExperienceData({
-      id: null,
+      id: '',
       ingenio: '',
       fechaInicio: '',
       fechaFin: '',
       cargo: '',
       area: '',
+      pais: '',
       acercaDe: '',
       actualmenteTrabaja: false,
     })
@@ -166,22 +159,22 @@ const Perfil: React.FC = () => {
       if (experienceData.id) {
         await axios.put(
           `${import.meta.env.VITE_API_URL}/experiencias/${experienceData.id}`,
-          experienceData
-        )
-        setExperiencias(
-          experiencias.map((exp) =>
-            exp.id === experienceData.id ? experienceData : exp
-          )
+          { ...experienceData, usuarioId: user.id }
         )
       } else {
-        const { id, ...dataWithoutId } = experienceData // Extraer id y guardar el resto en dataWithoutId
-        const response = await axios.post(
+        const { id, ...dataWithoutId } = experienceData
+        await axios.post(
           `${import.meta.env.VITE_API_URL}/experiencias/${user.id}`,
           dataWithoutId
         )
-
-        setExperiencias([...experiencias, response.data])
       }
+
+      // 🔄 Vuelve a cargar la lista completa de experiencias desde la API
+      const expResponse = await axios.get(
+        `${import.meta.env.VITE_API_URL}/experiencias/${user.id}`
+      )
+      setExperiencias(expResponse.data)
+
       handleCloseModal()
     } catch (error) {
       console.error('Error al guardar la experiencia', error)
@@ -218,10 +211,7 @@ const Perfil: React.FC = () => {
     )
   }
 
-  const handleDeleteExperience = async (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    event.preventDefault()
+  const handleDeleteExperience = async () => {
     if (!experienceData.id) return
     try {
       await axios.delete(
@@ -242,290 +232,267 @@ const Perfil: React.FC = () => {
   return (
     <Box
       sx={{
-        maxWidth: '800px',
-        margin: 'auto',
-        padding: 3,
-        marginTop: '64px',
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        minHeight: '100vh',
+        pt: 10,
+        pb: 8,
       }}
     >
-      {usuario && (
-        <Card sx={{ boxShadow: 3, padding: 3 }}>
-          <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={4} sx={{ textAlign: 'center' }}>
-                <Avatar
-                  src={usuario.avatarUrl}
-                  alt={`${usuario.nombre} ${usuario.apellido}`}
-                  sx={{
-                    width: 150,
-                    height: 150,
-                    margin: 'auto',
-                    border: '2px solid #ccc',
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={8}>
-                <Typography variant='h4' color='primary' gutterBottom>
-                  {usuario.nombre} {usuario.apellido}
-                </Typography>
-                <Typography variant='body1' gutterBottom>
-                  <strong>País:</strong> {usuario.pais}
-                </Typography>
-                <Typography variant='body1' gutterBottom>
-                  <strong>Ingenio:</strong> {usuario.ingenio}
-                </Typography>
-                <Typography variant='body1' gutterBottom>
-                  <strong>Área:</strong>{' '}
-                  {usuario.area === 'null' || usuario.area.trim() === ''
-                    ? 'Proveedor'
-                    : usuario.area}
-                </Typography>
-
-                {usuario.acercaDe && (
-                  <Typography variant='body1' gutterBottom>
-                    <strong>Acerca De:</strong> {usuario.acercaDe}
-                  </Typography>
-                )}
-              </Grid>
-            </Grid>
-          </CardContent>
-          {user?.id === id && (
-            <CardActions>
-              <Button
-                size='small'
-                onClick={() => navigate(`/editar-perfil/${id}`)}
-              >
-                Editar Perfil
-              </Button>
-            </CardActions>
-          )}
-        </Card>
-      )}
-      <Typography variant='h5' sx={{ mt: 4, mb: 2, fontWeight: 'bold' }}>
-        Experiencia Azucarera
-      </Typography>
-      {experiencias.map((exp) => (
-        <Card key={exp.id} sx={{ mb: 2, position: 'relative', minHeight: 120 }}>
-          <CardContent
+      <Container maxWidth='lg'>
+        {usuario && (
+          <Card
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+              borderRadius: 3,
+              overflow: 'hidden',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-5px)',
+              },
             }}
           >
-            <Grid container justifyContent='space-between' alignItems='center'>
-              <Grid item xs={12} sm={7}>
-                <Typography variant='subtitle1' sx={{ fontWeight: 'bold' }}>
-                  {exp.ingenio}
-                </Typography>
-                <Typography variant='body2' color='text.secondary'>
-                  {formatearFecha(exp.fechaInicio)} -{' '}
-                  {exp.actualmenteTrabaja
-                    ? 'Actual'
-                    : formatearFecha(exp.fechaFin)}
-                </Typography>
+            <CardContent sx={{ p: 4 }}>
+              <Grid container spacing={4}>
+                <Grid item xs={12} sm={4} sx={{ textAlign: 'center' }}>
+                  <Avatar
+                    src={usuario.avatarUrl}
+                    alt={`${usuario.nombre} ${usuario.apellido}`}
+                    sx={{
+                      width: 180,
+                      height: 180,
+                      margin: 'auto',
+                      border: '3px solid #ff6347',
+                      boxShadow: '0 4px 15px rgba(255, 99, 71, 0.2)',
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={8}>
+                  <Typography
+                    variant='h4'
+                    sx={{
+                      color: '#1a1a1a',
+                      fontWeight: 700,
+                      mb: 3,
+                      position: 'relative',
+                      '&::after': {
+                        content: '""',
+                        display: 'block',
+                        width: '60px',
+                        height: '4px',
+                        backgroundColor: '#ff6347',
+                        mt: 2,
+                        borderRadius: '2px',
+                      },
+                    }}
+                  >
+                    {usuario.nombre} {usuario.apellido}
+                  </Typography>
+                  <Typography variant='body1' sx={{ mb: 2, color: '#4a4a4a' }}>
+                    <strong>País:</strong> {usuario.pais}
+                  </Typography>
+                  <Typography variant='body1' sx={{ mb: 2, color: '#4a4a4a' }}>
+                    <strong>
+                      {usuario.proveedor ? 'Empresa' : 'Ingenio'}:
+                    </strong>{' '}
+                    {usuario.proveedor || usuario.ingenio}
+                  </Typography>
+                  {!usuario.proveedor && (
+                    <Typography
+                      variant='body1'
+                      sx={{ mb: 2, color: '#4a4a4a' }}
+                    >
+                      <strong>Área:</strong>{' '}
+                      {usuario.area === 'null' || usuario.area?.trim() === ''
+                        ? 'No especificada'
+                        : usuario.area}
+                    </Typography>
+                  )}
+                  {usuario.acercaDe && (
+                    <Typography variant='body1' sx={{ color: '#4a4a4a' }}>
+                      <strong>Acerca De:</strong> {usuario.acercaDe}
+                    </Typography>
+                  )}
+                </Grid>
               </Grid>
-              <Grid item xs={12} sm={5} sx={{ textAlign: 'right' }}>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+            </CardContent>
+            {user?.id === id && (
+              <CardActions sx={{ px: 4, pb: 3 }}>
+                <Button
+                  variant='contained'
+                  onClick={() => navigate(`/editar-perfil/${id}`)}
+                  sx={{
+                    backgroundColor: '#ff6347',
+                    color: '#fff',
+                    textTransform: 'none',
+                    borderRadius: '50px',
+                    padding: '8px 24px',
+                    boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      backgroundColor: '#e5533f',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
+                    },
+                  }}
                 >
-                  {exp.cargo}
-                </Typography>
-                <Chip
-                  label={exp.area}
-                  color='primary'
-                  size='small'
-                  sx={{ mt: 1 }}
-                />
-              </Grid>
-            </Grid>
-            <Typography variant='body1' sx={{ mt: 2 }}>
-              {exp.acercaDe}
-            </Typography>
-          </CardContent>
+                  Editar Perfil
+                </Button>
+              </CardActions>
+            )}
+          </Card>
+        )}
 
-          {esPropietario && (
-            <IconButton
-              onClick={handleOpenModal(exp)}
-              sx={{ position: 'absolute', bottom: 8, right: 8 }}
-            >
-              <EditIcon />
-            </IconButton>
-          )}
-        </Card>
-      ))}
-      {esPropietario && (
-        <Button
-          variant='contained'
-          onClick={handleOpenModal(null)}
-          sx={{ mt: 2 }}
-        >
-          Agregar Experiencia
-        </Button>
-      )}
-
-      <Modal open={modalOpen} onClose={handleCloseModal}>
-        <Box
+        <Typography
+          variant='h5'
           sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 600,
-            bgcolor: 'background.paper',
-            border: '2px solid #000',
-            boxShadow: 24,
-            p: 4,
+            mt: 6,
+            mb: 4,
+            fontWeight: 700,
+            color: '#1a1a1a',
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              display: 'block',
+              width: '40px',
+              height: '3px',
+              backgroundColor: '#ff6347',
+              mt: 1,
+              borderRadius: '2px',
+            },
           }}
         >
-          <TextField
-            fullWidth
-            label='Ingenio'
-            name='ingenio'
-            margin='dense'
-            variant='outlined'
-            value={experienceData.ingenio}
-            onChange={(e) =>
-              setExperienceData({ ...experienceData, ingenio: e.target.value })
-            }
-          />
-          <TextField
-            fullWidth
-            type='date'
-            label='Fecha de Inicio'
-            name='fechaInicio'
-            InputLabelProps={{ shrink: true }}
-            margin='dense'
-            value={
-              experienceData.fechaInicio
-                ? formatDate(experienceData.fechaInicio)
-                : ''
-            }
-            onChange={(e) =>
-              setExperienceData({
-                ...experienceData,
-                fechaInicio: e.target.value,
-              })
-            }
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                id='actualmenteTrabaja'
-                name='actualmenteTrabaja'
-                checked={experienceData.actualmenteTrabaja}
-                onChange={(e) =>
-                  setExperienceData({
-                    ...experienceData,
-                    actualmenteTrabaja: e.target.checked,
-                    fechaFin: '',
-                  })
-                }
-              />
-            }
-            label='Actualmente trabajo aquí'
-          />
-          <TextField
-            fullWidth
-            type='date'
-            name='fechaFin'
-            label='Fecha de Fin'
-            InputLabelProps={{ shrink: true }}
-            margin='dense'
-            value={
-              experienceData.fechaFin ? formatDate(experienceData.fechaFin) : ''
-            }
-            onChange={(e) => {
-              const nuevaFechaFin = e.target.value
-              if (
-                experienceData.fechaInicio &&
-                nuevaFechaFin < experienceData.fechaInicio
-              ) {
-                alert(
-                  'La fecha de fin no puede ser anterior a la fecha de inicio.'
-                )
-              } else {
-                setExperienceData({
-                  ...experienceData,
-                  fechaFin: nuevaFechaFin,
-                })
-              }
+          Experiencia Azucarera
+        </Typography>
+
+        {experiencias.map((exp) => (
+          <Card
+            key={exp.id}
+            sx={{
+              mb: 3,
+              position: 'relative',
+              minHeight: 120,
+              borderRadius: 2,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'translateY(-5px)',
+              },
             }}
-            disabled={experienceData.actualmenteTrabaja}
-          />
-          <TextField
-            fullWidth
-            label='Cargo'
-            name='cargo'
-            margin='dense'
-            variant='outlined'
-            value={experienceData.cargo}
-            onChange={(e) =>
-              setExperienceData({ ...experienceData, cargo: e.target.value })
-            }
-          />
-          <FormControl fullWidth margin='dense'>
-            <InputLabel id='area-label'>Área de Trabajo</InputLabel>
-            <Select
-              labelId='area-label'
-              id='area'
-              name='area'
-              value={experienceData.area}
-              label='Área de Trabajo'
-              onChange={(e) =>
-                setExperienceData({
-                  ...experienceData,
-                  area: e.target.value,
-                })
-              }
-            >
-              {areas.map((area) => (
-                <MenuItem key={area} value={area}>
-                  {area}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
-            fullWidth
-            label='Descripción'
-            name='acercaDe'
-            margin='dense'
-            variant='outlined'
-            multiline
-            rows={3}
-            value={experienceData.acercaDe}
-            onChange={(e) =>
-              setExperienceData({
-                ...experienceData,
-                acercaDe: e.target.value,
-              })
-            }
-          />
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={7}>
+                  <Typography
+                    variant='h6'
+                    sx={{
+                      fontWeight: 600,
+                      color: '#1a1a1a',
+                      mb: 1,
+                    }}
+                  >
+                    {exp.ingenio}
+                  </Typography>
+                  <Typography variant='body2' sx={{ color: '#666', mb: 2 }}>
+                    {formatearFecha(exp.fechaInicio)} -{' '}
+                    {exp.actualmenteTrabaja
+                      ? 'Actual'
+                      : formatearFecha(exp.fechaFin)}
+                  </Typography>
+                </Grid>
+                <Grid
+                  item
+                  xs={12}
+                  sm={5}
+                  sx={{ textAlign: { xs: 'left', sm: 'right' } }}
+                >
+                  <Typography
+                    variant='subtitle1'
+                    sx={{ color: '#4a4a4a', mb: 1 }}
+                  >
+                    {exp.cargo}
+                  </Typography>
+                  <Chip
+                    label={exp.area}
+                    sx={{
+                      backgroundColor: '#ff634710',
+                      color: '#ff6347',
+                      fontWeight: 500,
+                      '&:hover': {
+                        backgroundColor: '#ff634720',
+                      },
+                    }}
+                  />
+                </Grid>
+              </Grid>
+              <Typography
+                variant='body1'
+                sx={{
+                  mt: 3,
+                  color: '#4a4a4a',
+                  lineHeight: 1.6,
+                }}
+              >
+                {exp.acercaDe}
+              </Typography>
+            </CardContent>
+
+            {esPropietario && (
+              <IconButton
+                onClick={handleOpenModal(exp)}
+                sx={{
+                  position: 'absolute',
+                  bottom: 8,
+                  right: 8,
+                  color: '#ff6347',
+                  '&:hover': {
+                    backgroundColor: '#ff634710',
+                  },
+                }}
+              >
+                <EditIcon />
+              </IconButton>
+            )}
+          </Card>
+        ))}
+
+        {esPropietario && (
           <Button
             variant='contained'
-            color='primary'
-            sx={{ mt: 3 }}
-            onClick={handleSaveExperience}
+            onClick={() => handleOpenModal(null)()}
+            sx={{
+              mt: 4,
+              backgroundColor: '#ff6347',
+              color: '#fff',
+              textTransform: 'none',
+              borderRadius: '50px',
+              padding: '10px 30px',
+              boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                backgroundColor: '#e5533f',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
+              },
+            }}
           >
-            Guardar Cambios
+            Agregar Experiencia
           </Button>
-          {experienceData.id && (
-            <IconButton
-              sx={{
-                position: 'absolute',
-                bottom: 16,
-                right: 16,
-                color: 'error.main',
-              }}
-              onClick={handleDeleteExperience}
-            >
-              <DeleteIcon />
-            </IconButton>
-          )}
-        </Box>
-      </Modal>
+        )}
+
+        <Modal open={modalOpen} onClose={handleCloseModal}>
+          <ExperienceModal
+            experienceData={experienceData}
+            setExperienceData={setExperienceData}
+            paises={paises}
+            ingenios={ingenios}
+            areas={areas}
+            onSave={handleSaveExperience}
+            onClose={handleCloseModal}
+            onDelete={experienceData.id ? handleDeleteExperience : undefined}
+            formatDate={formatDate}
+          />
+        </Modal>
+      </Container>
     </Box>
   )
 }

@@ -5,9 +5,10 @@ const {
   getUserById,
   updateUserProfile,
   changeUserPassword,
+  uploadProfilePicture,
+  loginUser,
+  logout,
 } = require('../controllers/userController')
-const { loginUser, logout } = require('../controllers/authController')
-const { uploadProfilePicture } = require('../controllers/profileController')
 const upload = require('../middleware/multer')
 const router = express.Router()
 

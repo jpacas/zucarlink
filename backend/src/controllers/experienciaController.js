@@ -1,7 +1,10 @@
-const Experiencia = require('../models/Experiencia') // Asegúrate de que la ruta al modelo es correcta
+const Experiencia = require('../models/Experiencia')
+const Ingenio = require('../models/Ingenio')
+const Area = require('../models/Area')
+const Pais = require('../models/Pais')
 
 // Obtener todas las experiencias de un usuario
-exports.getExperiencias = async (req, res) => {
+const getExperiencias = async (req, res) => {
   try {
     // Validar que el userId es válido
     if (!req.params.userId) {
@@ -10,19 +13,46 @@ exports.getExperiencias = async (req, res) => {
         .json({ message: 'El ID del usuario es requerido.' })
     }
 
-    const experiencias = await Experiencia.findAll({
-      where: { UserId: req.params.userId },
+    const response = await Experiencia.findAll({
+      where: { usuarioId: req.params.userId },
+      include: [
+        {
+          model: Ingenio,
+          attributes: ['nombre'],
+          as: 'ingenio',
+        },
+        {
+          model: Area,
+          attributes: ['nombre'],
+          as: 'area',
+        },
+        {
+          model: Pais,
+          attributes: ['nombre'],
+          as: 'pais',
+        },
+      ],
     })
 
-    if (experiencias.length === 0) {
-      return (
-        res
-          //.status(404)
-          .json({
-            message: 'No se encontraron experiencias para este usuario.',
-          })
-      )
+    // Si no hay experiencias, retornar array vacío
+    if (response.length === 0) {
+      return res.json([])
     }
+
+    const experiencias = response.map((experiencia) => ({
+      id: experiencia.id,
+      fechaInicio: experiencia.fechaInicio,
+      fechaFin: experiencia.fechaFin,
+      cargo: experiencia.cargo,
+      area: experiencia.area.nombre,
+      ingenio: experiencia.ingenio.nombre,
+      pais: experiencia.pais.nombre,
+      actualmenteTrabaja: experiencia.actualmenteTrabaja,
+      acercaDe: experiencia.acercaDe,
+      ingenio: experiencia.ingenio.nombre,
+      area: experiencia.area.nombre,
+      pais: experiencia.pais.nombre,
+    }))
 
     res.json(experiencias)
   } catch (error) {
@@ -34,7 +64,7 @@ exports.getExperiencias = async (req, res) => {
 }
 
 // Crear una nueva experiencia
-exports.createExperiencia = async (req, res) => {
+const createExperiencia = async (req, res) => {
   try {
     const {
       ingenio,
@@ -44,25 +74,49 @@ exports.createExperiencia = async (req, res) => {
       area,
       acercaDe,
       actualmenteTrabaja,
+      pais,
     } = req.body
     const { userId } = req.params
 
     // Validación de entrada
-    if (!userId || !ingenio || !fechaInicio || !cargo || !area || !acercaDe) {
+    if (
+      !userId ||
+      !ingenio ||
+      !fechaInicio ||
+      !cargo ||
+      !area ||
+      !acercaDe ||
+      !pais
+    ) {
       return res.status(400).json({
         message: 'Todos los campos necesarios deben ser proporcionados.',
       })
     }
 
+    const ingenioObj = await Ingenio.findOne({ where: { nombre: ingenio } })
+    const areaObj = await Area.findOne({ where: { nombre: area } })
+    const paisObj = await Pais.findOne({ where: { nombre: pais } })
+
+    const ingenioId = ingenioObj ? Number(ingenioObj.id) : null
+    const areaId = areaObj ? Number(areaObj.id) : null
+    const paisId = paisObj ? Number(paisObj.id) : null
+
+    if (!areaId || !ingenioId || !paisId) {
+      return res.status(400).json({
+        message: 'Los campos area, ingenio y pais deben ser proporcionados.',
+      })
+    }
+
     // Validar que fechaFin solo se almacene si actualmenteTrabaja es false
     const experiencia = await Experiencia.create({
-      userId,
-      ingenio,
+      usuarioId: userId,
       fechaInicio,
       fechaFin: actualmenteTrabaja ? null : fechaFin, // Si trabaja actualmente, fechaFin es null
       actualmenteTrabaja,
       cargo,
-      area,
+      areaId,
+      ingenioId,
+      paisId,
       acercaDe,
     })
 
@@ -75,10 +129,10 @@ exports.createExperiencia = async (req, res) => {
   }
 }
 
-exports.updateExperiencia = async (req, res) => {
+const updateExperiencia = async (req, res) => {
   const { expId } = req.params
   const {
-    userId,
+    usuarioId,
     ingenio,
     fechaInicio,
     fechaFin,
@@ -86,6 +140,7 @@ exports.updateExperiencia = async (req, res) => {
     area,
     acercaDe,
     actualmenteTrabaja,
+    pais,
   } = req.body
 
   try {
@@ -97,21 +152,56 @@ exports.updateExperiencia = async (req, res) => {
     }
 
     // Verificar que el usuario autenticado sea el dueño de la experiencia
-    if (experiencia.userId !== userId) {
+    if (experiencia.usuarioId !== usuarioId) {
       return res
         .status(403)
         .json({ message: 'No tienes permiso para editar esta experiencia' })
     }
 
-    // Preparar datos a actualizar, asegurando que no se pierdan valores si no son enviados
+    const ingenioObj = await Ingenio.findOne({ where: { nombre: ingenio } })
+    const areaObj = await Area.findOne({ where: { nombre: area } })
+    const paisObj = await Pais.findOne({ where: { nombre: pais } })
+
+    const ingenioId = ingenioObj ? Number(ingenioObj.id) : experiencia.ingenioId
+    const areaId = areaObj ? Number(areaObj.id) : experiencia.areaId
+    const paisId = paisObj ? Number(paisObj.id) : experiencia.paisId
+
+    // Validaciones: si nunca tuvo estos valores y no se envían, es un error
+    if (!areaObj && !experiencia.areaId) {
+      return res.status(400).json({ message: 'El área es requerida.' })
+    }
+    if (!ingenioObj && !experiencia.ingenioId) {
+      return res.status(400).json({ message: 'El ingenio es requerido.' })
+    }
+    if (!paisObj && !experiencia.paisId) {
+      return res.status(400).json({ message: 'El país es requerido.' })
+    }
+
+    // Preparar datos a actualizar
     const updatedData = {
-      ingenio: ingenio ?? experiencia.ingenio,
+      ingenioId,
       fechaInicio: fechaInicio ?? experiencia.fechaInicio,
-      fechaFin: actualmenteTrabaja ? null : fechaFin ?? experiencia.fechaFin,
+      fechaFin: actualmenteTrabaja
+        ? null
+        : fechaFin !== undefined
+        ? fechaFin
+        : experiencia.fechaFin,
       cargo: cargo ?? experiencia.cargo,
-      area: area ?? experiencia.area,
+      areaId,
       acercaDe: acercaDe ?? experiencia.acercaDe,
       actualmenteTrabaja: actualmenteTrabaja ?? experiencia.actualmenteTrabaja,
+      paisId,
+    }
+
+    // Verificar si hay cambios
+    const hasChanges = Object.keys(updatedData).some(
+      (key) => updatedData[key] !== experiencia[key]
+    )
+
+    if (!hasChanges) {
+      return res
+        .status(400)
+        .json({ message: 'No hay cambios en la experiencia.' })
     }
 
     // Actualizar la experiencia
@@ -129,9 +219,9 @@ exports.updateExperiencia = async (req, res) => {
   }
 }
 
-exports.deleteExperience = async (req, res) => {
+const deleteExperience = async (req, res) => {
   const { expId } = req.params
-  const { userId } = req.body
+  const { usuarioId } = req.body
 
   try {
     const experience = await Experiencia.findOne({
@@ -143,7 +233,7 @@ exports.deleteExperience = async (req, res) => {
     }
 
     // Verifica que el usuario autenticado sea el dueño de la experiencia
-    if (experience.userId !== userId) {
+    if (experience.usuarioId !== usuarioId) {
       return res
         .status(403)
         .json({ message: 'No tienes permiso para eliminar esta experiencia' })
@@ -155,4 +245,11 @@ exports.deleteExperience = async (req, res) => {
     console.error('Error al eliminar experiencia:', error)
     res.status(500).json({ message: 'Error interno del servidor' })
   }
+}
+
+module.exports = {
+  getExperiencias,
+  createExperiencia,
+  updateExperiencia,
+  deleteExperience,
 }
