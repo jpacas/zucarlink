@@ -86,7 +86,7 @@ const CallToAction: React.FC = () => {
         </Typography>
         <Button
           component={Link}
-          to='/contact'
+          to='/register'
           variant='contained'
           sx={{
             backgroundColor: '#ff6347',
