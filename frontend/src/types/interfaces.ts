@@ -41,6 +41,7 @@ export interface Archivo {
   nombre: string
   url: string
   tipo: string
+  createdAt: string
 }
 
 export interface Post {
@@ -106,7 +107,7 @@ export interface Empleo {
   vigente: boolean
   createdAt: string
   updatedAt: string
-  usuarioId: number
+  usuarioId: string
   paisId: number
   ingenioId: number
   areaId: number

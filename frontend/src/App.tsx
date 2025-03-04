@@ -19,8 +19,10 @@ import TerminosUso from './pages/TerminosUso'
 import EditarPerfil from './components/EditarPerfil'
 import PostDetalle from './pages/PostDetalle'
 import { SnackbarProvider } from 'notistack'
-/* import Empleos from './pages/Empleos'
-import Maquinarias from './pages/Maquinarias' */
+import Empleos from './pages/Empleos'
+import EmpleoDetalle from './pages/EmpleoDetalle'
+import Maquinarias from './pages/Maquinarias'
+import MaquinariaDetalle from './pages/MaquinariaDetalle'
 import RegistroExitoso from './pages/RegistroExitoso'
 
 const App: React.FC = () => {
@@ -45,8 +47,13 @@ const App: React.FC = () => {
           <Route path='/services' element={<Servicios />} />
           <Route path='/privacidad' element={<PolPrivacidad />} />
           <Route path='/uso' element={<TerminosUso />} />
-          {/*           <Route path='/empleo' element={<Empleos />} />
-          <Route path='/maquinaria' element={<Maquinarias />} /> */}
+          <Route path='/empleos' element={<Empleos />} />
+          <Route path='/empleos/:empleoId' element={<EmpleoDetalle />} />
+          <Route path='/maquinarias' element={<Maquinarias />} />
+          <Route
+            path='/maquinarias/:maquinariaId'
+            element={<MaquinariaDetalle />}
+          />
           <Route path='/registro-exitoso' element={<RegistroExitoso />} />
           <Route
             path='/directorio'

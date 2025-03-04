@@ -31,6 +31,7 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material'
+import { useNavigate } from 'react-router-dom'
 
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
@@ -71,6 +72,7 @@ const Maquinarias: React.FC = () => {
   const [paises, setPaises] = useState<Pais[]>([])
   const { user } = useAuth()
   const { enqueueSnackbar } = useSnackbar()
+  const navigate = useNavigate()
 
   // Estados para filtros
   const [filtros, setFiltros] = useState({
@@ -250,6 +252,10 @@ const Maquinarias: React.FC = () => {
     setMenuAnchorEl(null)
   }
 
+  const handleMaquinariaClick = (maquinariaId: number) => {
+    navigate(`/maquinarias/${maquinariaId}`)
+  }
+
   // Filtrar maquinarias según los criterios
   const maquinariasFiltradas = maquinarias.filter((maquinaria) => {
     const matchBusqueda =
@@ -284,29 +290,6 @@ const Maquinarias: React.FC = () => {
       }}
     >
       <Container maxWidth='lg'>
-        <Typography
-          variant='h3'
-          align='center'
-          sx={{
-            mb: 6,
-            fontWeight: 700,
-            color: '#1a1a1a',
-            letterSpacing: '-0.5px',
-            position: 'relative',
-            '&::after': {
-              content: '""',
-              display: 'block',
-              width: '60px',
-              height: '4px',
-              backgroundColor: '#ff6347',
-              margin: '16px auto',
-              borderRadius: '2px',
-            },
-          }}
-        >
-          Maquinarias
-        </Typography>
-
         <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
           {/* Sección de filtros */}
           <Grid
@@ -466,7 +449,7 @@ const Maquinarias: React.FC = () => {
             ) : (
               <Grid container spacing={3}>
                 {maquinariasFiltradas.map((maquinaria) => (
-                  <Grid item xs={12} sm={6} md={6} lg={4} key={maquinaria.id}>
+                  <Grid item xs={12} sm={6} md={6} lg={6} key={maquinaria.id}>
                     <Card
                       sx={{
                         height: '100%',
@@ -480,7 +463,9 @@ const Maquinarias: React.FC = () => {
                           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
                         },
                         position: 'relative',
+                        cursor: 'pointer',
                       }}
+                      onClick={() => handleMaquinariaClick(maquinaria.id)}
                     >
                       {/* Menú de opciones (solo visible para el propietario) */}
                       {user && maquinaria.usuarioId === user.id && (
@@ -856,9 +841,7 @@ const Maquinarias: React.FC = () => {
                     }
                   >
                     {paises.map((pais) => (
-                      <MenuItem key={pais} value={pais}>
-                        {pais}
-                      </MenuItem>
+                      <MenuItem key={pais} value={pais}></MenuItem>
                     ))}
                   </Select>
                 </FormControl>

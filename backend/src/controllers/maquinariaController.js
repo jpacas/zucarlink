@@ -42,12 +42,14 @@ const getMaquinaria = async (req, res) => {
 ////////////////////////////////////////////////////////////
 
 const getMaquinariaById = async (req, res) => {
+  const { id } = req.params
+
   try {
-    const maquinaria = await Maquinaria.findByPk(req.params.id, {
+    const maquinaria = await Maquinaria.findByPk(id, {
       include: [
         {
           model: User,
-          as: 'usuario',
+          as: 'autor',
           attributes: ['id', 'nombre', 'apellido', 'email', 'avatarUrl'],
         },
         {
