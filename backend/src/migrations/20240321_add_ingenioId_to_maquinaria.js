@@ -1,10 +1,9 @@
-'use strict'
+const { DataTypes } = require('sequelize')
 
-/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn('Users', 'ingenioId', {
-      type: Sequelize.INTEGER,
+    await queryInterface.addColumn('Maquinaria', 'ingenioId', {
+      type: DataTypes.INTEGER,
       allowNull: true,
       references: {
         model: 'Ingenios',
@@ -16,6 +15,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.removeColumn('Users', 'ingenioId')
+    await queryInterface.removeColumn('Maquinaria', 'ingenioId')
   },
 }

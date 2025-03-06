@@ -131,6 +131,9 @@ const setupAssociations = () => {
   Maquinaria.belongsTo(Pais, { foreignKey: 'paisId', as: 'pais' })
   Pais.hasMany(Maquinaria, { foreignKey: 'paisId', as: 'maquinarias' })
 
+  Maquinaria.belongsTo(Ingenio, { foreignKey: 'ingenioId', as: 'ingenio' })
+  Ingenio.hasMany(Maquinaria, { foreignKey: 'ingenioId', as: 'maquinarias' })
+
   // Relaciones de Noticia
   Noticia.belongsTo(User, { foreignKey: 'usuarioId', as: 'autor' })
   User.hasMany(Noticia, { foreignKey: 'usuarioId', as: 'noticias' })

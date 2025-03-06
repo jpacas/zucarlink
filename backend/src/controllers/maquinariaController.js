@@ -2,6 +2,7 @@ const Maquinaria = require('../models/Maquinaria')
 const User = require('../models/User')
 const Pais = require('../models/Pais')
 const Archivo = require('../models/Archivo')
+const Ingenio = require('../models/Ingenio')
 const { uploadToS3 } = require('./serverFunctions')
 
 ////////////////////////////////////////////////////////////
@@ -21,6 +22,11 @@ const getMaquinaria = async (req, res) => {
           model: Pais,
           as: 'pais',
           attributes: ['id', 'nombre'],
+        },
+        {
+          model: Ingenio,
+          as: 'ingenio',
+          attributes: ['id', 'nombre', 'logo'],
         },
         {
           model: Archivo,
@@ -58,6 +64,11 @@ const getMaquinariaById = async (req, res) => {
           attributes: ['id', 'nombre'],
         },
         {
+          model: Ingenio,
+          as: 'ingenio',
+          attributes: ['id', 'nombre', 'logo'],
+        },
+        {
           model: Archivo,
           as: 'archivos',
           attributes: ['id', 'nombre', 'url', 'tipo'],
@@ -85,8 +96,17 @@ const getMaquinariaById = async (req, res) => {
 
 const createMaquinaria = async (req, res) => {
   try {
-    const { nombre, descripcion, precio, contacto, marca, modelo, anio, pais } =
-      req.body
+    const {
+      nombre,
+      descripcion,
+      precio,
+      contacto,
+      marca,
+      modelo,
+      anio,
+      pais,
+      ingenioId,
+    } = req.body
 
     // Validar campos requeridos
     if (
@@ -97,7 +117,8 @@ const createMaquinaria = async (req, res) => {
       !marca ||
       !modelo ||
       !anio ||
-      !pais
+      !pais ||
+      !ingenioId
     ) {
       return res.status(400).json({
         error: 'Todos los campos requeridos deben ser proporcionados.',
@@ -110,11 +131,19 @@ const createMaquinaria = async (req, res) => {
           modelo: !modelo,
           anio: !anio,
           pais: !pais,
+          ingenioId: !ingenioId,
         },
       })
     }
 
     const paisId = await Pais.findOne({ where: { nombre: pais } })
+    const ingenio = await Ingenio.findByPk(ingenioId)
+
+    if (!ingenio) {
+      return res
+        .status(400)
+        .json({ error: 'El ingenio especificado no existe.' })
+    }
 
     // Convertir tipos de datos
     const precioNum = parseFloat(precio)
@@ -152,6 +181,7 @@ const createMaquinaria = async (req, res) => {
       modelo,
       anio: anioNum,
       paisId: paisId.id,
+      ingenioId: ingenioId,
       usuarioId: req.user.id,
     })
 
@@ -196,6 +226,11 @@ const createMaquinaria = async (req, res) => {
             attributes: ['id', 'nombre'],
           },
           {
+            model: Ingenio,
+            as: 'ingenio',
+            attributes: ['id', 'nombre', 'logo'],
+          },
+          {
             model: Archivo,
             as: 'archivos',
             attributes: ['id', 'nombre', 'url', 'tipo'],
@@ -219,7 +254,7 @@ const createMaquinaria = async (req, res) => {
     if (error.name === 'SequelizeForeignKeyConstraintError') {
       return res.status(400).json({
         error: 'Error de clave foránea.',
-        details: 'El país o usuario especificado no existe.',
+        details: 'El país o ingenio especificado no existe.',
       })
     }
     res.status(500).json({
@@ -235,8 +270,17 @@ const createMaquinaria = async (req, res) => {
 
 const updateMaquinaria = async (req, res) => {
   const { id } = req.params
-  const { nombre, descripcion, precio, contacto, marca, modelo, anio, pais } =
-    req.body
+  const {
+    nombre,
+    descripcion,
+    precio,
+    contacto,
+    marca,
+    modelo,
+    anio,
+    pais,
+    ingenioId,
+  } = req.body
 
   try {
     const maquinaria = await Maquinaria.findByPk(id)
@@ -295,6 +339,7 @@ const updateMaquinaria = async (req, res) => {
       modelo,
       anio,
       paisId: pais.id,
+      ingenioId: ingenioId,
       foto: fotoUrl,
     })
 
@@ -335,6 +380,11 @@ const updateMaquinaria = async (req, res) => {
           model: Pais,
           as: 'pais',
           attributes: ['id', 'nombre'],
+        },
+        {
+          model: Ingenio,
+          as: 'ingenio',
+          attributes: ['id', 'nombre', 'logo'],
         },
         {
           model: Archivo,

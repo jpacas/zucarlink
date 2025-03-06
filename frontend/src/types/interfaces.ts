@@ -91,10 +91,12 @@ export interface AuthContextType {
 }
 
 export interface Ingenio {
+  id: number
   nombre: string
-  pais: string
-  correo?: string
   webpage?: string
+  correo?: string
+  pais: string
+  logo?: string
 }
 
 export interface Empleo {
@@ -134,6 +136,7 @@ export interface Maquinaria {
   pais: { id: number; nombre: string }
   usuario?: User
   archivos?: Archivo[]
+  ingenio?: { id: number; nombre: string; logo?: string }
   createdAt: Date
   updatedAt: Date
 }

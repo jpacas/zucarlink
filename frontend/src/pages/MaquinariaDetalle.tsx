@@ -24,6 +24,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Avatar,
 } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { Maquinaria, Pais } from '../types/interfaces'
@@ -32,6 +33,7 @@ import { Edit, Delete } from '@mui/icons-material'
 import { AttachFile } from '@mui/icons-material'
 import { Download } from '@mui/icons-material'
 import { useAuth } from '../context/AuthContext'
+import { Engineering } from '@mui/icons-material'
 
 const MaquinariaDetalle: React.FC = () => {
   const { maquinariaId } = useParams<{ maquinariaId: string }>()
@@ -45,6 +47,9 @@ const MaquinariaDetalle: React.FC = () => {
   const [editMode, setEditMode] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [paises, setPaises] = useState<Pais[]>([])
+  const [ingenios, setIngenios] = useState<
+    { id: number; nombre: string; logo?: string }[]
+  >([])
   const [formData, setFormData] = useState<{
     nombre: string
     descripcion: string
@@ -54,6 +59,7 @@ const MaquinariaDetalle: React.FC = () => {
     modelo: string
     anio: string
     pais: string
+    ingenioId: string
   }>({
     nombre: '',
     descripcion: '',
@@ -63,6 +69,7 @@ const MaquinariaDetalle: React.FC = () => {
     modelo: '',
     anio: '',
     pais: '',
+    ingenioId: '',
   })
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [filesToDelete, setFilesToDelete] = useState<number[]>([])
@@ -83,6 +90,7 @@ const MaquinariaDetalle: React.FC = () => {
         modelo: maquinaria.modelo || '',
         anio: maquinaria.anio.toString() || '',
         pais: maquinaria.pais?.nombre || '',
+        ingenioId: maquinaria.ingenio?.id.toString() || '',
       })
     }
   }, [searchParams, maquinaria])
@@ -91,10 +99,12 @@ const MaquinariaDetalle: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const paisesRes = await axios.get(
-          `${import.meta.env.VITE_API_URL}/helper/paises`
-        )
+        const [paisesRes, ingeniosRes] = await Promise.all([
+          axios.get(`${import.meta.env.VITE_API_URL}/helper/paises`),
+          axios.get(`${import.meta.env.VITE_API_URL}/ingenios`),
+        ])
         setPaises(paisesRes.data)
+        setIngenios(ingeniosRes.data)
       } catch (error) {
         console.error('Error al cargar datos:', error)
       }
@@ -135,6 +145,7 @@ const MaquinariaDetalle: React.FC = () => {
           modelo: response.data.modelo || '',
           anio: response.data.anio.toString() || '',
           pais: response.data.pais?.nombre || '',
+          ingenioId: response.data.ingenio?.id.toString() || '',
         })
       }
 
@@ -338,6 +349,30 @@ const MaquinariaDetalle: React.FC = () => {
             >
               {maquinaria.nombre}
             </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                mb: 4,
+                justifyContent: 'center',
+              }}
+            >
+              {maquinaria.ingenio?.logo && (
+                <Avatar
+                  src={maquinaria.ingenio.logo}
+                  alt={maquinaria.ingenio.nombre}
+                  sx={{ width: 60, height: 60, mr: 2 }}
+                />
+              )}
+              <Box>
+                <Typography variant='subtitle1' color='text.secondary'>
+                  Ingenio
+                </Typography>
+                <Typography variant='h5' sx={{ fontWeight: 600 }}>
+                  {maquinaria.ingenio?.nombre || 'No especificado'}
+                </Typography>
+              </Box>
+            </Box>
             <Card
               sx={{
                 borderRadius: '16px',
@@ -351,16 +386,18 @@ const MaquinariaDetalle: React.FC = () => {
               <CardContent>
                 <Grid container spacing={3}>
                   <Grid item xs={12} md={6}>
-                    {maquinaria.foto && (
-                      <Box
-                        sx={{
-                          width: '100%',
-                          height: 300,
-                          borderRadius: '16px',
-                          overflow: 'hidden',
-                          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                        }}
-                      >
+                    <Box
+                      sx={{
+                        width: '100%',
+                        height: 400,
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                        position: 'relative',
+                        backgroundColor: '#f5f5f5',
+                      }}
+                    >
+                      {maquinaria.foto ? (
                         <img
                           src={maquinaria.foto}
                           alt={maquinaria.nombre}
@@ -368,10 +405,28 @@ const MaquinariaDetalle: React.FC = () => {
                             width: '100%',
                             height: '100%',
                             objectFit: 'cover',
+                            transition: 'transform 0.3s ease',
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.05)'
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)'
                           }}
                         />
-                      </Box>
-                    )}
+                      ) : (
+                        <Box
+                          sx={{
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Engineering sx={{ fontSize: 80, color: '#ccc' }} />
+                        </Box>
+                      )}
+                    </Box>
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <Box sx={{ mb: 3 }}>
@@ -444,6 +499,18 @@ const MaquinariaDetalle: React.FC = () => {
                           </Typography>
                           <Typography variant='h6'>
                             {maquinaria.pais?.nombre || 'No especificado'}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Typography
+                            variant='subtitle2'
+                            color='text.secondary'
+                            sx={{ mb: 1 }}
+                          >
+                            Ingenio
+                          </Typography>
+                          <Typography variant='h6'>
+                            {maquinaria.ingenio?.nombre || 'No especificado'}
                           </Typography>
                         </Grid>
                       </Grid>
@@ -862,6 +929,41 @@ const MaquinariaDetalle: React.FC = () => {
                           {paises.map((pais) => (
                             <MenuItem key={pais} value={pais}>
                               {pais}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth required>
+                        <InputLabel>Ingenio</InputLabel>
+                        <Select
+                          value={formData.ingenioId}
+                          label='Ingenio'
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              ingenioId: e.target.value,
+                            })
+                          }
+                          sx={{
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              '&:hover': {
+                                borderColor: '#ff6347',
+                              },
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              borderColor: '#ff6347',
+                            },
+                          }}
+                        >
+                          {ingenios.map((ingenio) => (
+                            <MenuItem
+                              key={ingenio.id}
+                              value={ingenio.id.toString()}
+                            >
+                              {ingenio.nombre}
                             </MenuItem>
                           ))}
                         </Select>
