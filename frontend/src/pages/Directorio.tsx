@@ -74,7 +74,6 @@ const Directorio: React.FC<DirectorioProps> = () => {
             `${import.meta.env.VITE_API_URL}/helper/proveedores`
           )
           setProveedores(proveedoresRes.data)
-          //setProveedoresList(proveedoresRes.data)
         }
       } catch (err) {
         if (axios.isAxiosError(err)) {

@@ -41,11 +41,9 @@ import {
   Engineering,
   LocationOn,
   Business,
-  CalendarToday,
   MoreVert,
   Edit,
   Delete,
-  AttachMoney,
   PhotoCamera,
   AttachFile,
   Download,
@@ -72,7 +70,7 @@ const Maquinarias: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [paises, setPaises] = useState<{ nombre: string }[]>([])
+  const [paises, setPaises] = useState<Pais[]>([])
   const { user } = useAuth()
   const { enqueueSnackbar } = useSnackbar()
   const navigate = useNavigate()
@@ -104,19 +102,19 @@ const Maquinarias: React.FC = () => {
 
   // Efecto para filtrar ingenios cuando cambia el país
   useEffect(() => {
-    if (filtros.pais) {
+    if (formData.pais) {
       const ingeniosDelPais = ingenios.filter(
-        (ingenio) => ingenio.pais === filtros.pais
+        (ingenio) => ingenio.pais.toLowerCase() === formData.pais.toLowerCase()
       )
       setIngeniosFiltrados(ingeniosDelPais)
       // Resetear el ingenio seleccionado si no pertenece al país seleccionado
-      if (!ingeniosDelPais.find((i) => i.nombre === filtros.ingenio)) {
-        setFiltros((prev) => ({ ...prev, ingenio: '' }))
+      if (!ingeniosDelPais.find((i) => String(i.id) === formData.ingenio)) {
+        setFormData((prev) => ({ ...prev, ingenio: '' }))
       }
     } else {
       setIngeniosFiltrados(ingenios)
     }
-  }, [filtros.pais, ingenios])
+  }, [formData.pais, ingenios])
 
   const resetForm = () => {
     setFormData({
@@ -133,6 +131,8 @@ const Maquinarias: React.FC = () => {
     setSelectedFile(null)
     setSelectedFiles([])
     setPreviewUrl(null)
+    setEditMode(false)
+    setCurrentMaquinariaId(null)
   }
 
   const fetchMaquinarias = async () => {
@@ -153,19 +153,9 @@ const Maquinarias: React.FC = () => {
   useEffect(() => {
     fetchMaquinarias()
 
-    // Cargar datos para filtros
-    const fetchData = async () => {
-      try {
-        const paisesRes = await axios.get<{ nombre: string }[]>(
-          `${import.meta.env.VITE_API_URL}/helper/paises`
-        )
-        setPaises(paisesRes.data)
-      } catch (error) {
-        console.error('Error al cargar países:', error)
-      }
-    }
-
-    fetchData()
+    fetchPaises().then(({ paises, error }) => {
+      if (!error) setPaises(paises || [])
+    })
 
     fetchIngenios().then(({ ingenios, error }) => {
       if (!error) {
@@ -211,6 +201,8 @@ const Maquinarias: React.FC = () => {
         formDataObj.append('archivos', file)
       })
 
+      formDataObj.append('usuarioId', user?.id || '')
+
       const token = localStorage.getItem('token')
       const config = {
         headers: {
@@ -250,17 +242,25 @@ const Maquinarias: React.FC = () => {
 
   const handleDelete = async () => {
     if (!selectedMaquinariaId) return
+    console.log('UserID: ', user?.id)
+    if (!user?.id) {
+      enqueueSnackbar('Debes estar autenticado para eliminar una maquinaria', {
+        variant: 'error',
+      })
+      return
+    }
 
     try {
-      const token = localStorage.getItem('token')
-      await axios.delete(
-        `${import.meta.env.VITE_API_URL}/maquinaria/${selectedMaquinariaId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
+      await axios({
+        method: 'DELETE',
+        url: `${
+          import.meta.env.VITE_API_URL
+        }/maquinaria/${selectedMaquinariaId}`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        data: JSON.stringify({ usuarioId: user.id }),
+      })
       enqueueSnackbar('Maquinaria eliminada exitosamente', {
         variant: 'success',
       })
@@ -275,15 +275,15 @@ const Maquinarias: React.FC = () => {
   const handleEdit = (maquinaria: Maquinaria) => {
     setCurrentMaquinariaId(maquinaria.id)
     setFormData({
-      nombre: maquinaria.nombre,
-      descripcion: maquinaria.descripcion,
-      precio: maquinaria.precio.toString(),
-      contacto: maquinaria.contacto,
-      marca: maquinaria.marca,
-      modelo: maquinaria.modelo,
-      anio: maquinaria.anio.toString(),
+      nombre: maquinaria.nombre || '',
+      descripcion: maquinaria.descripcion || '',
+      precio: maquinaria.precio?.toString() || '',
+      contacto: maquinaria.contacto || '',
+      marca: maquinaria.marca || '',
+      modelo: maquinaria.modelo || '',
+      anio: maquinaria.anio?.toString() || '',
       pais: maquinaria.pais?.nombre || '',
-      ingenio: maquinaria.ingenio?.toString() || '',
+      ingenio: maquinaria.ingenio?.nombre || '',
     })
     setPreviewUrl(maquinaria.foto || null)
     setEditMode(true)
@@ -435,12 +435,9 @@ const Maquinarias: React.FC = () => {
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <Autocomplete
                   options={paises}
-                  getOptionLabel={(option) => option.nombre}
-                  value={
-                    paises.find((pais) => pais.nombre === filtros.pais) || null
-                  }
+                  value={paises.find((pais) => pais === filtros.pais) || null}
                   onChange={(_, value) =>
-                    setFiltros({ ...filtros, pais: value?.nombre || '' })
+                    setFiltros({ ...filtros, pais: value || '' })
                   }
                   renderInput={(params) => (
                     <TextField
@@ -574,12 +571,19 @@ const Maquinarias: React.FC = () => {
                         position: 'relative',
                         cursor: 'pointer',
                       }}
-                      onClick={() => handleMaquinariaClick(maquinaria.id)}
+                      onClick={(e) => {
+                        if (
+                          !(e.target as HTMLElement).closest('.menu-options')
+                        ) {
+                          handleMaquinariaClick(maquinaria.id)
+                        }
+                      }}
                     >
                       {/* Menú de opciones (solo visible para el propietario) */}
                       {user && maquinaria.usuarioId === user.id && (
                         <>
                           <IconButton
+                            className='menu-options'
                             sx={{
                               position: 'absolute',
                               top: 8,
@@ -599,6 +603,7 @@ const Maquinarias: React.FC = () => {
                             <MoreVert />
                           </IconButton>
                           <Menu
+                            className='menu-options'
                             anchorEl={menuAnchorEl}
                             open={Boolean(menuAnchorEl)}
                             onClose={() => setMenuAnchorEl(null)}
@@ -846,6 +851,8 @@ const Maquinarias: React.FC = () => {
             boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
           },
         }}
+        keepMounted={false}
+        disablePortal
       >
         <DialogTitle
           sx={{
@@ -985,35 +992,39 @@ const Maquinarias: React.FC = () => {
 
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required>
-                  <InputLabel>País</InputLabel>
-                  <Select
-                    value={formData.pais}
-                    label='País'
-                    onChange={(e) =>
-                      setFormData({ ...formData, pais: e.target.value })
+                  <Autocomplete
+                    options={paises}
+                    value={
+                      paises.find((pais) => pais === formData.pais) || null
                     }
-                  >
-                    <Autocomplete
-                      options={paises}
-                      getOptionLabel={(option) => option.nombre}
-                      value={
-                        paises.find((pais) => pais.nombre === filtros.pais) ||
-                        null
-                      }
-                      onChange={(_, value) =>
-                        setFiltros({ ...filtros, pais: value?.nombre || '' })
-                      }
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label='País'
-                          size='small'
-                          fullWidth
-                          sx={{ mb: 2 }}
-                        />
-                      )}
-                    />
-                  </Select>
+                    onChange={(_, value) =>
+                      setFormData({
+                        ...formData,
+                        pais: value || '',
+                        ingenio: '',
+                      })
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label='País'
+                        required
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '&:hover fieldset': {
+                              borderColor: '#ff6347',
+                            },
+                            '&.Mui-focused fieldset': {
+                              borderColor: '#ff6347',
+                            },
+                          },
+                          '& .MuiInputLabel-root.Mui-focused': {
+                            color: '#ff6347',
+                          },
+                        }}
+                      />
+                    )}
+                  />
                 </FormControl>
               </Grid>
 
@@ -1023,9 +1034,15 @@ const Maquinarias: React.FC = () => {
                   <Select
                     value={formData.ingenio}
                     label='Ingenio'
-                    onChange={(e) =>
+                    onChange={(e) => {
                       setFormData({ ...formData, ingenio: e.target.value })
-                    }
+                    }}
+                    disabled={!formData.pais}
+                    MenuProps={{
+                      PaperProps: {
+                        sx: { maxHeight: 300 },
+                      },
+                    }}
                     sx={{
                       '& .MuiOutlinedInput-notchedOutline': {
                         '&:hover': {
@@ -1037,8 +1054,8 @@ const Maquinarias: React.FC = () => {
                       },
                     }}
                   >
-                    {ingenios.map((ingenio) => (
-                      <MenuItem key={ingenio.nombre} value={ingenio.nombre}>
+                    {ingeniosFiltrados.map((ingenio) => (
+                      <MenuItem key={ingenio.id} value={ingenio.nombre}>
                         {ingenio.nombre}
                       </MenuItem>
                     ))}

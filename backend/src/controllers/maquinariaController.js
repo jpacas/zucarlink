@@ -105,8 +105,11 @@ const createMaquinaria = async (req, res) => {
       modelo,
       anio,
       pais,
-      ingenioId,
+      ingenio,
+      usuarioId,
     } = req.body
+
+    console.log(req.body)
 
     // Validar campos requeridos
     if (
@@ -118,7 +121,7 @@ const createMaquinaria = async (req, res) => {
       !modelo ||
       !anio ||
       !pais ||
-      !ingenioId
+      !ingenio
     ) {
       return res.status(400).json({
         error: 'Todos los campos requeridos deben ser proporcionados.',
@@ -131,25 +134,32 @@ const createMaquinaria = async (req, res) => {
           modelo: !modelo,
           anio: !anio,
           pais: !pais,
-          ingenioId: !ingenioId,
+          ingenio: !ingenio,
         },
       })
     }
 
-    const paisId = await Pais.findOne({ where: { nombre: pais } })
-    const ingenio = await Ingenio.findByPk(ingenioId)
+    const paisData = await Pais.findOne({ where: { nombre: pais } })
+    const ingenioData = await Ingenio.findOne({ where: { nombre: ingenio } })
 
-    if (!ingenio) {
+    if (!ingenioData) {
       return res
         .status(400)
         .json({ error: 'El ingenio especificado no existe.' })
     }
 
+    if (!paisData) {
+      return res.status(400).json({ error: 'El país especificado no existe.' })
+    }
+
+    console.log(paisData.id)
+    console.log(ingenioData.id)
+
     // Convertir tipos de datos
     const precioNum = parseFloat(precio)
     const anioNum = parseInt(anio)
 
-    if (isNaN(precioNum) || isNaN(anioNum) || !paisId) {
+    if (isNaN(precioNum) || isNaN(anioNum) || !paisData) {
       return res.status(400).json({
         error:
           'Error en el formato de los datos numéricos o país no encontrado.',
@@ -180,9 +190,9 @@ const createMaquinaria = async (req, res) => {
       marca,
       modelo,
       anio: anioNum,
-      paisId: paisId.id,
-      ingenioId: ingenioId,
-      usuarioId: req.user.id,
+      paisId: paisData.id,
+      ingenioId: ingenioData.id,
+      usuarioId,
     })
 
     // Manejar archivos adjuntos
@@ -210,38 +220,8 @@ const createMaquinaria = async (req, res) => {
       }
     }
 
-    // Obtener la maquinaria con sus relaciones
-    const maquinariaConRelaciones = await Maquinaria.findByPk(
-      nuevaMaquinaria.id,
-      {
-        include: [
-          {
-            model: User,
-            as: 'usuario',
-            attributes: ['id', 'nombre', 'apellido', 'email', 'avatarUrl'],
-          },
-          {
-            model: Pais,
-            as: 'pais',
-            attributes: ['id', 'nombre'],
-          },
-          {
-            model: Ingenio,
-            as: 'ingenio',
-            attributes: ['id', 'nombre', 'logo'],
-          },
-          {
-            model: Archivo,
-            as: 'archivos',
-            attributes: ['id', 'nombre', 'url', 'tipo'],
-          },
-        ],
-      }
-    )
-
     res.status(201).json({
       message: 'Maquinaria creada exitosamente.',
-      maquinaria: maquinariaConRelaciones,
     })
   } catch (error) {
     console.error('Error al crear maquinaria:', error)
@@ -280,6 +260,7 @@ const updateMaquinaria = async (req, res) => {
     anio,
     pais,
     ingenioId,
+    usuarioId,
   } = req.body
 
   try {
@@ -288,9 +269,6 @@ const updateMaquinaria = async (req, res) => {
     if (!maquinaria) {
       return res.status(404).json({ error: 'Maquinaria no encontrada.' })
     }
-
-    // Obtener el ID del usuario del token decodificado
-    const usuarioId = req.user?.id || req.user?.userId || null
 
     // Verificar que el usuario es el propietario
     if (maquinaria.usuarioId !== usuarioId) {
@@ -373,7 +351,7 @@ const updateMaquinaria = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'usuario',
+          as: 'autor',
           attributes: ['id', 'nombre', 'apellido', 'email', 'avatarUrl'],
         },
         {
@@ -415,8 +393,11 @@ const updateMaquinaria = async (req, res) => {
 ////////////////////////////////////////////////////////////
 
 const deleteMaquinaria = async (req, res) => {
+  const { id } = req.params
+  const { usuarioId } = req.body //No estoy recibiendo el usuarioId
+
   try {
-    const maquinaria = await Maquinaria.findByPk(req.params.id, {
+    const maquinaria = await Maquinaria.findByPk(id, {
       include: [
         {
           model: Archivo,
@@ -429,13 +410,24 @@ const deleteMaquinaria = async (req, res) => {
       return res.status(404).json({ error: 'Maquinaria no encontrada.' })
     }
 
+    console.log('Maquinaria encontrada:', {
+      id: maquinaria.id,
+      usuarioId: maquinaria.usuarioId,
+    })
+
+    //Tengo que entender por que no me funciona el usuarioId!!!
+
     // Verificar que el usuario es el propietario
-    if (maquinaria.usuarioId !== req.user.id) {
+    /*    if (maquinaria.usuarioId !== usuarioId) {
+      console.log('No autorizado - IDs no coinciden:', {
+        maquinariaUsuarioId: maquinaria.usuarioId,
+        requestUsuarioId: usuarioId,
+      })
       return res
         .status(403)
         .json({ error: 'No autorizado para eliminar esta maquinaria.' })
     }
-
+ */
     // Eliminar foto principal si existe
     if (maquinaria.foto) {
       try {
