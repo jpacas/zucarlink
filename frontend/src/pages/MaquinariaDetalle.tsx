@@ -24,32 +24,37 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Avatar,
+  Autocomplete,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  ListItemSecondaryAction,
 } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
-import { Maquinaria, Pais } from '../types/interfaces'
+import {
+  Edit,
+  Delete,
+  AttachFile,
+  Download,
+  Engineering,
+  PhotoCamera,
+  Close,
+} from '@mui/icons-material'
 import { useSnackbar } from 'notistack'
-import { Edit, Delete } from '@mui/icons-material'
-import { AttachFile } from '@mui/icons-material'
-import { Download } from '@mui/icons-material'
+import { Maquinaria, Pais, Ingenio } from '../types/interfaces'
 import { useAuth } from '../context/AuthContext'
-import { Engineering } from '@mui/icons-material'
+import { fetchIngenios, fetchPaises } from '../functions/fetchFunctions'
 
 const MaquinariaDetalle: React.FC = () => {
-  const { maquinariaId } = useParams<{ maquinariaId: string }>()
-  const [searchParams] = useSearchParams()
-  const { user } = useAuth()
-  const navigate = useNavigate()
-  const { enqueueSnackbar } = useSnackbar()
   const [maquinaria, setMaquinaria] = useState<Maquinaria | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editMode, setEditMode] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [paises, setPaises] = useState<Pais[]>([])
-  const [ingenios, setIngenios] = useState<
-    { id: number; nombre: string; logo?: string }[]
-  >([])
+  const [ingenios, setIngenios] = useState<Ingenio[]>([])
+  const [ingeniosFiltrados, setIngeniosFiltrados] = useState<Ingenio[]>([])
   const [formData, setFormData] = useState<{
     nombre: string
     descripcion: string
@@ -57,9 +62,8 @@ const MaquinariaDetalle: React.FC = () => {
     contacto: string
     marca: string
     modelo: string
-    anio: string
     pais: string
-    ingenioId: string
+    ingenio: string
   }>({
     nombre: '',
     descripcion: '',
@@ -67,44 +71,52 @@ const MaquinariaDetalle: React.FC = () => {
     contacto: '',
     marca: '',
     modelo: '',
-    anio: '',
     pais: '',
-    ingenioId: '',
+    ingenio: '',
   })
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [filesToDelete, setFilesToDelete] = useState<number[]>([])
-  const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const { maquinariaId } = useParams<{ maquinariaId: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { enqueueSnackbar } = useSnackbar()
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   // Verificar modo edición y cargar datos iniciales
   useEffect(() => {
-    const isEditing = searchParams.get('edit') === 'true'
-    setEditMode(isEditing)
-
-    if (isEditing && maquinaria) {
+    if (maquinaria) {
       setFormData({
         nombre: maquinaria.nombre || '',
         descripcion: maquinaria.descripcion || '',
-        precio: maquinaria.precio.toString() || '',
+        precio: maquinaria.precio?.toString() || '',
         contacto: maquinaria.contacto || '',
         marca: maquinaria.marca || '',
         modelo: maquinaria.modelo || '',
-        anio: maquinaria.anio.toString() || '',
         pais: maquinaria.pais?.nombre || '',
-        ingenioId: maquinaria.ingenio?.id.toString() || '',
+        ingenio: maquinaria.ingenio?.nombre || '',
       })
+      setPreviewUrl(maquinaria.foto || null)
     }
-  }, [searchParams, maquinaria])
+  }, [maquinaria])
+
+  // Manejar el modo de edición
+  useEffect(() => {
+    const isEditing = searchParams.get('edit') === 'true'
+    setEditMode(isEditing)
+  }, [searchParams])
 
   // Cargar datos necesarios
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [paisesRes, ingeniosRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_URL}/helper/paises`),
-          axios.get(`${import.meta.env.VITE_API_URL}/ingenios`),
+          fetchPaises(),
+          fetchIngenios(),
         ])
-        setPaises(paisesRes.data)
-        setIngenios(ingeniosRes.data)
+        setPaises(paisesRes.paises || [])
+        setIngenios(ingeniosRes.ingenios || [])
       } catch (error) {
         console.error('Error al cargar datos:', error)
       }
@@ -113,7 +125,14 @@ const MaquinariaDetalle: React.FC = () => {
     fetchData()
   }, [])
 
-  // Cargar maquinaria
+  useEffect(() => {
+    if (maquinariaId) {
+      fetchMaquinaria()
+    } else {
+      setLoading(false)
+    }
+  }, [maquinariaId])
+
   const fetchMaquinaria = async () => {
     try {
       setLoading(true)
@@ -134,21 +153,7 @@ const MaquinariaDetalle: React.FC = () => {
 
       setMaquinaria(response.data)
 
-      // Inicializar datos de edición si estamos en modo edición
-      if (searchParams.get('edit') === 'true') {
-        setFormData({
-          nombre: response.data.nombre || '',
-          descripcion: response.data.descripcion || '',
-          precio: response.data.precio.toString() || '',
-          contacto: response.data.contacto || '',
-          marca: response.data.marca || '',
-          modelo: response.data.modelo || '',
-          anio: response.data.anio.toString() || '',
-          pais: response.data.pais?.nombre || '',
-          ingenioId: response.data.ingenio?.id.toString() || '',
-        })
-      }
-
+      // Eliminamos la inicialización de formData aquí ya que se maneja en el useEffect
       setLoading(false)
     } catch (err) {
       console.error('Error completo:', err)
@@ -156,19 +161,23 @@ const MaquinariaDetalle: React.FC = () => {
     }
   }
 
-  useEffect(() => {
-    if (maquinariaId) {
-      fetchMaquinaria()
-    } else {
-      setLoading(false)
-    }
-  }, [maquinariaId])
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0]
+      setSelectedFile(file)
+      setPreviewUrl(URL.createObjectURL(file))
+    }
+  }
+
+  const handleFilesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       const files = Array.from(event.target.files)
       setSelectedFiles((prevFiles) => [...prevFiles, ...files])
     }
+  }
+
+  const removeFile = (index: number) => {
+    setSelectedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index))
   }
 
   const handleUpdate = async () => {
@@ -177,6 +186,11 @@ const MaquinariaDetalle: React.FC = () => {
       Object.entries(formData).forEach(([key, value]) => {
         formDataObj.append(key, value as string)
       })
+
+      // Agregar foto principal si se ha seleccionado una nueva
+      if (selectedFile) {
+        formDataObj.append('foto', selectedFile)
+      }
 
       // Agregar archivos nuevos
       selectedFiles.forEach((file) => {
@@ -188,14 +202,12 @@ const MaquinariaDetalle: React.FC = () => {
         formDataObj.append('archivosToDelete', id.toString())
       })
 
-      const token = localStorage.getItem('token')
       await axios.put(
         `${import.meta.env.VITE_API_URL}/maquinaria/${maquinariaId}`,
         formDataObj,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${token}`,
           },
         }
       )
@@ -215,14 +227,8 @@ const MaquinariaDetalle: React.FC = () => {
 
   const handleDelete = async () => {
     try {
-      const token = localStorage.getItem('token')
       await axios.delete(
-        `${import.meta.env.VITE_API_URL}/maquinaria/${maquinariaId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        `${import.meta.env.VITE_API_URL}/maquinaria/${maquinariaId}`
       )
       enqueueSnackbar('Maquinaria eliminada exitosamente', {
         variant: 'success',
@@ -235,6 +241,22 @@ const MaquinariaDetalle: React.FC = () => {
       })
     }
   }
+
+  // Efecto para filtrar ingenios cuando cambia el país
+  useEffect(() => {
+    if (formData.pais) {
+      const ingeniosDelPais = ingenios.filter(
+        (ingenio) => ingenio.pais.toLowerCase() === formData.pais.toLowerCase()
+      )
+      setIngeniosFiltrados(ingeniosDelPais)
+      // Resetear el ingenio seleccionado si no pertenece al país seleccionado
+      if (!ingeniosDelPais.find((i) => i.nombre === formData.ingenio)) {
+        setFormData((prev) => ({ ...prev, ingenio: '' }))
+      }
+    } else {
+      setIngeniosFiltrados(ingenios)
+    }
+  }, [formData.pais, ingenios])
 
   if (loading) {
     return (
@@ -349,30 +371,6 @@ const MaquinariaDetalle: React.FC = () => {
             >
               {maquinaria.nombre}
             </Typography>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                mb: 4,
-                justifyContent: 'center',
-              }}
-            >
-              {maquinaria.ingenio?.logo && (
-                <Avatar
-                  src={maquinaria.ingenio.logo}
-                  alt={maquinaria.ingenio.nombre}
-                  sx={{ width: 60, height: 60, mr: 2 }}
-                />
-              )}
-              <Box>
-                <Typography variant='subtitle1' color='text.secondary'>
-                  Ingenio
-                </Typography>
-                <Typography variant='h5' sx={{ fontWeight: 600 }}>
-                  {maquinaria.ingenio?.nombre || 'No especificado'}
-                </Typography>
-              </Box>
-            </Box>
             <Card
               sx={{
                 borderRadius: '16px',
@@ -459,18 +457,6 @@ const MaquinariaDetalle: React.FC = () => {
                             color='text.secondary'
                             sx={{ mb: 1 }}
                           >
-                            Año
-                          </Typography>
-                          <Typography variant='h6'>
-                            {maquinaria.anio}
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={6}>
-                          <Typography
-                            variant='subtitle2'
-                            color='text.secondary'
-                            sx={{ mb: 1 }}
-                          >
                             Marca
                           </Typography>
                           <Typography variant='h6'>
@@ -489,7 +475,7 @@ const MaquinariaDetalle: React.FC = () => {
                             {maquinaria.modelo}
                           </Typography>
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid item xs={6}>
                           <Typography
                             variant='subtitle2'
                             color='text.secondary'
@@ -571,7 +557,9 @@ const MaquinariaDetalle: React.FC = () => {
                         <Button
                           variant='contained'
                           startIcon={<Edit />}
-                          onClick={() => setEditMode(true)}
+                          onClick={() => {
+                            setSearchParams({ edit: 'true' })
+                          }}
                           sx={{
                             bgcolor: '#ff6347',
                             '&:hover': {
@@ -645,14 +633,6 @@ const MaquinariaDetalle: React.FC = () => {
                                 }}
                               >
                                 {archivo.nombre}
-                              </Typography>
-                              <Typography
-                                variant='body2'
-                                color='text.secondary'
-                              >
-                                {new Date(
-                                  archivo.createdAt
-                                ).toLocaleDateString()}
                               </Typography>
                             </Box>
                             <IconButton
@@ -743,9 +723,15 @@ const MaquinariaDetalle: React.FC = () => {
             {/* Diálogo de edición */}
             <Dialog
               open={editMode}
-              onClose={() => setEditMode(false)}
+              onClose={() => {
+                setSearchParams({})
+                setEditMode(false)
+              }}
               maxWidth='md'
               fullWidth
+              keepMounted={false}
+              disablePortal
+              disableEnforceFocus
               PaperProps={{
                 sx: {
                   borderRadius: '16px',
@@ -775,6 +761,54 @@ const MaquinariaDetalle: React.FC = () => {
                 <DialogContent>
                   <Grid container spacing={2}>
                     <Grid item xs={12}>
+                      <Box
+                        sx={{
+                          width: '100%',
+                          height: 200,
+                          border: '2px dashed #ccc',
+                          borderRadius: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mb: 2,
+                          position: 'relative',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {previewUrl ? (
+                          <img
+                            src={previewUrl}
+                            alt='Preview'
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                        ) : (
+                          <PhotoCamera
+                            sx={{ fontSize: 48, color: 'text.secondary' }}
+                          />
+                        )}
+                        <input
+                          type='file'
+                          accept='image/*'
+                          onChange={handleFileChange}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            opacity: 0,
+                            cursor: 'pointer',
+                          }}
+                        />
+                      </Box>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
                       <TextField
                         required
                         fullWidth
@@ -881,57 +915,41 @@ const MaquinariaDetalle: React.FC = () => {
                     </Grid>
 
                     <Grid item xs={12} sm={6}>
-                      <TextField
-                        required
-                        fullWidth
-                        label='Año'
-                        type='number'
-                        value={formData.anio}
-                        onChange={(e) =>
-                          setFormData({ ...formData, anio: e.target.value })
-                        }
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            '&:hover fieldset': {
-                              borderColor: '#ff6347',
-                            },
-                            '&.Mui-focused fieldset': {
-                              borderColor: '#ff6347',
-                            },
-                          },
-                          '& .MuiInputLabel-root.Mui-focused': {
-                            color: '#ff6347',
-                          },
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
                       <FormControl fullWidth required>
-                        <InputLabel>País</InputLabel>
-                        <Select
-                          value={formData.pais}
-                          label='País'
-                          onChange={(e) =>
-                            setFormData({ ...formData, pais: e.target.value })
+                        <Autocomplete
+                          options={paises}
+                          value={
+                            paises.find((pais) => pais === formData.pais) ||
+                            null
                           }
-                          sx={{
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              '&:hover': {
-                                borderColor: '#ff6347',
-                              },
-                            },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              borderColor: '#ff6347',
-                            },
-                          }}
-                        >
-                          {paises.map((pais) => (
-                            <MenuItem key={pais} value={pais}>
-                              {pais}
-                            </MenuItem>
-                          ))}
-                        </Select>
+                          onChange={(_, value) =>
+                            setFormData({
+                              ...formData,
+                              pais: value || '',
+                              ingenio: '',
+                            })
+                          }
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label='País'
+                              required
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  '&:hover fieldset': {
+                                    borderColor: '#ff6347',
+                                  },
+                                  '&.Mui-focused fieldset': {
+                                    borderColor: '#ff6347',
+                                  },
+                                },
+                                '& .MuiInputLabel-root.Mui-focused': {
+                                  color: '#ff6347',
+                                },
+                              }}
+                            />
+                          )}
+                        />
                       </FormControl>
                     </Grid>
 
@@ -939,14 +957,20 @@ const MaquinariaDetalle: React.FC = () => {
                       <FormControl fullWidth required>
                         <InputLabel>Ingenio</InputLabel>
                         <Select
-                          value={formData.ingenioId}
+                          value={formData.ingenio}
                           label='Ingenio'
-                          onChange={(e) =>
+                          onChange={(e) => {
                             setFormData({
                               ...formData,
-                              ingenioId: e.target.value,
+                              ingenio: e.target.value,
                             })
-                          }
+                          }}
+                          disabled={!formData.pais}
+                          MenuProps={{
+                            PaperProps: {
+                              sx: { maxHeight: 300 },
+                            },
+                          }}
                           sx={{
                             '& .MuiOutlinedInput-notchedOutline': {
                               '&:hover': {
@@ -958,10 +982,10 @@ const MaquinariaDetalle: React.FC = () => {
                             },
                           }}
                         >
-                          {ingenios.map((ingenio) => (
+                          {ingeniosFiltrados.map((ingenio) => (
                             <MenuItem
-                              key={ingenio.id}
-                              value={ingenio.id.toString()}
+                              key={`ingenio-${ingenio.id}`}
+                              value={ingenio.nombre}
                             >
                               {ingenio.nombre}
                             </MenuItem>
@@ -1025,11 +1049,85 @@ const MaquinariaDetalle: React.FC = () => {
                         }}
                       />
                     </Grid>
+
+                    {/* Sección de archivos adjuntos */}
+                    <Grid item xs={12}>
+                      <Typography variant='subtitle1' gutterBottom>
+                        Archivos adjuntos
+                      </Typography>
+                      <Button
+                        component='label'
+                        variant='outlined'
+                        startIcon={<AttachFile />}
+                        sx={{ mb: 2 }}
+                      >
+                        Agregar archivos
+                        <input
+                          type='file'
+                          multiple
+                          onChange={handleFilesChange}
+                          style={{ display: 'none' }}
+                          accept='.pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png'
+                        />
+                      </Button>
+
+                      <List>
+                        {/* Archivos existentes */}
+                        {maquinaria.archivos?.map((archivo) => (
+                          <ListItem key={archivo.id}>
+                            <ListItemIcon>
+                              <AttachFile />
+                            </ListItemIcon>
+                            <ListItemText primary={archivo.nombre} />
+                            <ListItemSecondaryAction>
+                              <IconButton
+                                edge='end'
+                                onClick={() => {
+                                  setFilesToDelete((prev) => [
+                                    ...prev,
+                                    archivo.id,
+                                  ])
+                                }}
+                                color='error'
+                              >
+                                <Close />
+                              </IconButton>
+                            </ListItemSecondaryAction>
+                          </ListItem>
+                        ))}
+
+                        {/* Nuevos archivos */}
+                        {selectedFiles.map((file, index) => (
+                          <ListItem key={`new-${index}`}>
+                            <ListItemIcon>
+                              <AttachFile />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={file.name}
+                              secondary={`${(file.size / 1024 / 1024).toFixed(
+                                2
+                              )} MB`}
+                            />
+                            <ListItemSecondaryAction>
+                              <IconButton
+                                edge='end'
+                                onClick={() => removeFile(index)}
+                              >
+                                <Close />
+                              </IconButton>
+                            </ListItemSecondaryAction>
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Grid>
                   </Grid>
                 </DialogContent>
                 <DialogActions>
                   <Button
-                    onClick={() => setEditMode(false)}
+                    onClick={() => {
+                      setSearchParams({})
+                      setEditMode(false)
+                    }}
                     sx={{
                       color: '#4a4a4a',
                       '&:hover': {

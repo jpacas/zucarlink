@@ -3,7 +3,7 @@ const User = require('../models/User')
 const Pais = require('../models/Pais')
 const Archivo = require('../models/Archivo')
 const Ingenio = require('../models/Ingenio')
-const { uploadToS3 } = require('./serverFunctions')
+const { uploadToS3, deleteFromS3 } = require('./serverFunctions')
 
 ////////////////////////////////////////////////////////////
 // Obtener todas las maquinarias
@@ -103,13 +103,10 @@ const createMaquinaria = async (req, res) => {
       contacto,
       marca,
       modelo,
-      anio,
       pais,
       ingenio,
       usuarioId,
     } = req.body
-
-    console.log(req.body)
 
     // Validar campos requeridos
     if (
@@ -119,7 +116,6 @@ const createMaquinaria = async (req, res) => {
       !contacto ||
       !marca ||
       !modelo ||
-      !anio ||
       !pais ||
       !ingenio
     ) {
@@ -132,7 +128,6 @@ const createMaquinaria = async (req, res) => {
           contacto: !contacto,
           marca: !marca,
           modelo: !modelo,
-          anio: !anio,
           pais: !pais,
           ingenio: !ingenio,
         },
@@ -151,15 +146,10 @@ const createMaquinaria = async (req, res) => {
     if (!paisData) {
       return res.status(400).json({ error: 'El país especificado no existe.' })
     }
-
-    console.log(paisData.id)
-    console.log(ingenioData.id)
-
     // Convertir tipos de datos
     const precioNum = parseFloat(precio)
-    const anioNum = parseInt(anio)
 
-    if (isNaN(precioNum) || isNaN(anioNum) || !paisData) {
+    if (isNaN(precioNum) || !paisData) {
       return res.status(400).json({
         error:
           'Error en el formato de los datos numéricos o país no encontrado.',
@@ -189,7 +179,6 @@ const createMaquinaria = async (req, res) => {
       contacto,
       marca,
       modelo,
-      anio: anioNum,
       paisId: paisData.id,
       ingenioId: ingenioData.id,
       usuarioId,
@@ -259,7 +248,7 @@ const updateMaquinaria = async (req, res) => {
     modelo,
     anio,
     pais,
-    ingenioId,
+    ingenio,
     usuarioId,
   } = req.body
 
@@ -268,6 +257,20 @@ const updateMaquinaria = async (req, res) => {
 
     if (!maquinaria) {
       return res.status(404).json({ error: 'Maquinaria no encontrada.' })
+    }
+
+    const ingenioData = await Ingenio.findOne({ where: { nombre: ingenio } })
+
+    if (!ingenioData) {
+      return res
+        .status(400)
+        .json({ error: 'El ingenio especificado no existe.' })
+    }
+
+    const paisData = await Pais.findOne({ where: { nombre: pais } })
+
+    if (!paisData) {
+      return res.status(400).json({ error: 'El país especificado no existe.' })
     }
 
     // Verificar que el usuario es el propietario
@@ -316,8 +319,8 @@ const updateMaquinaria = async (req, res) => {
       marca,
       modelo,
       anio,
-      paisId: pais.id,
-      ingenioId: ingenioId,
+      paisId: paisData.id,
+      ingenioId: ingenioData.id,
       foto: fotoUrl,
     })
 
@@ -394,7 +397,7 @@ const updateMaquinaria = async (req, res) => {
 
 const deleteMaquinaria = async (req, res) => {
   const { id } = req.params
-  const { usuarioId } = req.body //No estoy recibiendo el usuarioId
+  const { usuarioId } = req.body
 
   try {
     const maquinaria = await Maquinaria.findByPk(id, {
@@ -410,36 +413,10 @@ const deleteMaquinaria = async (req, res) => {
       return res.status(404).json({ error: 'Maquinaria no encontrada.' })
     }
 
-    console.log('Maquinaria encontrada:', {
-      id: maquinaria.id,
-      usuarioId: maquinaria.usuarioId,
-    })
-
-    //Tengo que entender por que no me funciona el usuarioId!!!
-
-    // Verificar que el usuario es el propietario
-    /*    if (maquinaria.usuarioId !== usuarioId) {
-      console.log('No autorizado - IDs no coinciden:', {
-        maquinariaUsuarioId: maquinaria.usuarioId,
-        requestUsuarioId: usuarioId,
-      })
-      return res
-        .status(403)
-        .json({ error: 'No autorizado para eliminar esta maquinaria.' })
-    }
- */
     // Eliminar foto principal si existe
     if (maquinaria.foto) {
       try {
-        const oldKey = maquinaria.foto.split('/').pop()
-        if (process.env.AWS_BUCKET_NAME) {
-          await s3
-            .deleteObject({
-              Bucket: process.env.AWS_BUCKET_NAME,
-              Key: `maquinarias/fotos/${oldKey}`,
-            })
-            .promise()
-        }
+        await deleteFromS3(maquinaria.foto)
       } catch (error) {
         console.error('Error al eliminar foto:', error)
       }
@@ -449,15 +426,7 @@ const deleteMaquinaria = async (req, res) => {
     if (maquinaria.archivos && maquinaria.archivos.length > 0) {
       const deletePromises = maquinaria.archivos.map(async (archivo) => {
         try {
-          const archivoKey = archivo.url.split('/').pop()
-          if (process.env.AWS_BUCKET_NAME) {
-            await s3
-              .deleteObject({
-                Bucket: process.env.AWS_BUCKET_NAME,
-                Key: `maquinarias/archivos/${archivoKey}`,
-              })
-              .promise()
-          }
+          await deleteFromS3(archivo.url)
         } catch (error) {
           console.error('Error al eliminar archivo:', error)
         }

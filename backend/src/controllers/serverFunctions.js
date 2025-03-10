@@ -16,4 +16,12 @@ const uploadToS3 = async (file) => {
   return Location // URL pública del archivo
 }
 
-module.exports = { uploadToS3 }
+const deleteFromS3 = async (url) => {
+  const params = {
+    Bucket: process.env.AWS_BUCKET_NAME,
+    Key: url,
+  }
+  await s3.deleteObject(params).promise()
+}
+
+module.exports = { uploadToS3, deleteFromS3 }

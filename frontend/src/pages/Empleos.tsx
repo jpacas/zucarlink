@@ -624,6 +624,7 @@ const Empleos: React.FC = () => {
                 }}
                 fullWidth
                 startIcon={<Business />}
+                disabled={!user}
                 sx={{
                   mt: 2,
                   py: 1.5,
@@ -635,9 +636,18 @@ const Empleos: React.FC = () => {
                     boxShadow: '0 4px 15px rgba(255,99,71,0.3)',
                   },
                   transition: 'all 0.2s ease',
+                  '&.Mui-disabled': {
+                    bgcolor: '#cccccc',
+                    color: '#666666',
+                    '&:hover': {
+                      bgcolor: '#cccccc',
+                      boxShadow: 'none',
+                      transform: 'none',
+                    },
+                  },
                 }}
               >
-                Publicar Oferta
+                {user ? 'Publicar Oferta' : 'Inicia sesión para publicar'}
               </Button>
             </Paper>
           </Grid>
