@@ -12,11 +12,15 @@ import {
   Checkbox,
   FormGroup,
   Container,
+  CardActions,
+  Button,
 } from '@mui/material'
 import { User, Ingenio, Area, Proveedor } from '../types/interfaces'
 import { useNavigate, useParams } from 'react-router-dom'
 import LanguageIcon from '@mui/icons-material/Language'
 import EmailIcon from '@mui/icons-material/Email'
+import { useChat } from '../context/ChatContext'
+import { useAuth } from '../context/AuthContext'
 
 interface DirectorioProps {}
 
@@ -42,6 +46,8 @@ const Directorio: React.FC<DirectorioProps> = () => {
   const [ingeniosFiltrados, setIngeniosFiltrados] = useState<Ingenio[]>([])
   const [areas, setAreas] = useState<Area[]>([])
   const navigate = useNavigate()
+  const { startChat } = useChat()
+  const { user: currentUser } = useAuth()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -407,6 +413,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
               textAlign: 'center',
               flexGrow: 1,
               p: 4,
+              position: 'relative',
             }}
           >
             {usuario.avatarUrl ? (
@@ -513,6 +520,33 @@ const Directorio: React.FC<DirectorioProps> = () => {
               </>
             )}
           </CardContent>
+          {currentUser && currentUser.id !== usuario.id && (
+            <CardActions sx={{ justifyContent: 'center', pb: 3 }}>
+              <Button
+                variant='contained'
+                onClick={(e) => {
+                  e.stopPropagation()
+                  startChat(usuario.id, `${usuario.nombre} ${usuario.apellido}`)
+                }}
+                sx={{
+                  backgroundColor: '#ff6347',
+                  color: '#fff',
+                  textTransform: 'none',
+                  borderRadius: '50px',
+                  padding: '6px 16px',
+                  boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: '#e5533f',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
+                  },
+                }}
+              >
+                Enviar Mensaje
+              </Button>
+            </CardActions>
+          )}
         </Card>
       )
     } else if (tipo === 'ingenios') {

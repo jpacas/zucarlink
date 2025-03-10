@@ -1,5 +1,8 @@
 import React from 'react'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+import { ChatProvider } from './context/ChatContext'
+import { ChatLayout } from './components/ChatLayout'
 import Register from './pages/Register'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
@@ -27,86 +30,92 @@ import RegistroExitoso from './pages/RegistroExitoso'
 
 const App: React.FC = () => {
   return (
-    <SnackbarProvider maxSnack={3} autoHideDuration={3000} preventDuplicate>
-      <Router>
-        <Navbar />
-        <Routes>
-          <Route
-            path='/'
-            element={
-              <>
-                <CallToAction />
-                <Benefits />
-                <Footer />
-              </>
-            }
-          ></Route>
-          <Route path='/register' element={<Register />} />
-          <Route path='/login' element={<Login />} />
-          <Route path='/contact' element={<Contact />} />
-          <Route path='/services' element={<Servicios />} />
-          <Route path='/privacidad' element={<PolPrivacidad />} />
-          <Route path='/uso' element={<TerminosUso />} />
-          <Route path='/empleos' element={<Empleos />} />
-          <Route path='/empleos/:empleoId' element={<EmpleoDetalle />} />
-          <Route path='/maquinarias' element={<Maquinarias />} />
-          <Route
-            path='/maquinarias/:maquinariaId'
-            element={<MaquinariaDetalle />}
-          />
-          <Route path='/registro-exitoso' element={<RegistroExitoso />} />
-          <Route
-            path='/directorio'
-            element={
-              <ProtectedRoute>
-                <DirectorioSelector />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/directorio/:tipo'
-            element={
-              <ProtectedRoute>
-                <Directorio />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/perfil/:id'
-            element={
-              <ProtectedRoute>
-                <Perfil />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/editar-perfil/:id'
-            element={
-              <ProtectedRoute>
-                <EditarPerfil />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/foro'
-            element={
-              <ProtectedRoute>
-                <Foro />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path='/zucaria'
-            element={
-              <ProtectedRoute>
-                <ZucarIA />
-              </ProtectedRoute>
-            }
-          />
-          <Route path='/foro/post/:postId' element={<PostDetalle />} />
-        </Routes>
-      </Router>
-    </SnackbarProvider>
+    <AuthProvider>
+      <ChatProvider>
+        <SnackbarProvider maxSnack={3} autoHideDuration={3000} preventDuplicate>
+          <Router>
+            <ChatLayout>
+              <Navbar />
+              <Routes>
+                <Route
+                  path='/'
+                  element={
+                    <>
+                      <CallToAction />
+                      <Benefits />
+                      <Footer />
+                    </>
+                  }
+                ></Route>
+                <Route path='/register' element={<Register />} />
+                <Route path='/login' element={<Login />} />
+                <Route path='/contact' element={<Contact />} />
+                <Route path='/services' element={<Servicios />} />
+                <Route path='/privacidad' element={<PolPrivacidad />} />
+                <Route path='/uso' element={<TerminosUso />} />
+                <Route path='/empleos' element={<Empleos />} />
+                <Route path='/empleos/:empleoId' element={<EmpleoDetalle />} />
+                <Route path='/maquinarias' element={<Maquinarias />} />
+                <Route
+                  path='/maquinarias/:maquinariaId'
+                  element={<MaquinariaDetalle />}
+                />
+                <Route path='/registro-exitoso' element={<RegistroExitoso />} />
+                <Route
+                  path='/directorio'
+                  element={
+                    <ProtectedRoute>
+                      <DirectorioSelector />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/directorio/:tipo'
+                  element={
+                    <ProtectedRoute>
+                      <Directorio />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/perfil/:id'
+                  element={
+                    <ProtectedRoute>
+                      <Perfil />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/editar-perfil/:id'
+                  element={
+                    <ProtectedRoute>
+                      <EditarPerfil />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/foro'
+                  element={
+                    <ProtectedRoute>
+                      <Foro />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/zucaria'
+                  element={
+                    <ProtectedRoute>
+                      <ZucarIA />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path='/foro/post/:postId' element={<PostDetalle />} />
+              </Routes>
+            </ChatLayout>
+          </Router>
+        </SnackbarProvider>
+      </ChatProvider>
+    </AuthProvider>
   )
 }
 

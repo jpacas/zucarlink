@@ -1,6 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 const dotenv = require('dotenv')
+const http = require('http')
 const userRoutes = require('./routes/userRoutes')
 const postRoutes = require('./routes/postRoutes')
 const maquinariaRoutes = require('./routes/maquinariaRoutes')
@@ -12,10 +13,14 @@ const helperRoutes = require('./routes/helperRoutes')
 const paymentRoutes = require('./routes/paymentRoutes')
 const sequelize = require('./config/database')
 const setupAssociations = require('./models/associations')
+const { initializeSocket } = require('./socket')
 
 // Configuración General
 dotenv.config()
 const app = express()
+const server = http.createServer(app)
+
+// Configuración de CORS
 app.use(
   cors({
     origin: [
@@ -24,10 +29,23 @@ app.use(
       'http://localhost:5173',
       /\.zucarlink\.com$/,
     ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'my-custom-header'],
   })
 )
+
+// Middleware para parsear JSON
 app.use(express.json())
+
+// Inicializar Socket.io
+const io = initializeSocket(server)
+
+// Middleware para hacer io accesible en las rutas
+app.use((req, res, next) => {
+  req.io = io
+  next()
+})
 
 //Inicializando la base de datos y las asociaciones
 const initializeDatabase = async () => {
@@ -69,6 +87,6 @@ app.get('/', (req, res) => {
 
 // Puerto de Inicio
 const PORT = process.env.PORT || 5001
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`)
 })
