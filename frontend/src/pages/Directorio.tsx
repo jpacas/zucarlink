@@ -64,9 +64,16 @@ const Directorio: React.FC<DirectorioProps> = () => {
         setPaises(paisesRes.data.map((pais) => pais.nombre))
         setAreas(areasRes.data.map((area) => area.nombre))
 
+        const token = localStorage.getItem('token')
+
         if (tipo === 'usuarios') {
           const usuariosRes = await axios.get<User[]>(
-            `${import.meta.env.VITE_API_URL}/users/usuarios`
+            `${import.meta.env.VITE_API_URL}/users/usuarios`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
           )
           setUsuarios(usuariosRes.data)
         } else if (tipo === 'ingenios') {

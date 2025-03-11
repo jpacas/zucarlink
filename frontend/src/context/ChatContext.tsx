@@ -14,6 +14,7 @@ interface Message {
   to: string
   content: string
   timestamp: Date
+  fromUserName?: string
 }
 
 interface ActiveChat {
@@ -46,27 +47,39 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
   const { user } = useAuth()
 
   useEffect(() => {
-    if (user) {
-      const newSocket = io('http://localhost:5001', {
-        auth: { userId: user.id },
-        transports: ['websocket', 'polling'],
-        reconnection: true,
-        reconnectionAttempts: Infinity,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
-        timeout: 45000,
-        withCredentials: true,
-        autoConnect: false,
-        path: '/socket.io/',
-        forceNew: true,
-        closeOnBeforeunload: true,
-      })
+    if (!user) {
+      // Limpiar el estado cuando el usuario hace logout
+      setSocket(null)
+      setMessages([])
+      setActiveChats([])
+      setCurrentChat(null)
+      setIsConnected(false)
+    }
+  }, [user])
 
-      // Limpiar cualquier conexión existente
-      if (socket) {
-        socket.disconnect()
-        socket.close()
-      }
+  useEffect(() => {
+    if (user && !socket) {
+      // Solo crear un nuevo socket si no existe uno
+      const newSocket = io(
+        import.meta.env.VITE_API_URL || 'http://localhost:5001',
+        {
+          auth: {
+            userId: user.id,
+            userName: `${user.nombre} ${user.apellido}`,
+          },
+          transports: ['websocket', 'polling'],
+          reconnection: true,
+          reconnectionAttempts: 5, // Limitar intentos de reconexión
+          reconnectionDelay: 1000,
+          reconnectionDelayMax: 5000,
+          timeout: 45000,
+          withCredentials: true,
+          autoConnect: false,
+          path: '/socket.io/',
+          forceNew: false, // Evitar crear nuevas conexiones innecesariamente
+          closeOnBeforeunload: true,
+        }
+      )
 
       // Configurar eventos antes de conectar
       newSocket.on('connect_error', (error) => {
@@ -113,8 +126,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
         if (pingInterval) {
           clearInterval(pingInterval)
         }
-        // Intentar reconectar si la desconexión no fue intencional
-        if (reason === 'io server disconnect' || reason === 'transport close') {
+        // Solo intentar reconectar si la desconexión no fue intencional y no es por cambio de servidor
+        if (
+          reason !== 'io client disconnect' &&
+          reason !== 'io server disconnect'
+        ) {
           setTimeout(() => {
             if (!newSocket.connected) {
               newSocket.connect()
@@ -173,8 +189,16 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
             if (currentChat?.userId !== message.from) {
               updatedChats[chatIndex].unreadCount += 1
             }
+            return updatedChats
+          } else {
+            // Si no existe un chat activo con este usuario, lo creamos
+            const newChat: ActiveChat = {
+              userId: message.from,
+              userName: message.fromUserName || 'Usuario', // Asumiendo que el servidor envía el nombre del usuario
+              unreadCount: 1,
+            }
+            return [...updatedChats, newChat]
           }
-          return updatedChats
         })
       })
 
@@ -186,8 +210,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return () => {
         if (pingInterval) clearInterval(pingInterval)
-        newSocket.disconnect()
-        newSocket.close()
+        if (newSocket) {
+          newSocket.removeAllListeners() // Remover todos los listeners antes de desconectar
+          newSocket.disconnect()
+          newSocket.close()
+        }
       }
     }
   }, [user])

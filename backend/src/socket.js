@@ -19,11 +19,8 @@ function initializeSocket(server) {
     },
     allowEIO3: true,
     transports: ['websocket', 'polling'],
-    pingTimeout: 60000,
-    pingInterval: 25000,
     path: '/socket.io/',
     serveClient: false,
-    connectTimeout: 45000,
     maxHttpBufferSize: 1e6,
     allowRequest: (req, callback) => {
       callback(null, true)
@@ -40,20 +37,22 @@ function initializeSocket(server) {
   io.use(async (socket, next) => {
     try {
       const userId = socket.handshake.auth.userId
+      const userName = socket.handshake.auth.userName
       if (!userId) {
         return next(new Error('Usuario no autenticado'))
       }
 
-      // Guardar el ID del usuario en el socket
+      // Guardar el ID y nombre del usuario en el socket
       socket.userId = userId
+      socket.userName = userName
 
-      // Limpiar conexiones antiguas del mismo usuario
+      // Si hay una conexión existente, solo actualizar el socket ID
       const oldSocketId = connectedUsers.get(userId)
       if (oldSocketId && oldSocketId !== socket.id) {
-        const oldSocket = io.sockets.sockets.get(oldSocketId)
-        if (oldSocket) {
-          oldSocket.disconnect(true)
-        }
+        console.log(
+          `Usuario ${userId} tiene una conexión existente, actualizando socket ID`
+        )
+        connectedUsers.set(userId, socket.id)
       }
 
       next()
@@ -66,7 +65,6 @@ function initializeSocket(server) {
   // Manejo de conexiones
   io.on('connection', (socket) => {
     try {
-      console.log('Usuario conectado:', socket.userId)
       const userId = socket.userId
 
       // Registrar la nueva conexión
@@ -83,11 +81,6 @@ function initializeSocket(server) {
       // Manejar mensajes privados
       socket.on('private_message', ({ recipientId, content }) => {
         try {
-          console.log('Mensaje recibido:', {
-            from: userId,
-            to: recipientId,
-            content,
-          })
           const recipientSocketId = connectedUsers.get(recipientId)
 
           const messageData = {
@@ -95,6 +88,7 @@ function initializeSocket(server) {
             to: recipientId,
             content,
             timestamp: new Date(),
+            fromUserName: socket.userName,
           }
 
           // Guardar mensaje en el historial
@@ -139,7 +133,6 @@ function initializeSocket(server) {
 
       // Manejar desconexión
       socket.on('disconnect', (reason) => {
-        console.log('Usuario desconectado:', userId, 'Razón:', reason)
         if (connectedUsers.get(userId) === socket.id) {
           connectedUsers.delete(userId)
         }

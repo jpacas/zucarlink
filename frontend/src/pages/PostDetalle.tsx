@@ -91,12 +91,15 @@ const PostDetalle: React.FC = () => {
       setLoading(true)
       setError(null)
 
+      const token = localStorage.getItem('token')
+
       const response = await axios.get(
         `${import.meta.env.VITE_API_URL}/posts/${postId}`,
         {
           timeout: 5000,
           headers: {
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
           params: {
             incrementView: !searchParams.get('edit'), // No incrementar vistas en modo edición
@@ -138,9 +141,15 @@ const PostDetalle: React.FC = () => {
   const handleLikeToggle = async () => {
     if (!user?.id || !post) return
     try {
+      const token = localStorage.getItem('token')
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/posts/${post.id}/like`,
-        { userId: user.id }
+        { userId: user.id },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       )
       setPost((prev) =>
         prev
@@ -159,11 +168,17 @@ const PostDetalle: React.FC = () => {
   const handleCommentSubmit = async () => {
     if (!user?.id || !post || !newComment.trim()) return
     try {
+      const token = localStorage.getItem('token')
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/posts/${post.id}/comment`,
         {
           contenido: newComment,
           usuarioId: user.id,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       )
       setPost((prev) =>
@@ -183,8 +198,14 @@ const PostDetalle: React.FC = () => {
   const handleDeleteComment = async (commentId: number) => {
     if (!post) return
     try {
+      const token = localStorage.getItem('token')
       const response = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/posts/${post.id}/comment/${commentId}`
+        `${import.meta.env.VITE_API_URL}/posts/${post.id}/comment/${commentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       )
       setPost((prev) =>
         prev
@@ -230,12 +251,14 @@ const PostDetalle: React.FC = () => {
         formData.append('archivos', file)
       })
 
+      const token = localStorage.getItem('token')
       const response = await axios.put(
         `${import.meta.env.VITE_API_URL}/posts/${postId}`,
         formData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
           },
         }
       )

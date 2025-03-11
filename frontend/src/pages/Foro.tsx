@@ -75,6 +75,7 @@ const Foro: React.FC = () => {
   const fetchPosts = async () => {
     try {
       setIsLoading(true)
+      const token = localStorage.getItem('token')
       const response = await axios.get(
         `${import.meta.env.VITE_API_URL}/posts`,
         {
@@ -83,6 +84,9 @@ const Foro: React.FC = () => {
             area: areaFiltro,
             autor: autorFiltro.trim(),
             orden: ordenamiento,
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
         }
       )
@@ -129,9 +133,15 @@ const Foro: React.FC = () => {
     }
 
     try {
+      const token = localStorage.getItem('token')
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/posts/${postId}/like`,
-        { userId: user.id }
+        { userId: user.id },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       )
 
       setPosts((prevPosts) =>
@@ -174,9 +184,11 @@ const Foro: React.FC = () => {
         formData.append('archivos', file)
       })
 
+      const token = localStorage.getItem('token')
       await axios.post(`${import.meta.env.VITE_API_URL}/posts`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
         },
       })
 
@@ -212,11 +224,17 @@ const Foro: React.FC = () => {
     }
 
     try {
+      const token = localStorage.getItem('token')
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/posts/${postId}/comment`,
         {
           contenido: newComment[postId], // Asegúrate de que coincida con el backend
           usuarioId: user.id, // Enviar solo usuarioId, el backend se encargará de obtener nombre y apellido
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       )
 
@@ -243,8 +261,14 @@ const Foro: React.FC = () => {
     }
 
     try {
+      const token = localStorage.getItem('token')
       const response = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/posts/${postId}/comment/${commentId}`
+        `${import.meta.env.VITE_API_URL}/posts/${postId}/comment/${commentId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       )
 
       if (!response.data || !response.data.comments) {
@@ -303,10 +327,14 @@ const Foro: React.FC = () => {
     if (!postToDelete) return
 
     try {
+      const token = localStorage.getItem('token')
       await axios.delete(
         `${import.meta.env.VITE_API_URL}/posts/${postToDelete}`,
         {
           data: { usuarioId: user?.id },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       )
 

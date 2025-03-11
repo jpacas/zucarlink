@@ -14,6 +14,7 @@ const paymentRoutes = require('./routes/paymentRoutes')
 const sequelize = require('./config/database')
 const setupAssociations = require('./models/associations')
 const { initializeSocket } = require('./socket')
+const authMiddleware = require('./middleware/authMiddleware')
 
 // Configuración General
 dotenv.config()
@@ -71,15 +72,15 @@ const initializeDatabase = async () => {
 initializeDatabase()
 
 // Rutas
-app.use('/api/users', userRoutes)
-app.use('/api/posts', postRoutes)
-app.use('/api/maquinaria', maquinariaRoutes)
-app.use('/api/empleos', empleoRoutes)
-app.use('/api/contact', contactRoutes)
-app.use('/api/conversations', zucariaRoutes)
-app.use('/api/experiencias', experienciaRoutes)
-app.use('/api/helper', helperRoutes)
-app.use('/api/payments', paymentRoutes)
+app.use('/users', userRoutes)
+app.use('/posts', authMiddleware, postRoutes)
+app.use('/maquinaria', maquinariaRoutes)
+app.use('/empleos', empleoRoutes)
+app.use('/contact', contactRoutes)
+app.use('/conversations', authMiddleware, zucariaRoutes)
+app.use('/experiencias', authMiddleware, experienciaRoutes)
+app.use('/helper', helperRoutes)
+app.use('/payments', paymentRoutes)
 
 app.get('/', (req, res) => {
   res.send('API de Zucarlink')

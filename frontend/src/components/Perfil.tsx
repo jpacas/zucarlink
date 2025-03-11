@@ -95,13 +95,24 @@ const Perfil: React.FC = () => {
     const fetchUsuarioYExperiencias = async () => {
       setLoading(true)
       try {
+        const token = localStorage.getItem('token')
         const userResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL}/users/usuarios/${id}`
+          `${import.meta.env.VITE_API_URL}/users/usuarios/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         )
         setUsuario(userResponse.data)
 
         const expResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL}/experiencias/${id}`
+          `${import.meta.env.VITE_API_URL}/experiencias/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         )
         setExperiencias(expResponse.data.length ? expResponse.data : [])
       } catch (expError: any) {
@@ -158,22 +169,38 @@ const Perfil: React.FC = () => {
       return
     }
     try {
+      const token = localStorage.getItem('token')
       if (experienceData.id) {
         await axios.put(
           `${import.meta.env.VITE_API_URL}/experiencias/${experienceData.id}`,
-          { ...experienceData, usuarioId: user.id }
+          { ...experienceData, usuarioId: user.id },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         )
       } else {
         const { id, ...dataWithoutId } = experienceData
         await axios.post(
           `${import.meta.env.VITE_API_URL}/experiencias/${user.id}`,
-          dataWithoutId
+          dataWithoutId,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         )
       }
 
       // 🔄 Vuelve a cargar la lista completa de experiencias desde la API
       const expResponse = await axios.get(
-        `${import.meta.env.VITE_API_URL}/experiencias/${user.id}`
+        `${import.meta.env.VITE_API_URL}/experiencias/${user.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       )
       setExperiencias(expResponse.data)
 
