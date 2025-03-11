@@ -97,6 +97,7 @@ export interface Ingenio {
   correo?: string
   pais: string
   logo?: string
+  usuariosCount: number
 }
 
 export interface Empleo {

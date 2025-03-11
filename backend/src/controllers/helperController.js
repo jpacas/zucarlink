@@ -3,6 +3,7 @@ const Area = require('../models/Area')
 const Ingenio = require('../models/Ingenio')
 const Proveedor = require('../models/Proveedor')
 const { uploadToS3 } = require('./serverFunctions')
+const sequelize = require('sequelize')
 
 ////////////////////////////////////////////////////////////
 ///// Enviar listado de paises disponibles ////////////////
@@ -86,7 +87,15 @@ const getProveedores = async (req, res) => {
 const getIngenios = async (req, res) => {
   try {
     const response = await Ingenio.findAll({
-      attributes: ['nombre'],
+      attributes: [
+        'nombre',
+        [
+          sequelize.literal(
+            '(SELECT COUNT(*) FROM Users WHERE Users.ingenioId = Ingenio.id)'
+          ),
+          'usuariosCount',
+        ],
+      ],
       include: [
         {
           model: Pais,
@@ -103,6 +112,7 @@ const getIngenios = async (req, res) => {
     const ingenios = response.map((ingenio) => ({
       nombre: ingenio.nombre,
       pais: ingenio.pais.nombre,
+      usuariosCount: ingenio.getDataValue('usuariosCount'),
     }))
 
     res.status(200).json(ingenios)

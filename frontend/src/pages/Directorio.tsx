@@ -19,6 +19,7 @@ import { User, Ingenio, Area, Proveedor } from '../types/interfaces'
 import { useNavigate, useParams } from 'react-router-dom'
 import LanguageIcon from '@mui/icons-material/Language'
 import EmailIcon from '@mui/icons-material/Email'
+import PeopleIcon from '@mui/icons-material/People'
 import { useChat } from '../context/ChatContext'
 import { useAuth } from '../context/AuthContext'
 
@@ -42,7 +43,6 @@ const Directorio: React.FC<DirectorioProps> = () => {
   const [error, setError] = useState<string | null>(null)
   const [paises, setPaises] = useState<string[]>([])
   const [ingeniosList, setIngeniosList] = useState<Ingenio[]>([])
-  //const [proveedoresList, setProveedoresList] = useState<Proveedor[]>([])
   const [ingeniosFiltrados, setIngeniosFiltrados] = useState<Ingenio[]>([])
   const [areas, setAreas] = useState<Area[]>([])
   const navigate = useNavigate()
@@ -67,21 +67,29 @@ const Directorio: React.FC<DirectorioProps> = () => {
         const token = localStorage.getItem('token')
 
         if (tipo === 'usuarios') {
-          const usuariosRes = await axios.get<User[]>(
-            `${import.meta.env.VITE_API_URL}/users/usuarios`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          )
+          const [usuariosRes, ingeniosRes] = await Promise.all([
+            axios.get<User[]>(
+              `${import.meta.env.VITE_API_URL}/users/usuarios`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            ),
+            axios.get<Ingenio[]>(
+              `${import.meta.env.VITE_API_URL}/helper/ingenios`
+            ),
+          ])
           setUsuarios(usuariosRes.data)
+          setIngeniosList(ingeniosRes.data)
+          setIngeniosFiltrados(ingeniosRes.data)
         } else if (tipo === 'ingenios') {
           const ingeniosRes = await axios.get<Ingenio[]>(
             `${import.meta.env.VITE_API_URL}/helper/ingenios`
           )
           setIngenios(ingeniosRes.data)
           setIngeniosList(ingeniosRes.data)
+          setIngeniosFiltrados(ingeniosRes.data)
         } else if (tipo === 'proveedores') {
           const proveedoresRes = await axios.get<Proveedor[]>(
             `${import.meta.env.VITE_API_URL}/helper/proveedores`
@@ -101,13 +109,15 @@ const Directorio: React.FC<DirectorioProps> = () => {
   }, [tipo])
 
   useEffect(() => {
-    if (filtros.pais && tipo === 'ingenios') {
-      const ingeniosPorPais = ingeniosList.filter(
-        (ingenio) => ingenio.pais.toLowerCase() === filtros.pais.toLowerCase()
-      )
-      setIngeniosFiltrados(ingeniosPorPais)
-    } else {
-      setIngeniosFiltrados(ingeniosList)
+    if (tipo === 'usuarios') {
+      if (filtros.pais) {
+        const ingeniosPorPais = ingeniosList.filter(
+          (ingenio) => ingenio.pais.toLowerCase() === filtros.pais.toLowerCase()
+        )
+        setIngeniosFiltrados(ingeniosPorPais)
+      } else {
+        setIngeniosFiltrados(ingeniosList)
+      }
     }
   }, [filtros.pais, ingeniosList, tipo])
 
@@ -283,12 +293,6 @@ const Directorio: React.FC<DirectorioProps> = () => {
                   label='Ingenio'
                   margin='normal'
                   fullWidth
-                  disabled={ingeniosFiltrados.length === 0}
-                  helperText={
-                    filtros.pais && ingeniosFiltrados.length === 0
-                      ? 'No hay ingenios disponibles para el país seleccionado'
-                      : ''
-                  }
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       '&:hover fieldset': {
@@ -604,7 +608,20 @@ const Directorio: React.FC<DirectorioProps> = () => {
                 gap: 0.5,
               }}
             >
-              <strong>País:</strong> {ingenio.pais}
+              {ingenio.pais}
+            </Typography>
+            <Typography
+              variant='body2'
+              sx={{
+                mb: 2,
+                color: '#4a4a4a',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <PeopleIcon sx={{ color: '#ff6347' }} />
+              {ingenio.usuariosCount}
             </Typography>
             {ingenio.webpage && (
               <Box

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect } from 'react'
 import { Box } from '@mui/material'
 import { ChatWindow } from './ChatWindow'
 import { useChat } from '../context/ChatContext'
@@ -8,8 +8,21 @@ interface ChatLayoutProps {
 }
 
 export const ChatLayout: React.FC<ChatLayoutProps> = ({ children }) => {
-  const [isMinimized, setIsMinimized] = useState(false)
-  const { activeChats, currentChat, closeChat } = useChat()
+  const {
+    activeChats,
+    currentChat,
+    closeChat,
+    hasUnreadMessages,
+    isMinimized,
+    setIsMinimized,
+  } = useChat()
+
+  // Maximizar el chat cuando hay mensajes no leídos
+  useEffect(() => {
+    if (hasUnreadMessages) {
+      setIsMinimized(false)
+    }
+  }, [hasUnreadMessages, setIsMinimized])
 
   const handleMinimize = () => {
     setIsMinimized(!isMinimized)

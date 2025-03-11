@@ -72,6 +72,7 @@ const EditarPerfil: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const token = localStorage.getItem('token')
         const [
           { paises },
           { areas },
@@ -84,7 +85,8 @@ const EditarPerfil: React.FC = () => {
           fetchIngenios(),
           fetchProveedores(),
           axios.get(
-            `${import.meta.env.VITE_API_URL}/users/usuarios/${user?.id}`
+            `${import.meta.env.VITE_API_URL}/users/usuarios/${user?.id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
           ),
         ])
 
@@ -149,6 +151,8 @@ const EditarPerfil: React.FC = () => {
     if (!validarFormulario()) return
 
     try {
+      const token = localStorage.getItem('token')
+
       const formDataToSend = new FormData()
       formDataToSend.append('nombre', formData.nombre)
       formDataToSend.append('apellido', formData.apellido)
@@ -163,7 +167,12 @@ const EditarPerfil: React.FC = () => {
       const response = await axios.put(
         `${import.meta.env.VITE_API_URL}/users/${user?.id}`,
         formDataToSend,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
+        }
       )
 
       const userActualizado = response.data.usuario

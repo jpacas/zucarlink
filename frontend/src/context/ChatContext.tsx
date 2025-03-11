@@ -23,6 +23,11 @@ interface ActiveChat {
   unreadCount: number
 }
 
+interface UnreadConversation {
+  conversationId: string
+  messages: Message[]
+}
+
 interface ChatContextType {
   socket: Socket | null
   messages: Message[]
@@ -32,6 +37,9 @@ interface ChatContextType {
   switchChat: (userId: string) => void
   startChat: (userId: string, userName: string) => void
   closeChat: (userId: string) => void
+  hasUnreadMessages: boolean
+  isMinimized: boolean
+  setIsMinimized: (value: boolean) => void
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined)
@@ -44,6 +52,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
   const [activeChats, setActiveChats] = useState<ActiveChat[]>([])
   const [currentChat, setCurrentChat] = useState<ActiveChat | null>(null)
   const [isConnected, setIsConnected] = useState(false)
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false)
+  const [isMinimized, setIsMinimized] = useState(false)
   const { user } = useAuth()
 
   useEffect(() => {
@@ -54,6 +64,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
       setActiveChats([])
       setCurrentChat(null)
       setIsConnected(false)
+      setHasUnreadMessages(false)
     }
   }, [user])
 
@@ -206,6 +217,45 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
         setMessages(history)
       })
 
+      newSocket.on(
+        'unread_messages',
+        (unreadConversations: UnreadConversation[]) => {
+          unreadConversations.forEach((conv) => {
+            const lastMessage = conv.messages[conv.messages.length - 1]
+            if (lastMessage && lastMessage.fromUserName) {
+              const sender: ActiveChat = {
+                userId: lastMessage.from,
+                userName: lastMessage.fromUserName,
+                unreadCount: conv.messages.length,
+              }
+
+              setActiveChats((prev) => {
+                const existingChat = prev.find(
+                  (chat) => chat.userId === sender.userId
+                )
+                if (existingChat) {
+                  return prev.map((chat) =>
+                    chat.userId === sender.userId
+                      ? {
+                          ...chat,
+                          unreadCount: chat.unreadCount + conv.messages.length,
+                        }
+                      : chat
+                  )
+                }
+                return [...prev, sender]
+              })
+
+              setMessages((prev) => [...prev, ...conv.messages])
+              setHasUnreadMessages(true)
+
+              // Maximizar el chat si hay mensajes no leídos
+              setCurrentChat(sender)
+            }
+          })
+        }
+      )
+
       setSocket(newSocket)
 
       return () => {
@@ -260,12 +310,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       setActiveChats((prev) => [...prev, newChat])
       setCurrentChat(newChat)
+      setIsMinimized(false) // Maximizar el chat cuando se inicia uno nuevo
       // Solicitar historial de mensajes cuando se inicia un nuevo chat
       if (socket && socket.connected) {
         socket.emit('get_message_history', { otherUserId: userId })
       }
     } else {
       setCurrentChat(existingChat)
+      setIsMinimized(false) // Maximizar el chat cuando se cambia a uno existente
     }
   }
 
@@ -301,6 +353,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
         switchChat,
         startChat,
         closeChat,
+        hasUnreadMessages,
+        isMinimized,
+        setIsMinimized,
       }}
     >
       {children}

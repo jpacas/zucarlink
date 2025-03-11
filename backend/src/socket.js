@@ -1,8 +1,73 @@
 const { Server } = require('socket.io')
+const { Message, Conversation, User } = require('./models')
+const { Op } = require('sequelize')
 
-// Almacenamiento en memoria para los mensajes y usuarios conectados
+// Almacenamiento en memoria para usuarios conectados
 const connectedUsers = new Map()
-const messageHistory = new Map()
+
+async function getUnreadMessages(userId) {
+  try {
+    const conversations = await Conversation.findAll({
+      where: {
+        [Op.or]: [{ user1Id: userId }, { user2Id: userId }],
+        isActive: true,
+      },
+      include: [
+        {
+          model: Message,
+          as: 'messages',
+          where: {
+            senderId: { [Op.ne]: userId },
+            isRead: false,
+          },
+          include: [
+            {
+              model: User,
+              as: 'sender',
+              attributes: ['id', 'nombre', 'apellido'],
+            },
+          ],
+        },
+      ],
+    })
+
+    return conversations.map((conv) => ({
+      conversationId: conv.id,
+      messages: conv.messages.map((msg) => ({
+        id: msg.id,
+        from: msg.senderId,
+        to: userId,
+        content: msg.content,
+        timestamp: msg.createdAt,
+        fromUserName: `${msg.sender.nombre} ${msg.sender.apellido}`,
+      })),
+    }))
+  } catch (error) {
+    console.error('Error al obtener mensajes no leídos:', error)
+    return []
+  }
+}
+
+async function getOrCreateConversation(user1Id, user2Id) {
+  let conversation = await Conversation.findOne({
+    where: {
+      [Op.or]: [
+        { user1Id, user2Id },
+        { user1Id: user2Id, user2Id: user1Id },
+      ],
+      isActive: true,
+    },
+  })
+
+  if (!conversation) {
+    conversation = await Conversation.create({
+      user1Id,
+      user2Id,
+    })
+  }
+
+  return conversation
+}
 
 function initializeSocket(server) {
   const io = new Server(server, {
@@ -42,16 +107,11 @@ function initializeSocket(server) {
         return next(new Error('Usuario no autenticado'))
       }
 
-      // Guardar el ID y nombre del usuario en el socket
       socket.userId = userId
       socket.userName = userName
 
-      // Si hay una conexión existente, solo actualizar el socket ID
       const oldSocketId = connectedUsers.get(userId)
       if (oldSocketId && oldSocketId !== socket.id) {
-        console.log(
-          `Usuario ${userId} tiene una conexión existente, actualizando socket ID`
-        )
         connectedUsers.set(userId, socket.id)
       }
 
@@ -62,49 +122,54 @@ function initializeSocket(server) {
     }
   })
 
-  // Manejo de conexiones
   io.on('connection', (socket) => {
     try {
       const userId = socket.userId
 
-      // Registrar la nueva conexión
       connectedUsers.set(userId, socket.id)
 
-      // Inicializar el historial de mensajes para el usuario si no existe
-      if (!messageHistory.has(userId)) {
-        messageHistory.set(userId, [])
-      }
+      // Enviar mensajes no leídos al conectarse
+      getUnreadMessages(userId).then((unreadConversations) => {
+        if (unreadConversations.length > 0) {
+          socket.emit('unread_messages', unreadConversations)
+        }
+      })
 
-      // Informar al cliente que la conexión fue exitosa
       socket.emit('connect_confirmed', { userId: socket.userId })
 
-      // Manejar mensajes privados
-      socket.on('private_message', ({ recipientId, content }) => {
+      socket.on('private_message', async ({ recipientId, content }) => {
         try {
-          const recipientSocketId = connectedUsers.get(recipientId)
+          const conversation = await getOrCreateConversation(
+            userId,
+            recipientId
+          )
+
+          const message = await Message.create({
+            conversationId: conversation.id,
+            senderId: userId,
+            content,
+            isRead: false,
+          })
+
+          // Actualizar lastMessageAt de la conversación
+          await conversation.update({
+            lastMessageAt: new Date(),
+          })
 
           const messageData = {
+            id: message.id,
             from: userId,
             to: recipientId,
             content,
-            timestamp: new Date(),
+            timestamp: message.createdAt,
             fromUserName: socket.userName,
           }
 
-          // Guardar mensaje en el historial
-          const senderHistory = messageHistory.get(userId) || []
-          const recipientHistory = messageHistory.get(recipientId) || []
-          senderHistory.push(messageData)
-          recipientHistory.push(messageData)
-          messageHistory.set(userId, senderHistory)
-          messageHistory.set(recipientId, recipientHistory)
-
-          // Enviar mensaje al destinatario si está conectado
+          const recipientSocketId = connectedUsers.get(recipientId)
           if (recipientSocketId) {
             io.to(recipientSocketId).emit('private_message', messageData)
           }
 
-          // Confirmar envío al remitente
           socket.emit('message_sent', messageData)
         } catch (error) {
           console.error('Error al enviar mensaje privado:', error)
@@ -112,33 +177,63 @@ function initializeSocket(server) {
         }
       })
 
-      // Obtener historial de mensajes
-      socket.on('get_message_history', ({ otherUserId }) => {
+      socket.on('get_message_history', async ({ otherUserId }) => {
         try {
-          const userHistory = messageHistory.get(userId) || []
-          const relevantMessages = userHistory.filter(
-            (msg) => msg.from === otherUserId || msg.to === otherUserId
+          const conversation = await getOrCreateConversation(
+            userId,
+            otherUserId
           )
-          socket.emit('message_history', relevantMessages)
+
+          const messages = await Message.findAll({
+            where: { conversationId: conversation.id },
+            order: [['createdAt', 'ASC']],
+            include: [
+              {
+                model: User,
+                as: 'sender',
+                attributes: ['nombre', 'apellido'],
+              },
+            ],
+          })
+
+          const formattedMessages = messages.map((msg) => ({
+            id: msg.id,
+            from: msg.senderId,
+            to: msg.senderId === userId ? otherUserId : userId,
+            content: msg.content,
+            timestamp: msg.createdAt,
+            fromUserName: `${msg.sender.nombre} ${msg.sender.apellido}`,
+          }))
+
+          socket.emit('message_history', formattedMessages)
+
+          // Marcar mensajes como leídos
+          await Message.update(
+            { isRead: true },
+            {
+              where: {
+                conversationId: conversation.id,
+                senderId: otherUserId,
+                isRead: false,
+              },
+            }
+          )
         } catch (error) {
           console.error('Error al obtener historial:', error)
           socket.emit('history_error', { error: 'Error al obtener historial' })
         }
       })
 
-      // Manejar ping
       socket.on('ping', () => {
         socket.emit('pong')
       })
 
-      // Manejar desconexión
       socket.on('disconnect', (reason) => {
         if (connectedUsers.get(userId) === socket.id) {
           connectedUsers.delete(userId)
         }
       })
 
-      // Manejar errores
       socket.on('error', (error) => {
         console.error('Error de Socket.IO:', error)
       })
@@ -148,7 +243,6 @@ function initializeSocket(server) {
     }
   })
 
-  // Manejar errores del servidor
   io.engine.on('connection_error', (err) => {
     console.error('Error de conexión:', err)
   })

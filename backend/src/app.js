@@ -60,7 +60,7 @@ const initializeDatabase = async () => {
     console.log('Asociaciones configuradas exitosamente')
 
     // Realizamos la sincronización
-    // await sequelize.sync({ force: true })
+    //await sequelize.sync({ alter: true })
     //console.log('Base de datos sincronizada exitosamente')
   } catch (error) {
     console.error('Error al inicializar la base de datos:', error)

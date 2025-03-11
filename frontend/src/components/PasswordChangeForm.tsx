@@ -28,9 +28,15 @@ const PasswordChangeForm = () => {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      const token = localStorage.getItem('token')
       await axios.put(
         `${import.meta.env.VITE_API_URL}/users/${user?.id}/password`,
-        passwordData
+        passwordData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       )
       setMessage({
         type: 'success',
