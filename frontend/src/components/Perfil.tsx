@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axiosInstance from '../utils/axiosConfig'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useAuth } from '../context/AuthContext'
@@ -95,25 +95,12 @@ const Perfil: React.FC = () => {
     const fetchUsuarioYExperiencias = async () => {
       setLoading(true)
       try {
-        const token = localStorage.getItem('token')
-        const userResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL}/users/usuarios/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
-        setUsuario(userResponse.data)
+        const [userResponse, expResponse] = await Promise.all([
+          axiosInstance.get(`/users/usuarios/${id}`),
+          axiosInstance.get(`/experiencias/${id}`),
+        ])
 
-        const expResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL}/experiencias/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
+        setUsuario(userResponse.data)
         setExperiencias(expResponse.data.length ? expResponse.data : [])
       } catch (expError: any) {
         if (expError.response && expError.response.status === 404) {
@@ -169,39 +156,18 @@ const Perfil: React.FC = () => {
       return
     }
     try {
-      const token = localStorage.getItem('token')
       if (experienceData.id) {
-        await axios.put(
-          `${import.meta.env.VITE_API_URL}/experiencias/${experienceData.id}`,
-          { ...experienceData, usuarioId: user.id },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
+        await axiosInstance.put(`/experiencias/${experienceData.id}`, {
+          ...experienceData,
+          usuarioId: user.id,
+        })
       } else {
         const { id, ...dataWithoutId } = experienceData
-        await axios.post(
-          `${import.meta.env.VITE_API_URL}/experiencias/${user.id}`,
-          dataWithoutId,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
+        await axiosInstance.post(`/experiencias/${user.id}`, dataWithoutId)
       }
 
       // 🔄 Vuelve a cargar la lista completa de experiencias desde la API
-      const expResponse = await axios.get(
-        `${import.meta.env.VITE_API_URL}/experiencias/${user.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
+      const expResponse = await axiosInstance.get(`/experiencias/${user.id}`)
       setExperiencias(expResponse.data)
 
       handleCloseModal()
@@ -243,12 +209,9 @@ const Perfil: React.FC = () => {
   const handleDeleteExperience = async () => {
     if (!experienceData.id) return
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_API_URL}/experiencias/${experienceData.id}`,
-        {
-          data: { userId: user?.id },
-        }
-      )
+      await axiosInstance.delete(`/experiencias/${experienceData.id}`, {
+        data: { userId: user?.id },
+      })
       setExperiencias(
         experiencias.filter((exp) => exp.id !== experienceData.id)
       )

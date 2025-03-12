@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import axiosInstance from '../utils/axiosConfig'
 import {
   Box,
   Grid,
@@ -22,6 +22,7 @@ import EmailIcon from '@mui/icons-material/Email'
 import PeopleIcon from '@mui/icons-material/People'
 import { useChat } from '../context/ChatContext'
 import { useAuth } from '../context/AuthContext'
+import { isAxiosError } from 'axios'
 
 interface DirectorioProps {}
 
@@ -53,51 +54,32 @@ const Directorio: React.FC<DirectorioProps> = () => {
     const fetchData = async () => {
       try {
         const [paisesRes, areasRes] = await Promise.all([
-          axios.get<{ nombre: string }[]>(
-            `${import.meta.env.VITE_API_URL}/helper/paises`
-          ),
-          axios.get<{ nombre: string }[]>(
-            `${import.meta.env.VITE_API_URL}/helper/areas`
-          ),
+          axiosInstance.get<{ nombre: string }[]>('/helper/paises'),
+          axiosInstance.get<{ nombre: string }[]>('/helper/areas'),
         ])
 
         setPaises(paisesRes.data.map((pais) => pais.nombre))
         setAreas(areasRes.data.map((area) => area.nombre))
 
-        const token = localStorage.getItem('token')
-
         if (tipo === 'usuarios') {
           const [usuariosRes, ingeniosRes] = await Promise.all([
-            axios.get<User[]>(
-              `${import.meta.env.VITE_API_URL}/users/usuarios`,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            ),
-            axios.get<Ingenio[]>(
-              `${import.meta.env.VITE_API_URL}/helper/ingenios`
-            ),
+            axiosInstance.get('/users/usuarios'),
+            axiosInstance.get('/helper/ingenios'),
           ])
           setUsuarios(usuariosRes.data)
           setIngeniosList(ingeniosRes.data)
           setIngeniosFiltrados(ingeniosRes.data)
         } else if (tipo === 'ingenios') {
-          const ingeniosRes = await axios.get<Ingenio[]>(
-            `${import.meta.env.VITE_API_URL}/helper/ingenios`
-          )
+          const ingeniosRes = await axiosInstance.get('/helper/ingenios')
           setIngenios(ingeniosRes.data)
           setIngeniosList(ingeniosRes.data)
           setIngeniosFiltrados(ingeniosRes.data)
         } else if (tipo === 'proveedores') {
-          const proveedoresRes = await axios.get<Proveedor[]>(
-            `${import.meta.env.VITE_API_URL}/helper/proveedores`
-          )
+          const proveedoresRes = await axiosInstance.get('/helper/proveedores')
           setProveedores(proveedoresRes.data)
         }
       } catch (err) {
-        if (axios.isAxiosError(err)) {
+        if (isAxiosError(err)) {
           setError(err.response?.data?.message || 'Error al cargar los datos.')
         } else {
           setError('Error desconocido.')

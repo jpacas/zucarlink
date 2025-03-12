@@ -31,10 +31,10 @@ import RegistroExitoso from './pages/RegistroExitoso'
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <ChatProvider>
-        <SnackbarProvider maxSnack={3} autoHideDuration={3000} preventDuplicate>
-          <Router>
+    <SnackbarProvider maxSnack={3} autoHideDuration={3000} preventDuplicate>
+      <Router>
+        <AuthProvider>
+          <ChatProvider>
             <ChatLayout>
               <Navbar />
               <Routes>
@@ -113,10 +113,10 @@ const App: React.FC = () => {
                 <Route path='/foro/post/:postId' element={<PostDetalle />} />
               </Routes>
             </ChatLayout>
-          </Router>
-        </SnackbarProvider>
-      </ChatProvider>
-    </AuthProvider>
+          </ChatProvider>
+        </AuthProvider>
+      </Router>
+    </SnackbarProvider>
   )
 }
 
