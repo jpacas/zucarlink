@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axiosInstance from '../utils/axiosConfig'
 import { useAuth } from '../context/AuthContext'
 import {
   Container,
@@ -47,13 +47,10 @@ const Login: React.FC = () => {
     }
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/users/login`,
-        {
-          email,
-          password,
-        }
-      )
+      const response = await axiosInstance.post('/users/login', {
+        email,
+        password,
+      })
 
       const { token, user } = response.data
       const payload = JSON.parse(atob(token.split('.')[1]))

@@ -41,6 +41,7 @@ export interface Archivo {
   nombre: string
   url: string
   tipo: string
+  createdAt: string
 }
 
 export interface Post {
@@ -90,10 +91,13 @@ export interface AuthContextType {
 }
 
 export interface Ingenio {
+  id: number
   nombre: string
-  pais: string
-  correo?: string
   webpage?: string
+  correo?: string
+  pais: string
+  logo?: string
+  usuariosCount: number
 }
 
 export interface Empleo {
@@ -106,7 +110,7 @@ export interface Empleo {
   vigente: boolean
   createdAt: string
   updatedAt: string
-  usuarioId: number
+  usuarioId: string
   paisId: number
   ingenioId: number
   areaId: number
@@ -133,6 +137,7 @@ export interface Maquinaria {
   pais: { id: number; nombre: string }
   usuario?: User
   archivos?: Archivo[]
+  ingenio?: { id: number; nombre: string; logo?: string }
   createdAt: Date
   updatedAt: Date
 }

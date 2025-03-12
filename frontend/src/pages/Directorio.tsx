@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import axiosInstance from '../utils/axiosConfig'
 import {
   Box,
   Grid,
@@ -12,11 +12,17 @@ import {
   Checkbox,
   FormGroup,
   Container,
+  CardActions,
+  Button,
 } from '@mui/material'
 import { User, Ingenio, Area, Proveedor } from '../types/interfaces'
 import { useNavigate, useParams } from 'react-router-dom'
 import LanguageIcon from '@mui/icons-material/Language'
 import EmailIcon from '@mui/icons-material/Email'
+import PeopleIcon from '@mui/icons-material/People'
+import { useChat } from '../context/ChatContext'
+import { useAuth } from '../context/AuthContext'
+import { isAxiosError } from 'axios'
 
 interface DirectorioProps {}
 
@@ -38,46 +44,42 @@ const Directorio: React.FC<DirectorioProps> = () => {
   const [error, setError] = useState<string | null>(null)
   const [paises, setPaises] = useState<string[]>([])
   const [ingeniosList, setIngeniosList] = useState<Ingenio[]>([])
-  //const [proveedoresList, setProveedoresList] = useState<Proveedor[]>([])
   const [ingeniosFiltrados, setIngeniosFiltrados] = useState<Ingenio[]>([])
   const [areas, setAreas] = useState<Area[]>([])
   const navigate = useNavigate()
+  const { startChat } = useChat()
+  const { user: currentUser } = useAuth()
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [paisesRes, areasRes] = await Promise.all([
-          axios.get<{ nombre: string }[]>(
-            `${import.meta.env.VITE_API_URL}/helper/paises`
-          ),
-          axios.get<{ nombre: string }[]>(
-            `${import.meta.env.VITE_API_URL}/helper/areas`
-          ),
+          axiosInstance.get<{ nombre: string }[]>('/helper/paises'),
+          axiosInstance.get<{ nombre: string }[]>('/helper/areas'),
         ])
 
         setPaises(paisesRes.data.map((pais) => pais.nombre))
         setAreas(areasRes.data.map((area) => area.nombre))
 
         if (tipo === 'usuarios') {
-          const usuariosRes = await axios.get<User[]>(
-            `${import.meta.env.VITE_API_URL}/users/usuarios`
-          )
+          const [usuariosRes, ingeniosRes] = await Promise.all([
+            axiosInstance.get('/users/usuarios'),
+            axiosInstance.get('/helper/ingenios'),
+          ])
           setUsuarios(usuariosRes.data)
+          setIngeniosList(ingeniosRes.data)
+          setIngeniosFiltrados(ingeniosRes.data)
         } else if (tipo === 'ingenios') {
-          const ingeniosRes = await axios.get<Ingenio[]>(
-            `${import.meta.env.VITE_API_URL}/helper/ingenios`
-          )
+          const ingeniosRes = await axiosInstance.get('/helper/ingenios')
           setIngenios(ingeniosRes.data)
           setIngeniosList(ingeniosRes.data)
+          setIngeniosFiltrados(ingeniosRes.data)
         } else if (tipo === 'proveedores') {
-          const proveedoresRes = await axios.get<Proveedor[]>(
-            `${import.meta.env.VITE_API_URL}/helper/proveedores`
-          )
+          const proveedoresRes = await axiosInstance.get('/helper/proveedores')
           setProveedores(proveedoresRes.data)
-          //setProveedoresList(proveedoresRes.data)
         }
       } catch (err) {
-        if (axios.isAxiosError(err)) {
+        if (isAxiosError(err)) {
           setError(err.response?.data?.message || 'Error al cargar los datos.')
         } else {
           setError('Error desconocido.')
@@ -89,13 +91,15 @@ const Directorio: React.FC<DirectorioProps> = () => {
   }, [tipo])
 
   useEffect(() => {
-    if (filtros.pais && tipo === 'ingenios') {
-      const ingeniosPorPais = ingeniosList.filter(
-        (ingenio) => ingenio.pais.toLowerCase() === filtros.pais.toLowerCase()
-      )
-      setIngeniosFiltrados(ingeniosPorPais)
-    } else {
-      setIngeniosFiltrados(ingeniosList)
+    if (tipo === 'usuarios') {
+      if (filtros.pais) {
+        const ingeniosPorPais = ingeniosList.filter(
+          (ingenio) => ingenio.pais.toLowerCase() === filtros.pais.toLowerCase()
+        )
+        setIngeniosFiltrados(ingeniosPorPais)
+      } else {
+        setIngeniosFiltrados(ingeniosList)
+      }
     }
   }, [filtros.pais, ingeniosList, tipo])
 
@@ -271,12 +275,6 @@ const Directorio: React.FC<DirectorioProps> = () => {
                   label='Ingenio'
                   margin='normal'
                   fullWidth
-                  disabled={ingeniosFiltrados.length === 0}
-                  helperText={
-                    filtros.pais && ingeniosFiltrados.length === 0
-                      ? 'No hay ingenios disponibles para el país seleccionado'
-                      : ''
-                  }
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       '&:hover fieldset': {
@@ -408,6 +406,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
               textAlign: 'center',
               flexGrow: 1,
               p: 4,
+              position: 'relative',
             }}
           >
             {usuario.avatarUrl ? (
@@ -514,6 +513,33 @@ const Directorio: React.FC<DirectorioProps> = () => {
               </>
             )}
           </CardContent>
+          {currentUser && currentUser.id !== usuario.id && (
+            <CardActions sx={{ justifyContent: 'center', pb: 3 }}>
+              <Button
+                variant='contained'
+                onClick={(e) => {
+                  e.stopPropagation()
+                  startChat(usuario.id, `${usuario.nombre} ${usuario.apellido}`)
+                }}
+                sx={{
+                  backgroundColor: '#ff6347',
+                  color: '#fff',
+                  textTransform: 'none',
+                  borderRadius: '50px',
+                  padding: '6px 16px',
+                  boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: '#e5533f',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
+                  },
+                }}
+              >
+                Enviar Mensaje
+              </Button>
+            </CardActions>
+          )}
         </Card>
       )
     } else if (tipo === 'ingenios') {
@@ -564,7 +590,20 @@ const Directorio: React.FC<DirectorioProps> = () => {
                 gap: 0.5,
               }}
             >
-              <strong>País:</strong> {ingenio.pais}
+              {ingenio.pais}
+            </Typography>
+            <Typography
+              variant='body2'
+              sx={{
+                mb: 2,
+                color: '#4a4a4a',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <PeopleIcon sx={{ color: '#ff6347' }} />
+              {ingenio.usuariosCount}
             </Typography>
             {ingenio.webpage && (
               <Box

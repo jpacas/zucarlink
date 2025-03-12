@@ -7,7 +7,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material'
-import axios from 'axios'
+import axiosInstance from '../utils/axiosConfig'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { LockReset as LockResetIcon } from '@mui/icons-material'
@@ -28,10 +28,8 @@ const PasswordChangeForm = () => {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await axios.put(
-        `${import.meta.env.VITE_API_URL}/users/${user?.id}/password`,
-        passwordData
-      )
+      await axiosInstance.put(`/users/${user?.id}/password`, passwordData)
+
       setMessage({
         type: 'success',
         text: 'Contraseña actualizada exitosamente',

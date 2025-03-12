@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import axiosInstance from '../utils/axiosConfig'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { useAuth } from '../context/AuthContext'
+import { useChat } from '../context/ChatContext'
 import {
   Box,
   Typography,
@@ -53,6 +54,7 @@ const Perfil: React.FC = () => {
 
   const { user } = useAuth() // Usuario autenticado
   const esPropietario = user?.id === id // Verifica si es su propio perfil
+  const { startChat } = useChat()
 
   const formatearFecha = (fecha: string) => {
     return format(new Date(fecha), 'MMM yyyy', { locale: es }) // Ejemplo: "Feb 2025"
@@ -93,14 +95,12 @@ const Perfil: React.FC = () => {
     const fetchUsuarioYExperiencias = async () => {
       setLoading(true)
       try {
-        const userResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL}/users/usuarios/${id}`
-        )
-        setUsuario(userResponse.data)
+        const [userResponse, expResponse] = await Promise.all([
+          axiosInstance.get(`/users/usuarios/${id}`),
+          axiosInstance.get(`/experiencias/${id}`),
+        ])
 
-        const expResponse = await axios.get(
-          `${import.meta.env.VITE_API_URL}/experiencias/${id}`
-        )
+        setUsuario(userResponse.data)
         setExperiencias(expResponse.data.length ? expResponse.data : [])
       } catch (expError: any) {
         if (expError.response && expError.response.status === 404) {
@@ -157,22 +157,17 @@ const Perfil: React.FC = () => {
     }
     try {
       if (experienceData.id) {
-        await axios.put(
-          `${import.meta.env.VITE_API_URL}/experiencias/${experienceData.id}`,
-          { ...experienceData, usuarioId: user.id }
-        )
+        await axiosInstance.put(`/experiencias/${experienceData.id}`, {
+          ...experienceData,
+          usuarioId: user.id,
+        })
       } else {
         const { id, ...dataWithoutId } = experienceData
-        await axios.post(
-          `${import.meta.env.VITE_API_URL}/experiencias/${user.id}`,
-          dataWithoutId
-        )
+        await axiosInstance.post(`/experiencias/${user.id}`, dataWithoutId)
       }
 
       // 🔄 Vuelve a cargar la lista completa de experiencias desde la API
-      const expResponse = await axios.get(
-        `${import.meta.env.VITE_API_URL}/experiencias/${user.id}`
-      )
+      const expResponse = await axiosInstance.get(`/experiencias/${user.id}`)
       setExperiencias(expResponse.data)
 
       handleCloseModal()
@@ -214,12 +209,9 @@ const Perfil: React.FC = () => {
   const handleDeleteExperience = async () => {
     if (!experienceData.id) return
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_API_URL}/experiencias/${experienceData.id}`,
-        {
-          data: { userId: user?.id },
-        }
-      )
+      await axiosInstance.delete(`/experiencias/${experienceData.id}`, {
+        data: { userId: user?.id },
+      })
       setExperiencias(
         experiencias.filter((exp) => exp.id !== experienceData.id)
       )
@@ -267,26 +259,61 @@ const Perfil: React.FC = () => {
                   />
                 </Grid>
                 <Grid item xs={12} sm={8}>
-                  <Typography
-                    variant='h4'
+                  <Box
                     sx={{
-                      color: '#1a1a1a',
-                      fontWeight: 700,
-                      mb: 3,
-                      position: 'relative',
-                      '&::after': {
-                        content: '""',
-                        display: 'block',
-                        width: '60px',
-                        height: '4px',
-                        backgroundColor: '#ff6347',
-                        mt: 2,
-                        borderRadius: '2px',
-                      },
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
                     }}
                   >
-                    {usuario.nombre} {usuario.apellido}
-                  </Typography>
+                    <Typography
+                      variant='h4'
+                      sx={{
+                        color: '#1a1a1a',
+                        fontWeight: 700,
+                        mb: 3,
+                        position: 'relative',
+                        '&::after': {
+                          content: '""',
+                          display: 'block',
+                          width: '60px',
+                          height: '4px',
+                          backgroundColor: '#ff6347',
+                          mt: 2,
+                          borderRadius: '2px',
+                        },
+                      }}
+                    >
+                      {usuario.nombre} {usuario.apellido}
+                    </Typography>
+                    {!esPropietario && (
+                      <Button
+                        variant='contained'
+                        onClick={() =>
+                          startChat(
+                            usuario.id,
+                            `${usuario.nombre} ${usuario.apellido}`
+                          )
+                        }
+                        sx={{
+                          backgroundColor: '#ff6347',
+                          color: '#fff',
+                          textTransform: 'none',
+                          borderRadius: '50px',
+                          padding: '8px 24px',
+                          boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            backgroundColor: '#e5533f',
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
+                          },
+                        }}
+                      >
+                        Enviar Mensaje
+                      </Button>
+                    )}
+                  </Box>
                   <Typography variant='body1' sx={{ mb: 2, color: '#4a4a4a' }}>
                     <strong>País:</strong> {usuario.pais}
                   </Typography>

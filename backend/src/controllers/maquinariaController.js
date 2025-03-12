@@ -2,7 +2,8 @@ const Maquinaria = require('../models/Maquinaria')
 const User = require('../models/User')
 const Pais = require('../models/Pais')
 const Archivo = require('../models/Archivo')
-const { uploadToS3 } = require('./serverFunctions')
+const Ingenio = require('../models/Ingenio')
+const { uploadToS3, deleteFromS3 } = require('./serverFunctions')
 
 ////////////////////////////////////////////////////////////
 // Obtener todas las maquinarias
@@ -21,6 +22,11 @@ const getMaquinaria = async (req, res) => {
           model: Pais,
           as: 'pais',
           attributes: ['id', 'nombre'],
+        },
+        {
+          model: Ingenio,
+          as: 'ingenio',
+          attributes: ['id', 'nombre', 'logo'],
         },
         {
           model: Archivo,
@@ -42,18 +48,25 @@ const getMaquinaria = async (req, res) => {
 ////////////////////////////////////////////////////////////
 
 const getMaquinariaById = async (req, res) => {
+  const { id } = req.params
+
   try {
-    const maquinaria = await Maquinaria.findByPk(req.params.id, {
+    const maquinaria = await Maquinaria.findByPk(id, {
       include: [
         {
           model: User,
-          as: 'usuario',
+          as: 'autor',
           attributes: ['id', 'nombre', 'apellido', 'email', 'avatarUrl'],
         },
         {
           model: Pais,
           as: 'pais',
           attributes: ['id', 'nombre'],
+        },
+        {
+          model: Ingenio,
+          as: 'ingenio',
+          attributes: ['id', 'nombre', 'logo'],
         },
         {
           model: Archivo,
@@ -83,8 +96,17 @@ const getMaquinariaById = async (req, res) => {
 
 const createMaquinaria = async (req, res) => {
   try {
-    const { nombre, descripcion, precio, contacto, marca, modelo, anio, pais } =
-      req.body
+    const {
+      nombre,
+      descripcion,
+      precio,
+      contacto,
+      marca,
+      modelo,
+      pais,
+      ingenio,
+      usuarioId,
+    } = req.body
 
     // Validar campos requeridos
     if (
@@ -94,8 +116,8 @@ const createMaquinaria = async (req, res) => {
       !contacto ||
       !marca ||
       !modelo ||
-      !anio ||
-      !pais
+      !pais ||
+      !ingenio
     ) {
       return res.status(400).json({
         error: 'Todos los campos requeridos deben ser proporcionados.',
@@ -106,19 +128,28 @@ const createMaquinaria = async (req, res) => {
           contacto: !contacto,
           marca: !marca,
           modelo: !modelo,
-          anio: !anio,
           pais: !pais,
+          ingenio: !ingenio,
         },
       })
     }
 
-    const paisId = await Pais.findOne({ where: { nombre: pais } })
+    const paisData = await Pais.findOne({ where: { nombre: pais } })
+    const ingenioData = await Ingenio.findOne({ where: { nombre: ingenio } })
 
+    if (!ingenioData) {
+      return res
+        .status(400)
+        .json({ error: 'El ingenio especificado no existe.' })
+    }
+
+    if (!paisData) {
+      return res.status(400).json({ error: 'El país especificado no existe.' })
+    }
     // Convertir tipos de datos
     const precioNum = parseFloat(precio)
-    const anioNum = parseInt(anio)
 
-    if (isNaN(precioNum) || isNaN(anioNum) || !paisId) {
+    if (isNaN(precioNum) || !paisData) {
       return res.status(400).json({
         error:
           'Error en el formato de los datos numéricos o país no encontrado.',
@@ -148,9 +179,9 @@ const createMaquinaria = async (req, res) => {
       contacto,
       marca,
       modelo,
-      anio: anioNum,
-      paisId: paisId.id,
-      usuarioId: req.user.id,
+      paisId: paisData.id,
+      ingenioId: ingenioData.id,
+      usuarioId,
     })
 
     // Manejar archivos adjuntos
@@ -178,33 +209,8 @@ const createMaquinaria = async (req, res) => {
       }
     }
 
-    // Obtener la maquinaria con sus relaciones
-    const maquinariaConRelaciones = await Maquinaria.findByPk(
-      nuevaMaquinaria.id,
-      {
-        include: [
-          {
-            model: User,
-            as: 'usuario',
-            attributes: ['id', 'nombre', 'apellido', 'email', 'avatarUrl'],
-          },
-          {
-            model: Pais,
-            as: 'pais',
-            attributes: ['id', 'nombre'],
-          },
-          {
-            model: Archivo,
-            as: 'archivos',
-            attributes: ['id', 'nombre', 'url', 'tipo'],
-          },
-        ],
-      }
-    )
-
     res.status(201).json({
       message: 'Maquinaria creada exitosamente.',
-      maquinaria: maquinariaConRelaciones,
     })
   } catch (error) {
     console.error('Error al crear maquinaria:', error)
@@ -217,7 +223,7 @@ const createMaquinaria = async (req, res) => {
     if (error.name === 'SequelizeForeignKeyConstraintError') {
       return res.status(400).json({
         error: 'Error de clave foránea.',
-        details: 'El país o usuario especificado no existe.',
+        details: 'El país o ingenio especificado no existe.',
       })
     }
     res.status(500).json({
@@ -233,8 +239,18 @@ const createMaquinaria = async (req, res) => {
 
 const updateMaquinaria = async (req, res) => {
   const { id } = req.params
-  const { nombre, descripcion, precio, contacto, marca, modelo, anio, pais } =
-    req.body
+  const {
+    nombre,
+    descripcion,
+    precio,
+    contacto,
+    marca,
+    modelo,
+    anio,
+    pais,
+    ingenio,
+    usuarioId,
+  } = req.body
 
   try {
     const maquinaria = await Maquinaria.findByPk(id)
@@ -243,8 +259,19 @@ const updateMaquinaria = async (req, res) => {
       return res.status(404).json({ error: 'Maquinaria no encontrada.' })
     }
 
-    // Obtener el ID del usuario del token decodificado
-    const usuarioId = req.user?.id || req.user?.userId || null
+    const ingenioData = await Ingenio.findOne({ where: { nombre: ingenio } })
+
+    if (!ingenioData) {
+      return res
+        .status(400)
+        .json({ error: 'El ingenio especificado no existe.' })
+    }
+
+    const paisData = await Pais.findOne({ where: { nombre: pais } })
+
+    if (!paisData) {
+      return res.status(400).json({ error: 'El país especificado no existe.' })
+    }
 
     // Verificar que el usuario es el propietario
     if (maquinaria.usuarioId !== usuarioId) {
@@ -292,7 +319,8 @@ const updateMaquinaria = async (req, res) => {
       marca,
       modelo,
       anio,
-      paisId: pais.id,
+      paisId: paisData.id,
+      ingenioId: ingenioData.id,
       foto: fotoUrl,
     })
 
@@ -326,13 +354,18 @@ const updateMaquinaria = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'usuario',
+          as: 'autor',
           attributes: ['id', 'nombre', 'apellido', 'email', 'avatarUrl'],
         },
         {
           model: Pais,
           as: 'pais',
           attributes: ['id', 'nombre'],
+        },
+        {
+          model: Ingenio,
+          as: 'ingenio',
+          attributes: ['id', 'nombre', 'logo'],
         },
         {
           model: Archivo,
@@ -363,8 +396,11 @@ const updateMaquinaria = async (req, res) => {
 ////////////////////////////////////////////////////////////
 
 const deleteMaquinaria = async (req, res) => {
+  const { id } = req.params
+  const { usuarioId } = req.body
+
   try {
-    const maquinaria = await Maquinaria.findByPk(req.params.id, {
+    const maquinaria = await Maquinaria.findByPk(id, {
       include: [
         {
           model: Archivo,
@@ -377,25 +413,10 @@ const deleteMaquinaria = async (req, res) => {
       return res.status(404).json({ error: 'Maquinaria no encontrada.' })
     }
 
-    // Verificar que el usuario es el propietario
-    if (maquinaria.usuarioId !== req.user.id) {
-      return res
-        .status(403)
-        .json({ error: 'No autorizado para eliminar esta maquinaria.' })
-    }
-
     // Eliminar foto principal si existe
     if (maquinaria.foto) {
       try {
-        const oldKey = maquinaria.foto.split('/').pop()
-        if (process.env.AWS_BUCKET_NAME) {
-          await s3
-            .deleteObject({
-              Bucket: process.env.AWS_BUCKET_NAME,
-              Key: `maquinarias/fotos/${oldKey}`,
-            })
-            .promise()
-        }
+        await deleteFromS3(maquinaria.foto)
       } catch (error) {
         console.error('Error al eliminar foto:', error)
       }
@@ -405,15 +426,7 @@ const deleteMaquinaria = async (req, res) => {
     if (maquinaria.archivos && maquinaria.archivos.length > 0) {
       const deletePromises = maquinaria.archivos.map(async (archivo) => {
         try {
-          const archivoKey = archivo.url.split('/').pop()
-          if (process.env.AWS_BUCKET_NAME) {
-            await s3
-              .deleteObject({
-                Bucket: process.env.AWS_BUCKET_NAME,
-                Key: `maquinarias/archivos/${archivoKey}`,
-              })
-              .promise()
-          }
+          await deleteFromS3(archivo.url)
         } catch (error) {
           console.error('Error al eliminar archivo:', error)
         }

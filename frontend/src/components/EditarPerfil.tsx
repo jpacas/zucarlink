@@ -15,7 +15,7 @@ import {
   Paper,
   Grid,
 } from '@mui/material'
-import axios from 'axios'
+import axiosInstance from '../utils/axiosConfig'
 import { useAuth } from '../context/AuthContext'
 import {
   fetchAreas,
@@ -83,9 +83,7 @@ const EditarPerfil: React.FC = () => {
           fetchAreas(),
           fetchIngenios(),
           fetchProveedores(),
-          axios.get(
-            `${import.meta.env.VITE_API_URL}/users/usuarios/${user?.id}`
-          ),
+          axiosInstance.get(`/users/usuarios/${user?.id}`),
         ])
 
         setPaises(paises || [])
@@ -160,10 +158,14 @@ const EditarPerfil: React.FC = () => {
         formDataToSend.append('avatar', avatar)
       }
 
-      const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/users/${user?.id}`,
+      const response = await axiosInstance.put(
+        `/users/${user?.id}`,
         formDataToSend,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
       )
 
       const userActualizado = response.data.usuario

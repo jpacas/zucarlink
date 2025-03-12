@@ -36,12 +36,15 @@ import {
   MoreVert,
   Edit,
   Delete,
+  Visibility,
+  Description,
 } from '@mui/icons-material'
 import {
   fetchPaises,
   fetchAreas,
   fetchIngenios,
 } from '../functions/fetchFunctions'
+import { useNavigate } from 'react-router-dom'
 
 const Empleos: React.FC = () => {
   const [empleos, setEmpleos] = useState<Empleo[]>([])
@@ -54,6 +57,7 @@ const Empleos: React.FC = () => {
   const [selectedEmpleoId, setSelectedEmpleoId] = useState<number | null>(null)
   const { user } = useAuth()
   const { enqueueSnackbar } = useSnackbar()
+  const navigate = useNavigate()
 
   // Estados para filtros
   const [paises, setPaises] = useState<string[]>([])
@@ -491,6 +495,11 @@ const Empleos: React.FC = () => {
     setCurrentEmpleoId(null)
   }
 
+  // Agregar función para manejar el clic en un empleo
+  const handleEmpleoClick = (empleoId: number) => {
+    navigate(`/empleos/${empleoId}`)
+  }
+
   return (
     <Box
       sx={{
@@ -501,29 +510,6 @@ const Empleos: React.FC = () => {
       }}
     >
       <Container maxWidth='lg'>
-        <Typography
-          variant='h3'
-          align='center'
-          sx={{
-            mb: 6,
-            fontWeight: 700,
-            color: '#1a1a1a',
-            letterSpacing: '-0.5px',
-            position: 'relative',
-            '&::after': {
-              content: '""',
-              display: 'block',
-              width: '60px',
-              height: '4px',
-              backgroundColor: '#ff6347',
-              margin: '16px auto',
-              borderRadius: '2px',
-            },
-          }}
-        >
-          Empleos
-        </Typography>
-
         <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
           {/* Sección de filtros (a la izquierda en pantallas grandes) */}
           <Grid
@@ -638,6 +624,7 @@ const Empleos: React.FC = () => {
                 }}
                 fullWidth
                 startIcon={<Business />}
+                disabled={!user}
                 sx={{
                   mt: 2,
                   py: 1.5,
@@ -649,9 +636,18 @@ const Empleos: React.FC = () => {
                     boxShadow: '0 4px 15px rgba(255,99,71,0.3)',
                   },
                   transition: 'all 0.2s ease',
+                  '&.Mui-disabled': {
+                    bgcolor: '#cccccc',
+                    color: '#666666',
+                    '&:hover': {
+                      bgcolor: '#cccccc',
+                      boxShadow: 'none',
+                      transform: 'none',
+                    },
+                  },
                 }}
               >
-                Publicar Oferta
+                {user ? 'Publicar Oferta' : 'Inicia sesión para publicar'}
               </Button>
             </Paper>
           </Grid>
@@ -710,7 +706,9 @@ const Empleos: React.FC = () => {
                         },
                         position: 'relative',
                         mx: 1,
+                        cursor: 'pointer',
                       }}
+                      onClick={() => handleEmpleoClick(empleo.id || 0)}
                     >
                       {/* Menú de opciones (solo visible para el creador) */}
                       {user && empleo.autor && user.id === empleo.autor.id && (
@@ -878,6 +876,37 @@ const Empleos: React.FC = () => {
                             </Typography>
                           </Box>
                         )}
+
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            position: 'absolute',
+                            bottom: 16,
+                            right: 16,
+                            color: 'text.secondary',
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            padding: '4px 8px',
+                            borderRadius: '12px',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                            gap: 1,
+                          }}
+                        >
+                          {empleo.archivos && empleo.archivos.length > 0 && (
+                            <Tooltip
+                              title={`${empleo.archivos.length} archivo(s) adjunto(s)`}
+                            >
+                              <Description
+                                fontSize='small'
+                                sx={{ color: '#ff6347' }}
+                              />
+                            </Tooltip>
+                          )}
+                          <Visibility fontSize='small' />
+                          <Typography variant='body2'>
+                            {empleo.views || 0}
+                          </Typography>
+                        </Box>
                       </CardContent>
                     </Card>
                   </Grid>

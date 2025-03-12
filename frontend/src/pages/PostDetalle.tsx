@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import axios from 'axios'
+import axiosInstance from '../utils/axiosConfig'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
@@ -74,9 +74,7 @@ const PostDetalle: React.FC = () => {
   useEffect(() => {
     const fetchAreas = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/helper/areas`
-        )
+        const response = await axiosInstance.get('/helper/areas')
         setAreas(response.data.map((a: any) => a.nombre))
       } catch (error) {
         console.error('Error al cargar áreas:', error)
@@ -91,18 +89,12 @@ const PostDetalle: React.FC = () => {
       setLoading(true)
       setError(null)
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/posts/${postId}`,
-        {
-          timeout: 5000,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          params: {
-            incrementView: !searchParams.get('edit'), // No incrementar vistas en modo edición
-          },
-        }
-      )
+      const response = await axiosInstance.get(`/posts/${postId}`, {
+        timeout: 5000,
+        params: {
+          incrementView: !searchParams.get('edit'), // No incrementar vistas en modo edición
+        },
+      })
 
       setPost(response.data)
 
@@ -138,10 +130,9 @@ const PostDetalle: React.FC = () => {
   const handleLikeToggle = async () => {
     if (!user?.id || !post) return
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/posts/${post.id}/like`,
-        { userId: user.id }
-      )
+      const response = await axiosInstance.post(`/posts/${post.id}/like`, {
+        userId: user.id,
+      })
       setPost((prev) =>
         prev
           ? {
@@ -159,13 +150,10 @@ const PostDetalle: React.FC = () => {
   const handleCommentSubmit = async () => {
     if (!user?.id || !post || !newComment.trim()) return
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/posts/${post.id}/comment`,
-        {
-          contenido: newComment,
-          usuarioId: user.id,
-        }
-      )
+      const response = await axiosInstance.post(`/posts/${post.id}/comment`, {
+        contenido: newComment,
+        usuarioId: user.id,
+      })
       setPost((prev) =>
         prev
           ? {
@@ -183,8 +171,8 @@ const PostDetalle: React.FC = () => {
   const handleDeleteComment = async (commentId: number) => {
     if (!post) return
     try {
-      const response = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/posts/${post.id}/comment/${commentId}`
+      const response = await axiosInstance.delete(
+        `/posts/${post.id}/comment/${commentId}`
       )
       setPost((prev) =>
         prev
@@ -230,15 +218,11 @@ const PostDetalle: React.FC = () => {
         formData.append('archivos', file)
       })
 
-      const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/posts/${postId}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      )
+      const response = await axiosInstance.put(`/posts/${postId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
 
       setPost(response.data)
       setEditMode(false)

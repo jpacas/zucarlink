@@ -36,6 +36,7 @@ const getAllEmpleos = async (req, res) => {
           attributes: ['id', 'nombre'],
         },
       ],
+      attributes: { include: ['views'] },
       order: [['createdAt', 'DESC']],
     })
 
@@ -76,11 +77,15 @@ const getEmpleoById = async (req, res) => {
           attributes: ['id', 'nombre'],
         },
       ],
+      attributes: { include: ['views'] },
     })
 
     if (!empleo) {
       return res.status(404).json({ message: 'Empleo no encontrado' })
     }
+
+    // Incrementar el contador de vistas
+    await empleo.increment('views')
 
     res.json(empleo)
   } catch (error) {
@@ -224,7 +229,7 @@ const updateEmpleo = async (req, res) => {
     }
 
     // Verificar que el usuario que actualiza es el creador
-    if (empleo.usuarioId !== parseInt(usuarioId)) {
+    if (empleo.usuarioId !== usuarioId) {
       return res
         .status(403)
         .json({ message: 'No tienes permiso para actualizar esta oferta' })

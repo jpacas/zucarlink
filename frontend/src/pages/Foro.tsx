@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import axiosInstance from '../utils/axiosConfig'
+import { isAxiosError } from 'axios'
 import {
   Box,
   Grid,
@@ -75,17 +76,14 @@ const Foro: React.FC = () => {
   const fetchPosts = async () => {
     try {
       setIsLoading(true)
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/posts`,
-        {
-          params: {
-            tema: temaFiltro,
-            area: areaFiltro,
-            autor: autorFiltro.trim(),
-            orden: ordenamiento,
-          },
-        }
-      )
+      const response = await axiosInstance.get('/posts', {
+        params: {
+          tema: temaFiltro,
+          area: areaFiltro,
+          autor: autorFiltro.trim(),
+          orden: ordenamiento,
+        },
+      })
       if (Array.isArray(response.data)) {
         setPosts(response.data)
       } else {
@@ -101,12 +99,12 @@ const Foro: React.FC = () => {
 
   const fetchAreas = async () => {
     try {
-      const response = await axios.get<{ nombre: string }[]>(
-        `${import.meta.env.VITE_API_URL}/helper/areas`
+      const response = await axiosInstance.get<{ nombre: string }[]>(
+        '/helper/areas'
       )
-      setAreas(response.data.map((area) => area.nombre))
+      setAreas(response.data.map((area: { nombre: string }) => area.nombre))
     } catch (err) {
-      if (axios.isAxiosError(err)) {
+      if (isAxiosError(err)) {
         setError(err.response?.data?.message || 'Error al cargar los datos.')
       } else {
         setError('Error desconocido.')
@@ -129,17 +127,16 @@ const Foro: React.FC = () => {
     }
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/posts/${postId}/like`,
-        { userId: user.id }
-      )
+      const response = await axiosInstance.post(`/posts/${postId}/like`, {
+        userId: user.id,
+      })
 
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === postId
             ? {
                 ...post,
-                likes: response.data.likes, // array actualizado
+                likes: response.data.likes,
                 userHasLiked: response.data.userHasLiked,
               }
             : post
@@ -169,12 +166,11 @@ const Foro: React.FC = () => {
       formData.append('area', area)
       formData.append('usuarioId', user?.id || '')
 
-      // Agregar archivos al FormData
       selectedFiles.forEach((file) => {
         formData.append('archivos', file)
       })
 
-      await axios.post(`${import.meta.env.VITE_API_URL}/posts`, formData, {
+      await axiosInstance.post('/posts', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -212,15 +208,11 @@ const Foro: React.FC = () => {
     }
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/posts/${postId}/comment`,
-        {
-          contenido: newComment[postId], // Asegúrate de que coincida con el backend
-          usuarioId: user.id, // Enviar solo usuarioId, el backend se encargará de obtener nombre y apellido
-        }
-      )
+      const response = await axiosInstance.post(`/posts/${postId}/comment`, {
+        contenido: newComment[postId],
+        usuarioId: user.id,
+      })
 
-      // El backend devuelve la lista de comentarios actualizada
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === postId
@@ -229,7 +221,6 @@ const Foro: React.FC = () => {
         )
       )
 
-      // Limpiar el input después de agregar el comentario
       setNewComment((prev) => ({ ...prev, [postId]: '' }))
     } catch (err: any) {
       console.error('Error al enviar comentario:', err.response?.data || err)
@@ -243,15 +234,14 @@ const Foro: React.FC = () => {
     }
 
     try {
-      const response = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/posts/${postId}/comment/${commentId}`
+      const response = await axiosInstance.delete(
+        `/posts/${postId}/comment/${commentId}`
       )
 
       if (!response.data || !response.data.comments) {
         throw new Error('No se recibió la lista de comentarios actualizada.')
       }
 
-      // Actualizar el estado con la lista de comentarios actualizada del backend
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post.id === postId
@@ -273,11 +263,11 @@ const Foro: React.FC = () => {
     setContenido('')
     setArea('')
     setSelectedFiles([])
-    setModalError(null) // Resetea el error cuando el modal se cierra
+    setModalError(null)
   }
 
   const formatRelativeDate = (date: string) => {
-    const parsedDate = new Date(date) // Convierte el string a un objeto Date
+    const parsedDate = new Date(date)
     return formatDistanceToNow(parsedDate, { addSuffix: true, locale: es })
   }
 
@@ -285,7 +275,7 @@ const Foro: React.FC = () => {
     event: React.MouseEvent<HTMLElement>,
     postId: number
   ) => {
-    event.stopPropagation() // Prevenir navegación al post
+    event.stopPropagation()
     setAnchorEl({ ...anchorEl, [postId]: event.currentTarget })
   }
 
@@ -303,12 +293,9 @@ const Foro: React.FC = () => {
     if (!postToDelete) return
 
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_API_URL}/posts/${postToDelete}`,
-        {
-          data: { usuarioId: user?.id },
-        }
-      )
+      await axiosInstance.delete(`/posts/${postToDelete}`, {
+        data: { usuarioId: user?.id },
+      })
 
       enqueueSnackbar('Post eliminado correctamente', {
         variant: 'success',

@@ -170,25 +170,97 @@ const Navbar: React.FC = () => {
               >
                 ZucarIA
               </Button>
+
+              <Button
+                component={Link}
+                to='/empleos'
+                color={isActive('/empleos') ? 'primary' : 'inherit'}
+                sx={{
+                  fontSize: '1rem',
+                  fontWeight: isActive('/empleos') ? 'bold' : 'normal',
+                  color: '#4a4a4a',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    color: '#ff6347',
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+              >
+                Empleos
+              </Button>
+
+              <Button
+                component={Link}
+                to='/maquinarias'
+                color={isActive('/maquinarias') ? 'primary' : 'inherit'}
+                sx={{
+                  fontSize: '1rem',
+                  fontWeight: isActive('/maquinarias') ? 'bold' : 'normal',
+                  color: '#4a4a4a',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    color: '#ff6347',
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+              >
+                Equipos
+              </Button>
             </>
           )}
           {!isAuthenticated && (
-            <Button
-              component={Link}
-              to='/services'
-              color='inherit'
-              sx={{
-                fontSize: '1rem',
-                color: '#4a4a4a',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  color: '#ff6347',
-                  transform: 'translateY(-2px)',
-                },
-              }}
-            >
-              Servicios
-            </Button>
+            <>
+              <Button
+                component={Link}
+                to='/services'
+                color='inherit'
+                sx={{
+                  fontSize: '1rem',
+                  color: '#4a4a4a',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    color: '#ff6347',
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+              >
+                Servicios
+              </Button>
+              <Button
+                component={Link}
+                to='/empleos'
+                color={isActive('/empleos') ? 'primary' : 'inherit'}
+                sx={{
+                  fontSize: '1rem',
+                  fontWeight: isActive('/empleos') ? 'bold' : 'normal',
+                  color: '#4a4a4a',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    color: '#ff6347',
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+              >
+                Empleos
+              </Button>
+              <Button
+                component={Link}
+                to='/maquinarias'
+                color={isActive('/maquinarias') ? 'primary' : 'inherit'}
+                sx={{
+                  fontSize: '1rem',
+                  fontWeight: isActive('/maquinarias') ? 'bold' : 'normal',
+                  color: '#4a4a4a',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    color: '#ff6347',
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+              >
+                Equipos
+              </Button>
+            </>
           )}
           <Button
             component={Link}
@@ -446,33 +518,133 @@ const Navbar: React.FC = () => {
                   }}
                 />
               </ListItemButton>
+
+              <ListItemButton
+                component={Link}
+                to='/empleos'
+                onClick={() => toggleDrawer(false)}
+                sx={{
+                  borderRadius: '8px',
+                  mb: 1,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                    transform: 'translateX(8px)',
+                  },
+                }}
+              >
+                <ListItemText
+                  primary='Empleos'
+                  primaryTypographyProps={{
+                    sx: {
+                      color: '#4a4a4a',
+                      fontWeight: isActive('/empleos') ? 'bold' : 'normal',
+                    },
+                  }}
+                />
+              </ListItemButton>
+
+              <ListItemButton
+                component={Link}
+                to='/maquinarias'
+                onClick={() => toggleDrawer(false)}
+                sx={{
+                  borderRadius: '8px',
+                  mb: 1,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                    transform: 'translateX(8px)',
+                  },
+                }}
+              >
+                <ListItemText
+                  primary='Equipos'
+                  primaryTypographyProps={{
+                    sx: {
+                      color: '#4a4a4a',
+                      fontWeight: isActive('/maquinarias') ? 'bold' : 'normal',
+                    },
+                  }}
+                />
+              </ListItemButton>
             </>
           )}
 
           {!isAuthenticated && (
-            <ListItemButton
-              component={Link}
-              to='/services'
-              onClick={() => toggleDrawer(false)}
-              sx={{
-                borderRadius: '8px',
-                mb: 1,
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  backgroundColor: 'rgba(255, 99, 71, 0.1)',
-                  transform: 'translateX(8px)',
-                },
-              }}
-            >
-              <ListItemText
-                primary='Servicios'
-                primaryTypographyProps={{
-                  sx: {
-                    color: '#4a4a4a',
+            <>
+              <ListItemButton
+                component={Link}
+                to='/services'
+                onClick={() => toggleDrawer(false)}
+                sx={{
+                  borderRadius: '8px',
+                  mb: 1,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                    transform: 'translateX(8px)',
                   },
                 }}
-              />
-            </ListItemButton>
+              >
+                <ListItemText
+                  primary='Servicios'
+                  primaryTypographyProps={{
+                    sx: {
+                      color: '#4a4a4a',
+                    },
+                  }}
+                />
+              </ListItemButton>
+              <ListItemButton
+                component={Link}
+                to='/empleos'
+                onClick={() => toggleDrawer(false)}
+                sx={{
+                  borderRadius: '8px',
+                  mb: 1,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                    transform: 'translateX(8px)',
+                  },
+                }}
+              >
+                <ListItemText
+                  primary='Empleos'
+                  primaryTypographyProps={{
+                    sx: {
+                      color: '#4a4a4a',
+                      fontWeight: isActive('/empleos') ? 'bold' : 'normal',
+                    },
+                  }}
+                />
+              </ListItemButton>
+              <ListItemButton
+                component={Link}
+                to='/maquinarias'
+                onClick={() => toggleDrawer(false)}
+                sx={{
+                  borderRadius: '8px',
+                  mb: 1,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                    transform: 'translateX(8px)',
+                  },
+                }}
+              >
+                <ListItemText
+                  primary='Equipos'
+                  primaryTypographyProps={{
+                    sx: {
+                      color: '#4a4a4a',
+                      fontWeight: isActive('/maquinarias') ? 'bold' : 'normal',
+                    },
+                  }}
+                />
+              </ListItemButton>
+            </>
           )}
 
           <ListItemButton

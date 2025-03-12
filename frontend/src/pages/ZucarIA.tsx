@@ -37,10 +37,19 @@ const ZucarIA: React.FC = () => {
     if (!user?.id) return
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/conversations/save`, {
-        userId: user.id,
-        messages: conversation,
-      })
+      const token = localStorage.getItem('token')
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/conversations/save`,
+        {
+          userId: user.id,
+          messages: conversation,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
     } catch (error) {
       console.error(
         'Error al guardar la conversación en la base de datos:',

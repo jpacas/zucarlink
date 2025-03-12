@@ -2,20 +2,15 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import { AuthProvider } from './context/AuthContext.tsx'
 import { ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import theme from '../src/theme/theme.ts'
-import { Analytics } from '@vercel/analytics/react'
 
 createRoot(document.getElementById('root')!).render(
-  <AuthProvider>
-    <StrictMode>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <App />
-        <Analytics />
-      </ThemeProvider>
-    </StrictMode>
-  </AuthProvider>
+  <StrictMode>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <App />
+    </ThemeProvider>
+  </StrictMode>
 )

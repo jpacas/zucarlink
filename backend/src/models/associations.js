@@ -13,6 +13,8 @@ const Archivo = require('./Archivo')
 const Maquinaria = require('./Maquinaria')
 const Noticia = require('./Noticia')
 const ZucarIA = require('./ZucarIA')
+const Conversation = require('./Conversation')
+const Message = require('./Message')
 
 const setupAssociations = () => {
   // Relaciones de User
@@ -131,6 +133,9 @@ const setupAssociations = () => {
   Maquinaria.belongsTo(Pais, { foreignKey: 'paisId', as: 'pais' })
   Pais.hasMany(Maquinaria, { foreignKey: 'paisId', as: 'maquinarias' })
 
+  Maquinaria.belongsTo(Ingenio, { foreignKey: 'ingenioId', as: 'ingenio' })
+  Ingenio.hasMany(Maquinaria, { foreignKey: 'ingenioId', as: 'maquinarias' })
+
   // Relaciones de Noticia
   Noticia.belongsTo(User, { foreignKey: 'usuarioId', as: 'autor' })
   User.hasMany(Noticia, { foreignKey: 'usuarioId', as: 'noticias' })
@@ -141,6 +146,30 @@ const setupAssociations = () => {
   // Relaciones de ZucarIA
   ZucarIA.belongsTo(User, { foreignKey: 'usuarioId', as: 'users' })
   User.hasMany(ZucarIA, { foreignKey: 'usuarioId', as: 'zucarIA' })
+
+  // Relaciones de Chat
+  Conversation.belongsTo(User, { foreignKey: 'user1Id', as: 'user1' })
+  Conversation.belongsTo(User, { foreignKey: 'user2Id', as: 'user2' })
+  User.hasMany(Conversation, {
+    foreignKey: 'user1Id',
+    as: 'conversationsAsUser1',
+  })
+  User.hasMany(Conversation, {
+    foreignKey: 'user2Id',
+    as: 'conversationsAsUser2',
+  })
+
+  Message.belongsTo(Conversation, {
+    foreignKey: 'conversationId',
+    as: 'conversation',
+  })
+  Conversation.hasMany(Message, {
+    foreignKey: 'conversationId',
+    as: 'messages',
+  })
+
+  Message.belongsTo(User, { foreignKey: 'senderId', as: 'sender' })
+  User.hasMany(Message, { foreignKey: 'senderId', as: 'sentMessages' })
 }
 
 module.exports = setupAssociations

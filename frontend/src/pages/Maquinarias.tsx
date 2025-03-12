@@ -1,4 +1,9 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import { useSnackbar } from 'notistack'
+import { formatDistanceToNow } from 'date-fns'
+import { es } from 'date-fns/locale'
 import {
   Box,
   Typography,
@@ -10,7 +15,6 @@ import {
   TextField,
   CircularProgress,
   Divider,
-  Chip,
   Avatar,
   Paper,
   IconButton,
@@ -30,27 +34,23 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Autocomplete,
 } from '@mui/material'
-
-import axios from 'axios'
-import { useAuth } from '../context/AuthContext'
-import { useSnackbar } from 'notistack'
 import {
   Engineering,
   LocationOn,
   Business,
-  CalendarToday,
   MoreVert,
   Edit,
   Delete,
-  AttachMoney,
   PhotoCamera,
   AttachFile,
-  Download,
   Close,
+  Email,
 } from '@mui/icons-material'
-
-import { Maquinaria, Pais } from '../types/interfaces'
+import { fetchPaises, fetchIngenios } from '../functions/fetchFunctions'
+import { Maquinaria, Pais, Ingenio } from '../types/interfaces'
+import { useAuth } from '../context/AuthContext'
 
 const Maquinarias: React.FC = () => {
   const [maquinarias, setMaquinarias] = useState<Maquinaria[]>([])
@@ -67,16 +67,19 @@ const Maquinarias: React.FC = () => {
   >(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [filesToDelete, setFilesToDelete] = useState<number[]>([])
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [paises, setPaises] = useState<Pais[]>([])
-  const { user } = useAuth()
-  const { enqueueSnackbar } = useSnackbar()
+  const [ingenios, setIngenios] = useState<Ingenio[]>([])
+  const [ingeniosFiltrados, setIngeniosFiltrados] = useState<Ingenio[]>([])
 
   // Estados para filtros
   const [filtros, setFiltros] = useState({
     busqueda: '',
     precioMin: '',
     precioMax: '',
+    pais: '',
+    ingenio: '',
   })
 
   // Estado para el formulario
@@ -87,9 +90,13 @@ const Maquinarias: React.FC = () => {
     contacto: '',
     marca: '',
     modelo: '',
-    anio: '',
     pais: '',
+    ingenio: '',
   })
+
+  const { user } = useAuth()
+  const { enqueueSnackbar } = useSnackbar()
+  const navigate = useNavigate()
 
   const resetForm = () => {
     setFormData({
@@ -99,19 +106,15 @@ const Maquinarias: React.FC = () => {
       contacto: '',
       marca: '',
       modelo: '',
-      anio: '',
       pais: '',
+      ingenio: '',
     })
     setSelectedFile(null)
     setSelectedFiles([])
+    setFilesToDelete([])
     setPreviewUrl(null)
-  }
-
-  const fetchPaises = async () => {
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/helper/paises`
-    )
-    setPaises(response.data)
+    setEditMode(false)
+    setCurrentMaquinariaId(null)
   }
 
   const fetchMaquinarias = async () => {
@@ -131,8 +134,53 @@ const Maquinarias: React.FC = () => {
 
   useEffect(() => {
     fetchMaquinarias()
-    fetchPaises()
+
+    fetchPaises().then(({ paises, error }) => {
+      if (!error) setPaises(paises || [])
+    })
+
+    fetchIngenios().then(({ ingenios, error }) => {
+      if (!error) {
+        setIngenios(ingenios || [])
+      }
+    })
   }, [])
+
+  // Efecto para filtrar ingenios cuando cambia el país
+  useEffect(() => {
+    if (filtros.pais) {
+      const ingeniosDelPais = ingenios.filter(
+        (ingenio) => ingenio.pais.toLowerCase() === filtros.pais.toLowerCase()
+      )
+      setIngeniosFiltrados(ingeniosDelPais)
+      // Resetear el ingenio seleccionado si no pertenece al país seleccionado
+      if (!ingeniosDelPais.find((i) => i.nombre === filtros.ingenio)) {
+        setFiltros((prev) => ({ ...prev, ingenio: '' }))
+      }
+    } else {
+      setIngeniosFiltrados([])
+      setFiltros((prev) => ({ ...prev, ingenio: '' }))
+    }
+  }, [filtros.pais, ingenios])
+
+  // Efecto para filtrar ingenios cuando cambia el país en el formulario
+  useEffect(() => {
+    if (formData.pais) {
+      const ingeniosDelPais = ingenios.filter(
+        (ingenio) => ingenio.pais.toLowerCase() === formData.pais.toLowerCase()
+      )
+      setIngeniosFiltrados(ingeniosDelPais)
+      // Resetear el ingenio seleccionado si no pertenece al país seleccionado
+      if (!ingeniosDelPais.find((i) => i.nombre === formData.ingenio)) {
+        setFormData((prev) => ({ ...prev, ingenio: '' }))
+      }
+    } else {
+      setIngeniosFiltrados([])
+      setFormData((prev) => ({ ...prev, ingenio: '' }))
+    }
+  }, [formData.pais, ingenios])
+
+  // Funciones para manejar archivos (subir, eliminar)
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -153,6 +201,8 @@ const Maquinarias: React.FC = () => {
     setSelectedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index))
   }
 
+  // Funciones para manejar la maquinaria (crear, editar, eliminar)
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -166,16 +216,21 @@ const Maquinarias: React.FC = () => {
         formDataObj.append('foto', selectedFile)
       }
 
-      // Agregar archivos adjuntos
+      // Agregar archivos nuevos
       selectedFiles.forEach((file) => {
         formDataObj.append('archivos', file)
       })
 
-      const token = localStorage.getItem('token')
+      // Agregar archivos a eliminar
+      filesToDelete.forEach((id) => {
+        formDataObj.append('archivosToDelete', id.toString())
+      })
+
+      formDataObj.append('usuarioId', user?.id || '')
+
       const config = {
         headers: {
           'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
         },
       }
 
@@ -208,19 +263,27 @@ const Maquinarias: React.FC = () => {
     }
   }
 
+  // Esta funcion me esta dando problemas
   const handleDelete = async () => {
     if (!selectedMaquinariaId) return
+    if (!user?.id) {
+      enqueueSnackbar('Debes estar autenticado para eliminar una maquinaria', {
+        variant: 'error',
+      })
+      return
+    }
 
     try {
-      const token = localStorage.getItem('token')
-      await axios.delete(
-        `${import.meta.env.VITE_API_URL}/maquinaria/${selectedMaquinariaId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
+      await axios({
+        method: 'DELETE',
+        url: `${
+          import.meta.env.VITE_API_URL
+        }/maquinaria/${selectedMaquinariaId}`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        data: JSON.stringify({ usuarioId: user.id }),
+      })
       enqueueSnackbar('Maquinaria eliminada exitosamente', {
         variant: 'success',
       })
@@ -235,22 +298,28 @@ const Maquinarias: React.FC = () => {
   const handleEdit = (maquinaria: Maquinaria) => {
     setCurrentMaquinariaId(maquinaria.id)
     setFormData({
-      nombre: maquinaria.nombre,
-      descripcion: maquinaria.descripcion,
-      precio: maquinaria.precio.toString(),
-      contacto: maquinaria.contacto,
-      marca: maquinaria.marca,
-      modelo: maquinaria.modelo,
-      anio: maquinaria.anio.toString(),
+      nombre: maquinaria.nombre || '',
+      descripcion: maquinaria.descripcion || '',
+      precio: maquinaria.precio?.toString() || '',
+      contacto: maquinaria.contacto || '',
+      marca: maquinaria.marca || '',
+      modelo: maquinaria.modelo || '',
       pais: maquinaria.pais?.nombre || '',
+      ingenio: maquinaria.ingenio?.nombre || '',
     })
     setPreviewUrl(maquinaria.foto || null)
     setEditMode(true)
     setModalOpen(true)
     setMenuAnchorEl(null)
+    setSelectedMaquinariaId(null)
+  }
+
+  const handleMaquinariaClick = (maquinariaId: number) => {
+    navigate(`/maquinarias/${maquinariaId}`)
   }
 
   // Filtrar maquinarias según los criterios
+
   const maquinariasFiltradas = maquinarias.filter((maquinaria) => {
     const matchBusqueda =
       filtros.busqueda === '' ||
@@ -271,8 +340,20 @@ const Maquinarias: React.FC = () => {
       (filtros.precioMax === '' ||
         maquinaria.precio <= parseFloat(filtros.precioMax))
 
-    return matchBusqueda && matchPrecio
+    const matchPais =
+      filtros.pais === '' || maquinaria.pais?.nombre === filtros.pais
+
+    const matchIngenio =
+      filtros.ingenio === '' ||
+      maquinaria.ingenio?.id.toString() === filtros.ingenio
+
+    return matchBusqueda && matchPrecio && matchPais && matchIngenio
   })
+
+  const formatRelativeDate = (date: string) => {
+    const parsedDate = new Date(date)
+    return formatDistanceToNow(parsedDate, { addSuffix: true, locale: es })
+  }
 
   return (
     <Box
@@ -284,29 +365,6 @@ const Maquinarias: React.FC = () => {
       }}
     >
       <Container maxWidth='lg'>
-        <Typography
-          variant='h3'
-          align='center'
-          sx={{
-            mb: 6,
-            fontWeight: 700,
-            color: '#1a1a1a',
-            letterSpacing: '-0.5px',
-            position: 'relative',
-            '&::after': {
-              content: '""',
-              display: 'block',
-              width: '60px',
-              height: '4px',
-              backgroundColor: '#ff6347',
-              margin: '16px auto',
-              borderRadius: '2px',
-            },
-          }}
-        >
-          Maquinarias
-        </Typography>
-
         <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
           {/* Sección de filtros */}
           <Grid
@@ -403,6 +461,68 @@ const Maquinarias: React.FC = () => {
                 }}
               />
 
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <Autocomplete
+                  options={paises}
+                  value={paises.find((pais) => pais === filtros.pais) || null}
+                  onChange={(_, value) =>
+                    setFiltros({ ...filtros, pais: value || '' })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label='País'
+                      size='small'
+                      fullWidth
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&:hover fieldset': {
+                            borderColor: '#ff6347',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#ff6347',
+                          },
+                        },
+                        '& .MuiInputLabel-root.Mui-focused': {
+                          color: '#ff6347',
+                        },
+                      }}
+                    />
+                  )}
+                />
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Ingenio</InputLabel>
+                <Select
+                  value={filtros.ingenio}
+                  label='Ingenio'
+                  onChange={(e) =>
+                    setFiltros({ ...filtros, ingenio: e.target.value })
+                  }
+                  disabled={!filtros.pais}
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      '&:hover': {
+                        borderColor: '#ff6347',
+                      },
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#ff6347',
+                    },
+                  }}
+                >
+                  {ingeniosFiltrados.map((ingenio) => (
+                    <MenuItem
+                      key={`ingenio-${ingenio.id}`}
+                      value={ingenio.nombre}
+                    >
+                      {ingenio.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
               <Divider sx={{ my: 3 }} />
 
               <Button
@@ -414,6 +534,7 @@ const Maquinarias: React.FC = () => {
                 }}
                 fullWidth
                 startIcon={<Engineering />}
+                disabled={!user}
                 sx={{
                   mt: 2,
                   py: 1.5,
@@ -426,9 +547,18 @@ const Maquinarias: React.FC = () => {
                     transform: 'translateY(-2px)',
                     transition: 'all 0.2s ease',
                   },
+                  '&.Mui-disabled': {
+                    bgcolor: '#cccccc',
+                    color: '#666666',
+                    '&:hover': {
+                      bgcolor: '#cccccc',
+                      boxShadow: 'none',
+                      transform: 'none',
+                    },
+                  },
                 }}
               >
-                Publicar Equipos
+                {user ? 'Publicar Equipos' : 'Inicia sesión para publicar'}
               </Button>
             </Paper>
           </Grid>
@@ -466,7 +596,7 @@ const Maquinarias: React.FC = () => {
             ) : (
               <Grid container spacing={3}>
                 {maquinariasFiltradas.map((maquinaria) => (
-                  <Grid item xs={12} sm={6} md={6} lg={4} key={maquinaria.id}>
+                  <Grid item xs={12} sm={6} md={6} lg={6} key={maquinaria.id}>
                     <Card
                       sx={{
                         height: '100%',
@@ -480,19 +610,34 @@ const Maquinarias: React.FC = () => {
                           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
                         },
                         position: 'relative',
+                        cursor: 'pointer',
+                      }}
+                      onClick={(e) => {
+                        if (
+                          !(e.target as HTMLElement).closest('.menu-options')
+                        ) {
+                          handleMaquinariaClick(maquinaria.id)
+                        }
                       }}
                     >
                       {/* Menú de opciones (solo visible para el propietario) */}
                       {user && maquinaria.usuarioId === user.id && (
                         <>
                           <IconButton
+                            className='menu-options'
                             sx={{
                               position: 'absolute',
                               top: 8,
                               right: 8,
                               zIndex: 1,
+                              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                              '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 1)',
+                              },
                             }}
                             onClick={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
                               setSelectedMaquinariaId(maquinaria.id)
                               setMenuAnchorEl(e.currentTarget)
                             }}
@@ -502,17 +647,34 @@ const Maquinarias: React.FC = () => {
                           <Menu
                             anchorEl={menuAnchorEl}
                             open={Boolean(menuAnchorEl)}
-                            onClose={() => setMenuAnchorEl(null)}
+                            onClose={() => {
+                              setMenuAnchorEl(null)
+                              setSelectedMaquinariaId(null)
+                            }}
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <MenuItem onClick={() => handleEdit(maquinaria)}>
+                            <MenuItem
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                handleEdit(maquinaria)
+                                setMenuAnchorEl(null)
+                                setSelectedMaquinariaId(null)
+                              }}
+                              tabIndex={0}
+                            >
                               <Edit sx={{ mr: 1 }} /> Editar
                             </MenuItem>
                             <MenuItem
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
                                 setDeleteDialogOpen(true)
                                 setMenuAnchorEl(null)
+                                setSelectedMaquinariaId(null)
                               }}
                               sx={{ color: 'error.main' }}
+                              tabIndex={0}
                             >
                               <Delete sx={{ mr: 1 }} /> Eliminar
                             </MenuItem>
@@ -521,14 +683,15 @@ const Maquinarias: React.FC = () => {
                       )}
 
                       {/* Imagen de la maquinaria */}
-                      {maquinaria.foto && (
-                        <Box
-                          sx={{
-                            height: 200,
-                            overflow: 'hidden',
-                            position: 'relative',
-                          }}
-                        >
+                      <Box
+                        sx={{
+                          height: 250,
+                          overflow: 'hidden',
+                          position: 'relative',
+                          backgroundColor: '#f5f5f5',
+                        }}
+                      >
+                        {maquinaria.foto ? (
                           <img
                             src={maquinaria.foto}
                             alt={maquinaria.nombre}
@@ -536,44 +699,50 @@ const Maquinarias: React.FC = () => {
                               width: '100%',
                               height: '100%',
                               objectFit: 'cover',
+                              transition: 'transform 0.3s ease',
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.transform = 'scale(1.05)'
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.transform = 'scale(1)'
                             }}
                           />
-                        </Box>
-                      )}
+                        ) : (
+                          <Box
+                            sx={{
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Engineering sx={{ fontSize: 60, color: '#ccc' }} />
+                          </Box>
+                        )}
+                      </Box>
 
-                      <CardContent sx={{ flexGrow: 1 }}>
-                        <Typography
-                          variant='h6'
-                          gutterBottom
-                          sx={{ fontWeight: 'bold', mb: 2 }}
-                        >
-                          {maquinaria.nombre}
-                        </Typography>
-
+                      <CardContent
+                        sx={{ flexGrow: 1, p: 3, position: 'relative' }}
+                      >
                         <Box
-                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                            mb: 2,
+                          }}
                         >
-                          <AttachMoney color='primary' sx={{ mr: 1 }} />
-                          <Typography variant='h6' color='primary'>
-                            ${maquinaria.precio.toLocaleString()}
+                          <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
+                            {maquinaria.nombre}
                           </Typography>
-                        </Box>
-
-                        <Box
-                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
-                        >
-                          <Business
-                            fontSize='small'
-                            color='action'
-                            sx={{ mr: 1 }}
-                          />
                           <Typography variant='body2' color='text.secondary'>
                             {maquinaria.marca} - {maquinaria.modelo}
                           </Typography>
                         </Box>
 
                         <Box
-                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                          sx={{ display: 'flex', alignItems: 'center', mb: 2 }}
                         >
                           <LocationOn
                             fontSize='small'
@@ -586,15 +755,35 @@ const Maquinarias: React.FC = () => {
                         </Box>
 
                         <Box
-                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                          sx={{ display: 'flex', alignItems: 'center', mb: 2 }}
                         >
-                          <CalendarToday
+                          {maquinaria.ingenio?.logo && (
+                            <Avatar
+                              src={maquinaria.ingenio.logo}
+                              alt={maquinaria.ingenio.nombre}
+                              sx={{ width: 40, height: 40, mr: 2 }}
+                            />
+                          )}
+                          <Business
                             fontSize='small'
                             color='action'
                             sx={{ mr: 1 }}
                           />
                           <Typography variant='body2' color='text.secondary'>
-                            Año: {maquinaria.anio}
+                            {maquinaria.ingenio?.nombre || 'No especificado'}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', mb: 1 }}
+                        >
+                          <Email
+                            fontSize='small'
+                            color='action'
+                            sx={{ mr: 1 }}
+                          />
+                          <Typography variant='body2' color='text.secondary'>
+                            {maquinaria.contacto}
                           </Typography>
                         </Box>
 
@@ -614,21 +803,25 @@ const Maquinarias: React.FC = () => {
                           {maquinaria.descripcion}
                         </Typography>
 
-                        <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
-                          {maquinaria.vigente ? (
-                            <Chip
-                              label='Disponible'
-                              color='success'
-                              size='small'
-                            />
-                          ) : (
-                            <Chip
-                              label='No disponible'
-                              color='error'
-                              size='small'
-                            />
-                          )}
+                        <Box sx={{ mt: 2 }}>
+                          <Typography variant='caption' color='text.secondary'>
+                            {formatRelativeDate(
+                              maquinaria.createdAt.toString()
+                            )}
+                          </Typography>
                         </Box>
+
+                        <Typography
+                          variant='h6'
+                          color='primary'
+                          sx={{
+                            position: 'absolute',
+                            bottom: 16,
+                            right: 16,
+                          }}
+                        >
+                          ${maquinaria.precio.toLocaleString()}
+                        </Typography>
 
                         {maquinaria.usuario && (
                           <Box
@@ -663,21 +856,24 @@ const Maquinarias: React.FC = () => {
                               </Typography>
                               <List dense>
                                 {maquinaria.archivos.map((archivo) => (
-                                  <ListItem key={archivo.id}>
+                                  <ListItem
+                                    key={archivo.id}
+                                    component='div'
+                                    onClick={() =>
+                                      window.open(archivo.url, '_blank')
+                                    }
+                                    sx={{
+                                      cursor: 'pointer',
+                                      '&:hover': {
+                                        backgroundColor:
+                                          'rgba(255, 99, 71, 0.1)',
+                                      },
+                                    }}
+                                  >
                                     <ListItemIcon>
                                       <AttachFile />
                                     </ListItemIcon>
                                     <ListItemText primary={archivo.nombre} />
-                                    <ListItemSecondaryAction>
-                                      <IconButton
-                                        edge='end'
-                                        href={archivo.url}
-                                        target='_blank'
-                                        download
-                                      >
-                                        <Download />
-                                      </IconButton>
-                                    </ListItemSecondaryAction>
                                   </ListItem>
                                 ))}
                               </List>
@@ -708,6 +904,9 @@ const Maquinarias: React.FC = () => {
             boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
           },
         }}
+        keepMounted={false}
+        disablePortal
+        disableEnforceFocus
       >
         <DialogTitle
           sx={{
@@ -833,31 +1032,75 @@ const Maquinarias: React.FC = () => {
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label='Año'
-                  type='number'
-                  value={formData.anio}
-                  onChange={(e) =>
-                    setFormData({ ...formData, anio: e.target.value })
-                  }
-                />
+                <FormControl fullWidth required>
+                  <Autocomplete
+                    options={paises}
+                    value={
+                      paises.find((pais) => pais === formData.pais) || null
+                    }
+                    onChange={(_, value) =>
+                      setFormData({
+                        ...formData,
+                        pais: value || '',
+                        ingenio: '',
+                      })
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label='País'
+                        required
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '&:hover fieldset': {
+                              borderColor: '#ff6347',
+                            },
+                            '&.Mui-focused fieldset': {
+                              borderColor: '#ff6347',
+                            },
+                          },
+                          '& .MuiInputLabel-root.Mui-focused': {
+                            color: '#ff6347',
+                          },
+                        }}
+                      />
+                    )}
+                  />
+                </FormControl>
               </Grid>
 
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required>
-                  <InputLabel>País</InputLabel>
+                  <InputLabel>Ingenio</InputLabel>
                   <Select
-                    value={formData.pais}
-                    label='País'
-                    onChange={(e) =>
-                      setFormData({ ...formData, pais: e.target.value })
-                    }
+                    value={formData.ingenio}
+                    label='Ingenio'
+                    onChange={(e) => {
+                      setFormData({ ...formData, ingenio: e.target.value })
+                    }}
+                    disabled={!formData.pais}
+                    MenuProps={{
+                      PaperProps: {
+                        sx: { maxHeight: 300 },
+                      },
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        '&:hover': {
+                          borderColor: '#ff6347',
+                        },
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#ff6347',
+                      },
+                    }}
                   >
-                    {paises.map((pais) => (
-                      <MenuItem key={pais} value={pais}>
-                        {pais}
+                    {ingeniosFiltrados.map((ingenio) => (
+                      <MenuItem
+                        key={`ingenio-${ingenio.id}`}
+                        value={ingenio.nombre}
+                      >
+                        {ingenio.nombre}
                       </MenuItem>
                     ))}
                   </Select>
@@ -913,8 +1156,36 @@ const Maquinarias: React.FC = () => {
                 </Button>
 
                 <List>
+                  {/* Archivos existentes */}
+                  {editMode &&
+                    maquinarias
+                      .find((m) => m.id === currentMaquinariaId)
+                      ?.archivos?.map((archivo) => (
+                        <ListItem key={archivo.id}>
+                          <ListItemIcon>
+                            <AttachFile />
+                          </ListItemIcon>
+                          <ListItemText primary={archivo.nombre} />
+                          <ListItemSecondaryAction>
+                            <IconButton
+                              edge='end'
+                              onClick={() => {
+                                setFilesToDelete((prev) => [
+                                  ...prev,
+                                  archivo.id,
+                                ])
+                              }}
+                              color='error'
+                            >
+                              <Close />
+                            </IconButton>
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                      ))}
+
+                  {/* Nuevos archivos */}
                   {selectedFiles.map((file, index) => (
-                    <ListItem key={index}>
+                    <ListItem key={`new-${index}`}>
                       <ListItemIcon>
                         <AttachFile />
                       </ListItemIcon>
@@ -978,6 +1249,9 @@ const Maquinarias: React.FC = () => {
             boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
           },
         }}
+        keepMounted={false}
+        disablePortal
+        disableEnforceFocus
       >
         <DialogTitle
           sx={{
