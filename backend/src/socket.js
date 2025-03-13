@@ -147,6 +147,7 @@ function initializeSocket(server) {
           const message = await Message.create({
             conversationId: conversation.id,
             senderId: userId,
+            recipientId: recipientId,
             content,
             isRead: false,
           })
@@ -199,7 +200,7 @@ function initializeSocket(server) {
           const formattedMessages = messages.map((msg) => ({
             id: msg.id,
             from: msg.senderId,
-            to: msg.senderId === userId ? otherUserId : userId,
+            to: msg.recipientId,
             content: msg.content,
             timestamp: msg.createdAt,
             fromUserName: `${msg.sender.nombre} ${msg.sender.apellido}`,

@@ -169,7 +169,9 @@ const setupAssociations = () => {
   })
 
   Message.belongsTo(User, { foreignKey: 'senderId', as: 'sender' })
+  Message.belongsTo(User, { foreignKey: 'recipientId', as: 'recipient' })
   User.hasMany(Message, { foreignKey: 'senderId', as: 'sentMessages' })
+  User.hasMany(Message, { foreignKey: 'recipientId', as: 'receivedMessages' })
 }
 
 module.exports = setupAssociations

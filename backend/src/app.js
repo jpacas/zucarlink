@@ -15,6 +15,7 @@ const sequelize = require('./config/database')
 const setupAssociations = require('./models/associations')
 const { initializeSocket } = require('./socket')
 const authMiddleware = require('./middleware/authMiddleware')
+const { scheduleReminderChecks } = require('./services/scheduler')
 
 // Configuración General
 dotenv.config()
@@ -70,6 +71,9 @@ const initializeDatabase = async () => {
 
 // Inicializar la base de datos
 initializeDatabase()
+
+// Inicializar el programador de recordatorios
+//scheduleReminderChecks()
 
 // Rutas
 app.use('/users', userRoutes)

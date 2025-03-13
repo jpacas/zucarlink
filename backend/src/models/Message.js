@@ -17,6 +17,18 @@ const Message = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    reminderSent: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    senderId: {
+      type: DataTypes.STRING(36),
+      allowNull: false,
+    },
+    recipientId: {
+      type: DataTypes.STRING(36),
+      allowNull: false,
+    },
   },
   {
     timestamps: true,
