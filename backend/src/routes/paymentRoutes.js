@@ -5,7 +5,7 @@ const {
   handleWebhook,
 } = require('../controllers/paymentController')
 
-router.post('/create-payment-intent', createPaymentIntent)
+router.post('/create-payment-intent', express.json(), createPaymentIntent)
 router.post(
   '/webhook',
   express.raw({ type: 'application/json' }),

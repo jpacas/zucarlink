@@ -2,6 +2,7 @@ const Pais = require('../models/Pais')
 const Area = require('../models/Area')
 const Ingenio = require('../models/Ingenio')
 const Proveedor = require('../models/Proveedor')
+const User = require('../models/User')
 const { uploadToS3 } = require('./serverFunctions')
 const sequelize = require('sequelize')
 
@@ -50,12 +51,30 @@ const getAreas = async (req, res) => {
 const getProveedores = async (req, res) => {
   try {
     const proveedores = await Proveedor.findAll({
-      attributes: ['nombre', 'email', 'webpage', 'logo', 'descripcion'],
+      attributes: [
+        'nombre',
+        'email',
+        'paginaWeb',
+        'logo',
+        'descripcion',
+        'nombrePais',
+        [
+          sequelize.literal(
+            '(SELECT COUNT(*) FROM Users WHERE Users.proveedorId = Proveedor.id)'
+          ),
+          'usuariosCount',
+        ],
+      ],
       include: [
         {
           model: Pais,
           as: 'pais',
           attributes: ['nombre'],
+        },
+        {
+          model: User,
+          as: 'users',
+          attributes: [],
         },
       ],
     })
@@ -67,10 +86,11 @@ const getProveedores = async (req, res) => {
     const proveedoresFormateados = proveedores.map((proveedor) => ({
       nombre: proveedor.nombre,
       email: proveedor.email,
-      webpage: proveedor.webpage,
+      paginaWeb: proveedor.paginaWeb,
       logo: proveedor.logo,
       descripcion: proveedor.descripcion,
-      pais: proveedor.pais?.nombre,
+      pais: proveedor.nombrePais,
+      usuariosCount: proveedor.getDataValue('usuariosCount'),
     }))
 
     res.status(200).json(proveedoresFormateados)
@@ -127,10 +147,18 @@ const getIngenios = async (req, res) => {
 ///////////////////////////////////////////////////////////
 
 const registerProveedor = async (req, res) => {
-  const { nombre, pais, email, webpage, descripcion } = req.body
+  const { nombre, pais, email, paginaWeb, descripcion, paymentIntent } =
+    req.body
 
   try {
-    const proveedorExistente = await Proveedor.findOne({ where: { email } })
+    const proveedorExistente = await Proveedor.findOne({
+      where: {
+        [sequelize.Op.or]: [
+          { email },
+          { stripePaymentIntentId: paymentIntent },
+        ],
+      },
+    })
 
     if (proveedorExistente) {
       return res.status(200).json(proveedorExistente)
@@ -151,10 +179,14 @@ const registerProveedor = async (req, res) => {
     const proveedor = await Proveedor.create({
       nombre,
       paisId: paisId.id,
+      nombrePais: pais,
       email,
-      webpage,
+      paginaWeb,
       descripcion,
+      fechaRegistro: new Date(),
       logo,
+      estado: 'pendiente',
+      stripePaymentIntentId: paymentIntent,
     })
 
     if (!proveedor) {

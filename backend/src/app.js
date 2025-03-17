@@ -22,6 +22,15 @@ dotenv.config()
 const app = express()
 const server = http.createServer(app)
 
+// Configuración del middleware para el body parser
+app.use((req, res, next) => {
+  if (req.originalUrl === '/payments/webhook') {
+    next()
+  } else {
+    express.json()(req, res, next)
+  }
+})
+
 // Configuración de CORS
 app.use(
   cors({
@@ -37,8 +46,8 @@ app.use(
   })
 )
 
-// Middleware para parsear JSON
-app.use(express.json())
+// Configuración para recibir datos de formularios
+app.use(express.urlencoded({ extended: true }))
 
 // Inicializar Socket.io
 const io = initializeSocket(server)

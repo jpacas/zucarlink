@@ -685,144 +685,187 @@ const Directorio: React.FC<DirectorioProps> = () => {
             sx={{
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
+              height: '100%',
               p: 4,
+              '&:last-child': {
+                pb: 4,
+              },
             }}
           >
-            {proveedor.logo ? (
-              <Box
-                sx={{
-                  width: 120,
-                  height: 120,
-                  mb: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <img
-                  src={proveedor.logo}
-                  alt={proveedor.nombre}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                  }}
-                />
-              </Box>
-            ) : (
-              <Box
-                sx={{
-                  width: 120,
-                  height: 120,
-                  mb: 3,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: '#f5f5f5',
-                  borderRadius: '8px',
-                }}
-              >
-                <Typography variant='body2' color='text.secondary'>
-                  Sin logo
-                </Typography>
-              </Box>
-            )}
-            <Typography
-              variant='h6'
+            {/* Header con logo y nombre */}
+            <Box
               sx={{
-                mb: 2,
-                fontWeight: 600,
-                color: '#1a1a1a',
+                mb: 3,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
               }}
             >
-              {proveedor.nombre}
-            </Typography>
-            {proveedor.pais && (
               <Typography
-                variant='body2'
+                variant='h6'
                 sx={{
-                  mb: 1,
-                  color: '#4a4a4a',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5,
+                  fontWeight: 600,
+                  color: '#1a1a1a',
+                  flex: 1,
                 }}
               >
-                <strong>País:</strong> {proveedor.pais}
+                {proveedor.nombre}
               </Typography>
-            )}
-            {proveedor.descripcion && (
-              <Typography
-                variant='body2'
-                sx={{
-                  mb: 2,
-                  color: '#4a4a4a',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  lineHeight: 1.7,
-                }}
-              >
-                {proveedor.descripcion}
-              </Typography>
-            )}
-            {proveedor.webpage && (
+              {proveedor.logo ? (
+                <Box
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <img
+                    src={proveedor.logo}
+                    alt={proveedor.nombre}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                    }}
+                  />
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '8px',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Typography variant='body2' color='text.secondary'>
+                    Sin logo
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+
+            {/* Contenido principal */}
+            <Box sx={{ flex: 1 }}>
+              {proveedor.pais && (
+                <Typography
+                  variant='body2'
+                  sx={{
+                    mb: 1,
+                    color: '#4a4a4a',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                  }}
+                >
+                  <strong>País:</strong> {proveedor.pais}
+                </Typography>
+              )}
+              {proveedor.descripcion && (
+                <Typography
+                  variant='body2'
+                  sx={{
+                    color: '#4a4a4a',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    lineHeight: 1.7,
+                  }}
+                >
+                  {proveedor.descripcion}
+                </Typography>
+              )}
+              {proveedor.webpage && (
+                <Box
+                  sx={{
+                    mt: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                >
+                  <LanguageIcon sx={{ color: '#ff6347' }} />
+                  <Typography
+                    variant='body2'
+                    component='a'
+                    href={proveedor.webpage}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    sx={{
+                      color: '#ff6347',
+                      textDecoration: 'none',
+                      '&:hover': {
+                        textDecoration: 'underline',
+                      },
+                    }}
+                  >
+                    Sitio web
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+
+            {/* Footer con iconos */}
+            <Box
+              sx={{
+                mt: 3,
+                pt: 2,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '100%',
+                borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+              }}
+            >
               <Box
                 sx={{
-                  mt: 1,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
                 }}
               >
-                <LanguageIcon sx={{ color: '#ff6347' }} />
-                <Typography
-                  variant='body2'
-                  component='a'
-                  href={proveedor.webpage}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  sx={{
-                    color: '#ff6347',
-                    textDecoration: 'none',
-                    '&:hover': {
-                      textDecoration: 'underline',
-                    },
-                  }}
-                >
-                  Sitio web
-                </Typography>
+                {proveedor.email && (
+                  <EmailIcon
+                    sx={{
+                      color: '#ff6347',
+                      cursor: 'pointer',
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      window.location.href = `mailto:${proveedor.email}`
+                    }}
+                  />
+                )}
               </Box>
-            )}
-            {proveedor.email && (
               <Box
                 sx={{
-                  mt: 1,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
                 }}
               >
-                <EmailIcon sx={{ color: '#ff6347' }} />
                 <Typography
                   variant='body2'
-                  component='a'
-                  href={`mailto:${proveedor.email}`}
                   sx={{
-                    color: '#ff6347',
-                    textDecoration: 'none',
-                    '&:hover': {
-                      textDecoration: 'underline',
-                    },
+                    color: '#4a4a4a',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
                   }}
                 >
-                  Contacto
+                  {proveedor.usuariosCount || 0}
+                  <PeopleIcon sx={{ color: '#ff6347' }} />
                 </Typography>
               </Box>
-            )}
+            </Box>
           </CardContent>
         </Card>
       )

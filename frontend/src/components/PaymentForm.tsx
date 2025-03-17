@@ -38,8 +38,6 @@ const PaymentForm = ({
     }
 
     setProcessing(true)
-    console.log(elements)
-    console.log(window.location.origin)
 
     try {
       // Guardar los datos del proveedor en sessionStorage

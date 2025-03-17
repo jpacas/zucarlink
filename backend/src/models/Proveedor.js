@@ -4,6 +4,11 @@ const sequelize = require('../config/database')
 const Proveedor = sequelize.define(
   'Proveedor',
   {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
     nombre: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -11,25 +16,47 @@ const Proveedor = sequelize.define(
     email: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
     },
-    webpage: {
+    nombrePais: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
     },
-    logo: {
+    paginaWeb: {
       type: DataTypes.STRING,
       allowNull: true,
     },
     descripcion: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    estado: {
+      type: DataTypes.ENUM('activo', 'inactivo', 'pendiente'),
+      defaultValue: 'pendiente',
+    },
+    fechaRegistro: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    stripeCustomerId: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-    meses_pagados: {
-      type: DataTypes.INTEGER,
+    stripeSubscriptionId: {
+      type: DataTypes.STRING,
       allowNull: true,
     },
-    fecha_vencimiento: {
-      type: DataTypes.DATE,
+    stripePaymentIntentId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
+    planType: {
+      type: DataTypes.ENUM('month', 'year'),
+      allowNull: true,
+    },
+    logo: {
+      type: DataTypes.STRING,
       allowNull: true,
     },
   },

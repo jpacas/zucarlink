@@ -23,6 +23,7 @@ import {
   ListItemIcon,
   ListItemText,
   CardActions,
+  Tooltip,
 } from '@mui/material'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
@@ -37,7 +38,7 @@ import {
 } from '@mui/icons-material'
 import { useDropzone } from 'react-dropzone'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
-import axios from 'axios'
+import axiosInstance from '../utils/axiosConfig'
 import { useNavigate } from 'react-router-dom'
 //import placeholder from '../assets/images/avatar-generico.jpg' // Asegúrate de tener esta imagen o ajusta la ruta
 import {
@@ -96,19 +97,23 @@ const plans: Plan[] = [
       'Listado en el directorio',
       'Soporte prioritario',
       'Estadísticas detalladas',
+      'Facturación mensual',
+      'Cancela cuando quieras',
     ],
   },
   {
     id: 'yearly',
     name: 'Plan Anual',
-    price: 500, // Descuento de 2 meses
+    price: 500,
     interval: 'year',
     features: [
       'Perfil de empresa destacado',
       'Listado en el directorio',
       'Soporte prioritario',
       'Estadísticas detalladas',
+      'Facturación anual',
       '2 meses gratis',
+      'Mejor valor',
     ],
   },
 ]
@@ -148,10 +153,10 @@ const Register: React.FC = () => {
   const [registrationStep, setRegistrationStep] = useState<
     'form' | 'plan' | 'payment'
   >('form')
+  const [tooltipOpen, setTooltipOpen] = useState(false)
 
   const steps = ['Información Personal', 'Detalles de Usuario']
 
-  // Lista de países (puedes obtenerla de una API si prefieres)
   useEffect(() => {
     fetchPaises().then(({ paises, error }) => {
       if (error) {
@@ -296,7 +301,7 @@ const Register: React.FC = () => {
     try {
       if (userType === 'empresa_proveedora') {
         if (registrationStep === 'form') {
-          // Guardar datos del proveedor en localStorage
+          // Guardar datos del proveedor en localStorage (PORQUE????)
           window.localStorage.setItem('proveedorPais', formData.pais)
           window.localStorage.setItem(
             'proveedorWeb',
@@ -324,7 +329,18 @@ const Register: React.FC = () => {
 
         if (registrationStep === 'plan' && selectedPlan) {
           try {
-            const response = await axios.post(
+            console.log('Enviando plan a Stripe:', {
+              plan: selectedPlan,
+              email: formData.email,
+              metadata: {
+                nombre: formData.nombre,
+                pais: formData.pais,
+                paginaWeb: formData.paginaWeb,
+                descripcion: formData.descripcion,
+              },
+            })
+
+            const response = await axiosInstance.post(
               `${import.meta.env.VITE_API_URL}/payments/create-payment-intent`,
               {
                 plan: selectedPlan,
@@ -338,6 +354,7 @@ const Register: React.FC = () => {
               }
             )
 
+            console.log('Respuesta de Stripe:', response.data)
             setClientSecret(response.data.clientSecret)
             setRegistrationStep('payment')
             setLoading(false)
@@ -364,7 +381,7 @@ const Register: React.FC = () => {
           formDataToSend.append('logo', formData.avatarUrl)
         }
 
-        await axios.post(
+        await axiosInstance.post(
           `${import.meta.env.VITE_API_URL}/helper/registerProveedor`,
           formDataToSend,
           {
@@ -412,7 +429,7 @@ const Register: React.FC = () => {
           }
         })
 
-        await axios.post(
+        await axiosInstance.post(
           `${import.meta.env.VITE_API_URL}/users/register`,
           formDataToSend,
           {
@@ -484,14 +501,39 @@ const Register: React.FC = () => {
             <Typography
               variant='h6'
               color='text.secondary'
-              sx={{ maxWidth: '600px', mx: 'auto', lineHeight: 1.6 }}
+              sx={{ maxWidth: '600px', mx: 'auto', lineHeight: 1.6, mb: 2 }}
             >
               Selecciona el tipo de cuenta que mejor se adapte a tus necesidades
               y comienza a disfrutar de todos los beneficios
             </Typography>
+            <Box
+              sx={{
+                backgroundColor: 'info.light',
+                p: 2,
+                borderRadius: 2,
+                maxWidth: '800px',
+                mx: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+              }}
+            >
+              <Store sx={{ color: 'info.main', fontSize: 40 }} />
+              <Typography
+                variant='body1'
+                color='info.dark'
+                sx={{ textAlign: 'left' }}
+              >
+                <strong>¿Eres una empresa proveedora?</strong> Para registrar
+                usuarios de tu empresa, primero debes registrar tu empresa en la
+                plataforma. Una vez registrada, tus empleados podrán crear sus
+                cuentas seleccionando "Usuario Proveedor".
+              </Typography>
+            </Box>
           </Box>
 
           <Grid container spacing={4} justifyContent='center'>
+            {/* Tarjeta de Usuario de Ingenio */}
             <Grid item xs={12} md={4}>
               <Box
                 sx={{
@@ -570,10 +612,8 @@ const Register: React.FC = () => {
                       paragraph
                       sx={{ mb: 3, flexGrow: 1 }}
                     >
-                      Personal que trabaja en ingenios azucareros. Accede al
-                      modelo de inteligencia artificial ZucarIA. Obtén
-                      información detallada sobre proveedores y gestiona
-                      relaciones comerciales.
+                      Personal que trabaja en ingenios azucareros. Debes de
+                      registrarte con tu correo profesional.
                     </Typography>
                     <List sx={{ mb: 3, flexGrow: 1 }}>
                       {[
@@ -627,142 +667,7 @@ const Register: React.FC = () => {
               </Box>
             </Grid>
 
-            <Grid item xs={12} md={4}>
-              <Box
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'all 0.3s ease',
-                  position: 'relative',
-                  overflow: 'visible',
-                  '&:hover': {
-                    transform: 'translateY(-8px)',
-                    '& .MuiCardContent-root': {
-                      boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
-                    },
-                  },
-                }}
-              >
-                <Card
-                  sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    borderRadius: 3,
-                    overflow: 'visible',
-                    background: 'transparent',
-                    boxShadow: 'none',
-                  }}
-                >
-                  <CardContent
-                    sx={{
-                      flexGrow: 1,
-                      textAlign: 'center',
-                      p: 4,
-                      borderRadius: 3,
-                      transition: 'all 0.3s ease',
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-                      backgroundColor: '#fff',
-                      border: '1px solid',
-                      borderColor: 'secondary.light',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      height: '100%',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 80,
-                        height: 80,
-                        borderRadius: '50%',
-                        backgroundColor: 'secondary.light',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 24px',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          transform: 'rotate(10deg)',
-                          backgroundColor: 'secondary.main',
-                        },
-                      }}
-                    >
-                      <Business sx={{ fontSize: 40, color: '#fff' }} />
-                    </Box>
-                    <Typography
-                      variant='h5'
-                      gutterBottom
-                      fontWeight='bold'
-                      color='secondary.main'
-                      sx={{ mb: 2 }}
-                    >
-                      Usuarios de Proveedores
-                    </Typography>
-                    <Typography
-                      variant='body1'
-                      color='text.secondary'
-                      paragraph
-                      sx={{ mb: 3, flexGrow: 1 }}
-                    >
-                      Empleados de empresas proveedoras de la industria
-                      azucarera. Gestiona tu perfil empresarial y mantén
-                      actualizada la información de productos y servicios.
-                    </Typography>
-                    <List sx={{ mb: 3, flexGrow: 1 }}>
-                      {[
-                        'Interactua con tecnicos',
-                        'Aumenta tu visibilidad',
-                        'Conoce necesidades de ingenios',
-                        'Incrementa tus ventas',
-                      ].map((feature) => (
-                        <ListItem key={feature} sx={{ py: 0.5 }}>
-                          <ListItemIcon sx={{ minWidth: 36 }}>
-                            <CheckCircleOutline
-                              color='secondary'
-                              fontSize='small'
-                              sx={{
-                                color: 'secondary.main',
-                                opacity: 0.8,
-                                '&:hover': {
-                                  opacity: 1,
-                                },
-                              }}
-                            />
-                          </ListItemIcon>
-                          <ListItemText primary={feature} />
-                        </ListItem>
-                      ))}
-                    </List>
-                    <Button
-                      variant='contained'
-                      color='secondary'
-                      fullWidth
-                      size='large'
-                      disabled={true} // TODO: Desbloquear cuando se tenga el formulario de proveedor
-                      onClick={() => handleUserTypeSelection('proveedor')}
-                      sx={{
-                        py: 1.5,
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        fontSize: '1.1rem',
-                        fontWeight: 'bold',
-                        boxShadow: 2,
-
-                        backgroundColor: 'secondary.light',
-                        '&:hover': {
-                          boxShadow: 4,
-                          backgroundColor: 'secondary.main',
-                        },
-                      }}
-                    >
-                      Registrarse
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Box>
-            </Grid>
-
+            {/* Tarjeta de Empresa Proveedora */}
             <Grid item xs={12} md={4}>
               <Box
                 sx={{
@@ -833,7 +738,7 @@ const Register: React.FC = () => {
                       color='info.main'
                       sx={{ mb: 2 }}
                     >
-                      Empresa Proveedora
+                      Registrar Empresa
                     </Typography>
                     <Typography
                       variant='body1'
@@ -841,14 +746,14 @@ const Register: React.FC = () => {
                       paragraph
                       sx={{ mb: 3, flexGrow: 1 }}
                     >
-                      Registra tu empresa proveedora. Obtén un perfil destacado,
-                      aparece en el directorio de proveedores y aprovecha
-                      herramientas exclusivas de mercadeo.
+                      ¿Eres proveedor de la industria azucarera? Primero
+                      registra tu empresa aquí para que tus empleados puedan
+                      crear sus cuentas como usuarios proveedores.
                     </Typography>
                     <List sx={{ mb: 3, flexGrow: 1 }}>
                       {[
-                        'Directorio de proveedores',
-                        'Registra tus empleados',
+                        'Paso 1: Registra tu empresa',
+                        'Paso 2: Registra tus empleados',
                         'Fortalece tu marca',
                         'Análisis de mercado',
                       ].map((feature) => (
@@ -866,7 +771,14 @@ const Register: React.FC = () => {
                               }}
                             />
                           </ListItemIcon>
-                          <ListItemText primary={feature} />
+                          <ListItemText
+                            primary={feature}
+                            primaryTypographyProps={{
+                              fontWeight: feature.startsWith('Paso')
+                                ? 'bold'
+                                : 'normal',
+                            }}
+                          />
                         </ListItem>
                       ))}
                     </List>
@@ -874,7 +786,6 @@ const Register: React.FC = () => {
                       variant='contained'
                       color='info'
                       fullWidth
-                      disabled={true} // TODO: Desbloquear cuando se tenga el formulario de proveedor
                       size='large'
                       onClick={() =>
                         handleUserTypeSelection('empresa_proveedora')
@@ -893,8 +804,175 @@ const Register: React.FC = () => {
                         },
                       }}
                     >
-                      Registrarse
+                      Registrar Empresa
                     </Button>
+                  </CardContent>
+                </Card>
+              </Box>
+            </Grid>
+
+            {/* Tarjeta de Usuario Proveedor */}
+            <Grid item xs={12} md={4}>
+              <Box
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transition: 'all 0.3s ease',
+                  position: 'relative',
+                  overflow: 'visible',
+                  '&:hover': {
+                    transform:
+                      proveedores.length > 0 ? 'translateY(-8px)' : 'none',
+                    '& .MuiCardContent-root': {
+                      boxShadow:
+                        proveedores.length > 0
+                          ? '0 12px 40px rgba(0,0,0,0.12)'
+                          : 'none',
+                    },
+                  },
+                }}
+              >
+                <Card
+                  sx={{
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    borderRadius: 3,
+                    overflow: 'visible',
+                    background: 'transparent',
+                    boxShadow: 'none',
+                    opacity: proveedores.length > 0 ? 1 : 0.7,
+                  }}
+                >
+                  <CardContent
+                    sx={{
+                      flexGrow: 1,
+                      textAlign: 'center',
+                      p: 4,
+                      borderRadius: 3,
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                      backgroundColor: '#fff',
+                      border: '1px solid',
+                      borderColor: 'secondary.light',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: '100%',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        backgroundColor: 'secondary.light',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 24px',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'rotate(10deg)',
+                          backgroundColor: 'secondary.main',
+                        },
+                      }}
+                    >
+                      <Business sx={{ fontSize: 40, color: '#fff' }} />
+                    </Box>
+                    <Typography
+                      variant='h5'
+                      gutterBottom
+                      fontWeight='bold'
+                      color='secondary.main'
+                      sx={{ mb: 2 }}
+                    >
+                      Usuarios de Proveedores
+                    </Typography>
+                    <Typography
+                      variant='body1'
+                      color='text.secondary'
+                      paragraph
+                      sx={{ mb: 3, flexGrow: 1 }}
+                    >
+                      Empleados de empresas proveedoras de la industria
+                      azucarera. Tu empresa debe de estar registrada como
+                      proveedor antes de que puedas registrarte como usuario.
+                    </Typography>
+                    <List sx={{ mb: 3, flexGrow: 1 }}>
+                      {[
+                        'Interactua con tecnicos',
+                        'Aumenta tu visibilidad',
+                        'Conoce necesidades de ingenios',
+                        'Incrementa tus ventas',
+                      ].map((feature) => (
+                        <ListItem key={feature} sx={{ py: 0.5 }}>
+                          <ListItemIcon sx={{ minWidth: 36 }}>
+                            <CheckCircleOutline
+                              color='secondary'
+                              fontSize='small'
+                              sx={{
+                                color: 'secondary.main',
+                                opacity: 0.8,
+                                '&:hover': {
+                                  opacity: 1,
+                                },
+                              }}
+                            />
+                          </ListItemIcon>
+                          <ListItemText primary={feature} />
+                        </ListItem>
+                      ))}
+                    </List>
+                    <Tooltip
+                      open={tooltipOpen}
+                      onClose={() => setTooltipOpen(false)}
+                      title={
+                        proveedores.length === 0
+                          ? "Primero debes registrar tu empresa como proveedora antes de poder registrar usuarios. Haz click en 'Empresa Proveedora' para comenzar."
+                          : ''
+                      }
+                      arrow
+                      placement='top'
+                    >
+                      <span>
+                        <Button
+                          variant='contained'
+                          color='secondary'
+                          fullWidth
+                          size='large'
+                          disabled={proveedores.length === 0}
+                          onClick={() => {
+                            if (proveedores.length === 0) {
+                              setTooltipOpen(true)
+                            } else {
+                              handleUserTypeSelection('proveedor')
+                            }
+                          }}
+                          sx={{
+                            py: 1.5,
+                            borderRadius: 2,
+                            textTransform: 'none',
+                            fontSize: '1.1rem',
+                            fontWeight: 'bold',
+                            boxShadow: 2,
+                            backgroundColor: 'secondary.light',
+                            '&:hover': {
+                              boxShadow: 4,
+                              backgroundColor: 'secondary.main',
+                            },
+                            '&.Mui-disabled': {
+                              backgroundColor: 'rgba(0, 0, 0, 0.12)',
+                              color: 'rgba(0, 0, 0, 0.26)',
+                            },
+                          }}
+                        >
+                          {proveedores.length === 0
+                            ? 'Registra tu empresa primero'
+                            : 'Registrarse'}
+                        </Button>
+                      </span>
+                    </Tooltip>
                   </CardContent>
                 </Card>
               </Box>
@@ -1396,6 +1474,7 @@ const Register: React.FC = () => {
                           proveedor: value ? value.nombre : '',
                         }))
                       }
+                      getOptionLabel={(option) => option.nombre}
                       renderInput={(params) => (
                         <TextField
                           {...params}
@@ -1415,7 +1494,7 @@ const Register: React.FC = () => {
                         />
                       )}
                       isOptionEqualToValue={(option, value) =>
-                        option.nombre === value?.nombre
+                        option.nombre === (value?.nombre || value)
                       }
                     />
                     <TextField
@@ -1694,7 +1773,16 @@ const Register: React.FC = () => {
                 {registrationStep === 'plan' && (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant='h6' gutterBottom align='center'>
-                      Selecciona tu Plan
+                      Selecciona tu Plan de Suscripción
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                      align='center'
+                      sx={{ mb: 3 }}
+                    >
+                      Elige el plan que mejor se adapte a tus necesidades.
+                      Puedes cambiar o cancelar en cualquier momento.
                     </Typography>
                     <Grid container spacing={3} justifyContent='center'>
                       {plans.map((plan) => (
@@ -1708,14 +1796,34 @@ const Register: React.FC = () => {
                                 selectedPlan === plan.id
                                   ? '2px solid #1976d2'
                                   : 'none',
-                              transition: 'transform 0.2s ease',
+                              transition:
+                                'transform 0.2s ease, box-shadow 0.2s ease',
                               '&:hover': {
                                 transform: 'translateY(-4px)',
                                 boxShadow: 4,
                               },
+                              position: 'relative',
                             }}
                           >
-                            <CardContent sx={{ flexGrow: 1 }}>
+                            {plan.interval === 'year' && (
+                              <Box
+                                sx={{
+                                  position: 'absolute',
+                                  top: 12,
+                                  right: -32,
+                                  transform: 'rotate(45deg)',
+                                  backgroundColor: 'success.main',
+                                  color: 'white',
+                                  px: 4,
+                                  py: 0.5,
+                                  fontSize: '0.875rem',
+                                  fontWeight: 'bold',
+                                }}
+                              >
+                                MEJOR VALOR
+                              </Box>
+                            )}
+                            <CardContent sx={{ flexGrow: 1, p: 3 }}>
                               <Typography
                                 variant='h5'
                                 component='div'
@@ -1723,20 +1831,28 @@ const Register: React.FC = () => {
                               >
                                 {plan.name}
                               </Typography>
-                              <Typography
-                                variant='h4'
-                                color='primary'
-                                gutterBottom
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'baseline',
+                                  mb: 2,
+                                }}
                               >
-                                ${plan.price}
                                 <Typography
-                                  component='span'
-                                  variant='body1'
+                                  variant='h3'
+                                  color='primary'
+                                  sx={{ fontWeight: 'bold' }}
+                                >
+                                  ${plan.price}
+                                </Typography>
+                                <Typography
+                                  variant='subtitle1'
                                   color='text.secondary'
+                                  sx={{ ml: 1 }}
                                 >
                                   /{plan.interval === 'month' ? 'mes' : 'año'}
                                 </Typography>
-                              </Typography>
+                              </Box>
                               {plan.interval === 'year' && (
                                 <Typography
                                   variant='subtitle1'
@@ -1755,7 +1871,12 @@ const Register: React.FC = () => {
                                         fontSize='small'
                                       />
                                     </ListItemIcon>
-                                    <ListItemText primary={feature} />
+                                    <ListItemText
+                                      primary={feature}
+                                      primaryTypographyProps={{
+                                        variant: 'body2',
+                                      }}
+                                    />
                                   </ListItem>
                                 ))}
                               </List>
@@ -1769,7 +1890,12 @@ const Register: React.FC = () => {
                                     : 'outlined'
                                 }
                                 onClick={() => setSelectedPlan(plan.id)}
-                                sx={{ py: 1 }}
+                                sx={{
+                                  py: 1.5,
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                  fontSize: '1.1rem',
+                                }}
                               >
                                 {selectedPlan === plan.id
                                   ? 'Plan Seleccionado'
@@ -1783,12 +1909,27 @@ const Register: React.FC = () => {
                     <Button
                       fullWidth
                       variant='contained'
-                      sx={{ mt: 4 }}
+                      sx={{
+                        mt: 4,
+                        py: 1.5,
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontSize: '1.1rem',
+                      }}
                       disabled={!selectedPlan}
                       onClick={handleSubmit}
                     >
                       Continuar al Pago
                     </Button>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                      align='center'
+                      sx={{ mt: 2, display: 'block' }}
+                    >
+                      Pago seguro con Stripe. Puedes cancelar tu suscripción en
+                      cualquier momento.
+                    </Typography>
                   </Box>
                 )}
               </>

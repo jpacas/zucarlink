@@ -57,11 +57,11 @@ export const fetchPaises = async () => {
 
 export const fetchProveedores = async () => {
   try {
-    const response = await axios.get<{ nombre: Proveedor }[]>(
+    const response = await axios.get<Proveedor[]>(
       `${import.meta.env.VITE_API_URL}/helper/proveedores`
     )
     return {
-      proveedores: response.data.map((proveedor) => proveedor.nombre),
+      proveedores: response.data,
       error: null,
     }
   } catch (err) {

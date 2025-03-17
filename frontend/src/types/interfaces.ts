@@ -34,6 +34,7 @@ export interface Proveedor {
   logo?: string
   descripcion?: string
   pais?: string
+  usuariosCount?: number
 }
 
 export interface Archivo {
