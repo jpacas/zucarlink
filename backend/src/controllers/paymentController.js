@@ -11,12 +11,6 @@ const createPaymentIntent = async (req, res) => {
   try {
     const { plan, email, metadata } = req.body
 
-    console.log('Plan recibido:', plan)
-    console.log('Email recibido:', email)
-    console.log('Metadata recibida:', metadata)
-    console.log('STRIPE_PRODUCTS:', STRIPE_PRODUCTS)
-    console.log('Price ID a usar:', STRIPE_PRODUCTS[plan])
-
     // Verificar que el plan es válido y existe el ID del precio
     if (!plan || !STRIPE_PRODUCTS[plan]) {
       return res.status(400).json({
@@ -44,7 +38,31 @@ const createPaymentIntent = async (req, res) => {
         metadata: metadata || {}, // Asegurarse de que metadata no sea null
       })
 
-      console.log('Cliente creado:', customer.id)
+      console.log('Cliente de Stripe creado:', {
+        customerId: customer.id,
+        email: customer.email,
+        metadata: customer.metadata,
+      })
+
+      // Actualizar el proveedor con el stripeCustomerId
+      if (metadata?.proveedorId) {
+        console.log('Actualizando proveedor con stripeCustomerId:', {
+          proveedorId: metadata.proveedorId,
+          customerId: customer.id,
+        })
+        const proveedor = await Proveedor.findByPk(metadata.proveedorId)
+        if (proveedor) {
+          await proveedor.update({
+            stripeCustomerId: customer.id,
+          })
+          console.log('Proveedor actualizado con stripeCustomerId')
+        } else {
+          console.error(
+            'No se encontró el proveedor para actualizar:',
+            metadata.proveedorId
+          )
+        }
+      }
 
       // Crear una suscripción con el precio correcto
       const subscription = await stripe.subscriptions.create({
@@ -57,15 +75,33 @@ const createPaymentIntent = async (req, res) => {
         payment_behavior: 'default_incomplete',
         payment_settings: { save_default_payment_method: 'on_subscription' },
         expand: ['latest_invoice.payment_intent'],
-        metadata: metadata || {}, // Asegurarse de que metadata no sea null
+        metadata: {
+          ...metadata,
+          customerId: customer.id,
+        },
       })
 
-      console.log('Suscripción creada:', subscription.id)
+      console.log('Suscripción creada:', {
+        subscriptionId: subscription.id,
+        customerId: subscription.customer,
+        metadata: subscription.metadata,
+      })
 
       // Verificar que se creó el payment intent
       if (!subscription.latest_invoice.payment_intent) {
         throw new Error('No se pudo crear el payment intent')
       }
+
+      // Actualizar el payment intent con los metadatos
+      await stripe.paymentIntents.update(
+        subscription.latest_invoice.payment_intent.id,
+        {
+          metadata: {
+            ...metadata,
+            customerId: customer.id,
+          },
+        }
+      )
 
       // Devolver los datos necesarios al frontend
       res.json({
@@ -117,19 +153,32 @@ const handleWebhook = async (req, res) => {
   switch (event.type) {
     case 'payment_intent.succeeded':
       const paymentIntent = event.data.object
-      try {
-        // Buscar el proveedor por el paymentIntentId
-        const proveedor = await Proveedor.findOne({
-          where: { stripePaymentIntentId: paymentIntent.id },
-        })
 
-        if (proveedor) {
-          // Actualizar el proveedor con los datos de Stripe
-          await proveedor.update({
-            estado: 'activo',
-            stripeCustomerId: paymentIntent.customer,
-          })
+      try {
+        // Obtener el ID del proveedor de los metadatos
+        const proveedorId = paymentIntent.metadata.proveedorId
+
+        if (!proveedorId) {
+          console.error(
+            'No se encontró proveedorId en los metadatos del payment intent'
+          )
+          return
         }
+
+        // Buscar el proveedor por ID
+        const proveedor = await Proveedor.findByPk(proveedorId)
+
+        if (!proveedor) {
+          console.error('No se encontró el proveedor con ID:', proveedorId)
+          return
+        }
+
+        // Actualizar el proveedor con los datos de Stripe y estado activo
+        await proveedor.update({
+          estado: 'activo',
+          stripeCustomerId: paymentIntent.customer,
+          stripePaymentIntentId: paymentIntent.id,
+        })
       } catch (error) {
         console.error('Error al actualizar proveedor:', error)
       }
@@ -137,35 +186,61 @@ const handleWebhook = async (req, res) => {
 
     case 'customer.subscription.created':
       const subscription = event.data.object
+
       try {
-        // Actualizar el proveedor con los datos de la suscripción
-        await Proveedor.update(
+        // Buscar el proveedor por stripeCustomerId o por proveedorId en los metadatos
+        let proveedor = await Proveedor.findOne({
+          where: { stripeCustomerId: subscription.customer },
+        })
+
+        if (!proveedor && subscription.metadata?.proveedorId) {
+          proveedor = await Proveedor.findByPk(
+            subscription.metadata.proveedorId
+          )
+        }
+
+        if (!proveedor) {
+          console.error('No se encontró el proveedor para la suscripción:', {
+            subscriptionId: subscription.id,
+            customerId: subscription.customer,
+            metadata: subscription.metadata,
+          })
+          return
+        }
+
+        // Actualizar solo los datos de la suscripción, sin cambiar el estado
+        await proveedor.update({
+          stripeSubscriptionId: subscription.id,
+          planType: subscription.items.data[0].price.recurring.interval,
+          stripeCustomerId: subscription.customer,
+        })
+      } catch (error) {
+        console.error(
+          'Error detallado al actualizar suscripción del proveedor:',
           {
-            stripeSubscriptionId: subscription.id,
-            planType: subscription.items.data[0].price.recurring.interval,
-          },
-          {
-            where: { stripeCustomerId: subscription.customer },
+            error: error.message,
+            stack: error.stack,
+            subscriptionId: subscription.id,
+            customerId: subscription.customer,
+            metadata: subscription.metadata,
           }
         )
-      } catch (error) {
-        console.error('Error al actualizar suscripción del proveedor:', error)
       }
       break
 
     case 'customer.subscription.deleted':
       const canceledSubscription = event.data.object
+
       try {
-        await Proveedor.update(
-          {
-            estado: 'inactivo',
-            stripeSubscriptionId: null,
-            planType: null,
-          },
-          {
-            where: { stripeSubscriptionId: canceledSubscription.id },
-          }
-        )
+        const proveedor = await Proveedor.findOne({
+          where: { stripeSubscriptionId: canceledSubscription.id },
+        })
+
+        await proveedor.update({
+          estado: 'inactivo',
+          stripeSubscriptionId: null,
+          planType: null,
+        })
       } catch (error) {
         console.error('Error al actualizar estado del proveedor:', error)
       }

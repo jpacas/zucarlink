@@ -1,11 +1,21 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const nodemailer = require('nodemailer')
 const User = require('../models/User')
 const Pais = require('../models/Pais')
 const Ingenio = require('../models/Ingenio')
 const Area = require('../models/Area')
 const Proveedor = require('../models/Proveedor')
 const { uploadToS3 } = require('./serverFunctions')
+
+// Configuración del transportador de correo
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+})
 
 ////////////////////////////////////////////////////////////
 ///// Obtener todos los usuarios //////////////////////////
@@ -504,6 +514,160 @@ const logout = (req, res) => {
   }
 }
 
+////////////////////////////////////////////////////////////
+///// Obtener usuarios por proveedor ///////////////////////
+///////////////////////////////////////////////////////////
+
+const getProviderUsers = async (req, res) => {
+  const { id } = req.params
+
+  try {
+    const response = await User.findAll({
+      where: { proveedorId: id },
+      attributes: [
+        'id',
+        'nombre',
+        'apellido',
+        'email',
+        'avatarUrl',
+        'acercaDe',
+      ],
+      include: [
+        {
+          model: Pais,
+          as: 'pais',
+          attributes: ['nombre'],
+        },
+        {
+          model: Area,
+          as: 'area',
+          attributes: ['nombre'],
+          required: false,
+        },
+      ],
+    })
+
+    if (!response.length) {
+      return res.status(204).send([]) // No hay contenido
+    }
+
+    const usuarios = response.map((usuario) => ({
+      id: usuario.id,
+      nombre: usuario.nombre,
+      apellido: usuario.apellido,
+      email: usuario.email,
+      avatarUrl: usuario.avatarUrl,
+      pais: usuario.pais.nombre,
+      area: usuario.area?.nombre || null,
+      acercaDe: usuario.acercaDe,
+    }))
+
+    res.status(200).json(usuarios)
+  } catch (error) {
+    console.error('Error al obtener usuarios del proveedor:', error)
+    res
+      .status(500)
+      .json({ message: 'Error al obtener los usuarios del proveedor', error })
+  }
+}
+
+////////////////////////////////////////////////////////////
+///// Recuperación de contraseña ///////////////////////////
+///////////////////////////////////////////////////////////
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body
+
+    const user = await User.findOne({ where: { email } })
+    if (!user) {
+      return res.status(404).json({
+        message: 'No existe un usuario con ese correo electrónico.',
+      })
+    }
+
+    // Generar token de recuperación
+    const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    })
+
+    // Crear URL de recuperación
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`
+
+    // Configurar el correo
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Recuperación de Contraseña - ZucarLink',
+      html: `
+        <h2>Recuperación de Contraseña</h2>
+        <p>Has solicitado recuperar tu contraseña. Haz clic en el siguiente enlace para restablecerla:</p>
+        <a href="${resetUrl}" style="background-color: #ff6347; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+          Restablecer Contraseña
+        </a>
+        <p>Este enlace expirará en 1 hora.</p>
+        <p>Si no solicitaste este cambio, por favor ignora este correo.</p>
+      `,
+    }
+
+    // Enviar el correo
+    await transporter.sendMail(mailOptions)
+
+    res.status(200).json({
+      message:
+        'Se ha enviado un correo con las instrucciones para recuperar tu contraseña.',
+    })
+  } catch (error) {
+    console.error('Error en forgotPassword:', error)
+    res.status(500).json({
+      message: 'Error al procesar la solicitud de recuperación de contraseña.',
+    })
+  }
+}
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params
+    const { newPassword } = req.body
+
+    if (!newPassword) {
+      return res.status(400).json({
+        message: 'La nueva contraseña es requerida.',
+      })
+    }
+
+    // Verificar el token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const user = await User.findByPk(decoded.id)
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'Usuario no encontrado.',
+      })
+    }
+
+    // Encriptar la nueva contraseña
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    user.password = hashedPassword
+    await user.save()
+
+    res.status(200).json({
+      message: 'Contraseña actualizada exitosamente.',
+    })
+  } catch (error) {
+    console.error('Error en resetPassword:', error)
+    if (error.name === 'TokenExpiredError') {
+      return res.status(400).json({
+        message:
+          'El enlace de recuperación ha expirado. Por favor, solicita uno nuevo.',
+      })
+    }
+    res.status(500).json({
+      message: 'Error al restablecer la contraseña.',
+    })
+  }
+}
+
 module.exports = {
   getAllUsers,
   registerUser,
@@ -513,4 +677,7 @@ module.exports = {
   uploadProfilePicture,
   loginUser,
   logout,
+  getProviderUsers,
+  forgotPassword,
+  resetPassword,
 }
