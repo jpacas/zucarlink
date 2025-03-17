@@ -7,37 +7,6 @@ module.exports = {
     // 1. Renombrar 'webpage' a 'paginaWeb' (si el nombre cambia en producción)
 
     // 2. Agregar nuevas columnas requeridas en Versión 2
-    await queryInterface.addColumn('Proveedors', 'fechaRegistro', {
-      type: Sequelize.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.NOW, // Usa la fecha actual como valor por defecto
-    })
-
-    await queryInterface.addColumn('Proveedors', 'stripeCustomerId', {
-      type: Sequelize.STRING(255),
-      allowNull: true,
-    })
-
-    await queryInterface.addColumn('Proveedors', 'stripeSubscriptionId', {
-      type: Sequelize.STRING(255),
-      allowNull: true,
-    })
-
-    await queryInterface.addColumn('Proveedors', 'stripePaymentIntentId', {
-      type: Sequelize.STRING(255),
-      allowNull: true,
-    })
-
-    await queryInterface.addColumn('Proveedors', 'planType', {
-      type: Sequelize.ENUM('month', 'year'),
-      allowNull: true,
-    })
-
-    await queryInterface.addColumn('Proveedors', 'estado', {
-      type: Sequelize.ENUM('activo', 'inactivo', 'pendiente'),
-      allowNull: true,
-      defaultValue: 'pendiente', // Valor por defecto para nuevos registros
-    })
 
     // 3. Eliminar columnas obsoletas de Versión 1
     await queryInterface.removeColumn('Proveedors', 'fecha_vencimiento')
