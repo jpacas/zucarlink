@@ -5,7 +5,7 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     // 1. Renombrar 'webpage' a 'paginaWeb' (si el nombre cambia en producción)
-    await queryInterface.renameColumn('Proveedors', 'webpage', 'paginaWeb')
+    await queryInterface.removeColumn('Proveedors', 'webpage')
 
     // 2. Agregar nuevas columnas requeridas en Versión 2
     await queryInterface.addColumn('Proveedors', 'nombrePais', {
