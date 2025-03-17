@@ -30,11 +30,34 @@ const Login: React.FC = () => {
     password: '',
   })
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [isForgotPassword, setIsForgotPassword] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
+    // Limpiar mensajes cuando el usuario empieza a escribir
+    setErrorMessage(null)
+    setSuccessMessage(null)
+  }
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      await axiosInstance.post('/users/forgot-password', {
+        email: formData.email,
+      })
+      setSuccessMessage(
+        'Se ha enviado un correo con las instrucciones para recuperar tu contraseña.'
+      )
+      setIsForgotPassword(false)
+    } catch (error: any) {
+      setErrorMessage(
+        error.response?.data?.message ||
+          'Error al procesar la solicitud. Por favor, verifica tu correo electrónico.'
+      )
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,11 +89,18 @@ const Login: React.FC = () => {
     }
   }
 
+  const toggleForgotPassword = (value: boolean) => {
+    setIsForgotPassword(value)
+    // Limpiar mensajes cuando se cambia entre formularios
+    setErrorMessage(null)
+    setSuccessMessage(null)
+  }
+
   return (
     <Container component='main' maxWidth='xs' sx={{ marginTop: '150px' }}>
       <StyledPaper elevation={3}>
         <Typography component='h1' variant='h5' gutterBottom>
-          Inicia Sesión
+          {isForgotPassword ? 'Recuperar Contraseña' : 'Inicia Sesión'}
         </Typography>
 
         {errorMessage && (
@@ -79,9 +109,15 @@ const Login: React.FC = () => {
           </Alert>
         )}
 
+        {successMessage && (
+          <Alert severity='success' sx={{ width: '100%', mb: 2 }}>
+            {successMessage}
+          </Alert>
+        )}
+
         <Box
           component='form'
-          onSubmit={handleSubmit}
+          onSubmit={isForgotPassword ? handleForgotPassword : handleSubmit}
           sx={{ mt: 1, width: '100%' }}
         >
           <TextField
@@ -97,19 +133,21 @@ const Login: React.FC = () => {
             onChange={handleChange}
             variant='outlined'
           />
-          <TextField
-            margin='normal'
-            required
-            fullWidth
-            name='password'
-            label='Contraseña'
-            type='password'
-            id='password'
-            autoComplete='current-password'
-            value={formData.password}
-            onChange={handleChange}
-            variant='outlined'
-          />
+          {!isForgotPassword && (
+            <TextField
+              margin='normal'
+              required
+              fullWidth
+              name='password'
+              label='Contraseña'
+              type='password'
+              id='password'
+              autoComplete='current-password'
+              value={formData.password}
+              onChange={handleChange}
+              variant='outlined'
+            />
+          )}
           <Button
             type='submit'
             fullWidth
@@ -123,25 +161,60 @@ const Login: React.FC = () => {
               },
             }}
           >
-            Ingresar
+            {isForgotPassword ? 'Enviar Instrucciones' : 'Ingresar'}
           </Button>
           <Box sx={{ textAlign: 'center', mt: 2 }}>
-            <Typography variant='body2'>
-              ¿No tienes una cuenta?{' '}
-              <MuiLink
-                component={Link}
-                to='/register'
-                sx={{
-                  color: '#ff6347',
-                  textDecoration: 'none',
-                  '&:hover': {
-                    textDecoration: 'underline',
-                  },
-                }}
-              >
-                Regístrate aquí
-              </MuiLink>
-            </Typography>
+            {!isForgotPassword ? (
+              <>
+                <Typography variant='body2'>
+                  ¿No tienes una cuenta?{' '}
+                  <MuiLink
+                    component={Link}
+                    to='/register'
+                    sx={{
+                      color: '#ff6347',
+                      textDecoration: 'none',
+                      '&:hover': {
+                        textDecoration: 'underline',
+                      },
+                    }}
+                  >
+                    Regístrate aquí
+                  </MuiLink>
+                </Typography>
+                <Typography variant='body2' sx={{ mt: 1 }}>
+                  <MuiLink
+                    component='button'
+                    onClick={() => toggleForgotPassword(true)}
+                    sx={{
+                      color: '#ff6347',
+                      textDecoration: 'none',
+                      '&:hover': {
+                        textDecoration: 'underline',
+                      },
+                    }}
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </MuiLink>
+                </Typography>
+              </>
+            ) : (
+              <Typography variant='body2'>
+                <MuiLink
+                  component='button'
+                  onClick={() => toggleForgotPassword(false)}
+                  sx={{
+                    color: '#ff6347',
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                  }}
+                >
+                  Volver al inicio de sesión
+                </MuiLink>
+              </Typography>
+            )}
           </Box>
         </Box>
       </StyledPaper>

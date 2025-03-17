@@ -28,12 +28,19 @@ export type Pais = string
 export type Area = string
 
 export interface Proveedor {
+  id: number
   nombre: string
   email: string
-  webpage?: string
+  nombrePais: string
+  paginaWeb?: string
   logo?: string
   descripcion?: string
-  pais?: string
+  estado: 'activo' | 'inactivo' | 'pendiente'
+  fechaRegistro: Date
+  stripeCustomerId?: string
+  stripeSubscriptionId?: string
+  stripePaymentIntentId?: string
+  planType?: 'month' | 'year'
   usuariosCount?: number
 }
 

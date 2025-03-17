@@ -301,7 +301,7 @@ const Register: React.FC = () => {
     try {
       if (userType === 'empresa_proveedora') {
         if (registrationStep === 'form') {
-          // Guardar datos del proveedor en localStorage (PORQUE????)
+          // Guardar datos del proveedor en localStorage
           window.localStorage.setItem('proveedorPais', formData.pais)
           window.localStorage.setItem(
             'proveedorWeb',
@@ -329,16 +329,25 @@ const Register: React.FC = () => {
 
         if (registrationStep === 'plan' && selectedPlan) {
           try {
-            console.log('Enviando plan a Stripe:', {
-              plan: selectedPlan,
-              email: formData.email,
-              metadata: {
-                nombre: formData.nombre,
-                pais: formData.pais,
-                paginaWeb: formData.paginaWeb,
-                descripcion: formData.descripcion,
-              },
-            })
+            // Primero crear el proveedor
+            const formDataToSend = new FormData()
+            formDataToSend.append('nombre', formData.nombre)
+            formDataToSend.append('pais', formData.pais)
+            formDataToSend.append('email', formData.email)
+            formDataToSend.append('paginaWeb', formatWebUrl(formData.paginaWeb))
+            formDataToSend.append('descripcion', formData.descripcion)
+            if (formData.avatarUrl) {
+              formDataToSend.append('logo', formData.avatarUrl)
+            }
+
+            // Crear el proveedor primero
+            const proveedorResponse = await axiosInstance.post(
+              `${import.meta.env.VITE_API_URL}/helper/registerProveedor`,
+              formDataToSend,
+              {
+                headers: { 'Content-Type': 'multipart/form-data' },
+              }
+            )
 
             const response = await axiosInstance.post(
               `${import.meta.env.VITE_API_URL}/payments/create-payment-intent`,
@@ -348,13 +357,13 @@ const Register: React.FC = () => {
                 metadata: {
                   nombre: formData.nombre,
                   pais: formData.pais,
-                  paginaWeb: formData.paginaWeb,
+                  paginaWeb: formatWebUrl(formData.paginaWeb),
                   descripcion: formData.descripcion,
+                  proveedorId: proveedorResponse.data.id.toString(),
                 },
               }
             )
 
-            console.log('Respuesta de Stripe:', response.data)
             setClientSecret(response.data.clientSecret)
             setRegistrationStep('payment')
             setLoading(false)

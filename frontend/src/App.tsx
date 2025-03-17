@@ -15,6 +15,7 @@ import Directorio from './pages/Directorio'
 import DirectorioSelector from './pages/DirectorioSelector'
 import ProtectedRoute from './components/ProtectedRoute'
 import Perfil from './components/Perfil'
+import PerfilProveedor from './components/PerfilProveedor'
 import Foro from './pages/Foro'
 import Contact from './components/Contact'
 import Servicios from './pages/Servicios'
@@ -28,6 +29,7 @@ import EmpleoDetalle from './pages/EmpleoDetalle'
 import Maquinarias from './pages/Maquinarias'
 import MaquinariaDetalle from './pages/MaquinariaDetalle'
 import RegistroExitoso from './pages/RegistroExitoso'
+import ResetPassword from './pages/ResetPassword'
 
 const App: React.FC = () => {
   return (
@@ -50,6 +52,10 @@ const App: React.FC = () => {
                 ></Route>
                 <Route path='/register' element={<Register />} />
                 <Route path='/login' element={<Login />} />
+                <Route
+                  path='/reset-password/:token'
+                  element={<ResetPassword />}
+                />
                 <Route path='/contact' element={<Contact />} />
                 <Route path='/services' element={<Servicios />} />
                 <Route path='/privacidad' element={<PolPrivacidad />} />
@@ -83,6 +89,14 @@ const App: React.FC = () => {
                   element={
                     <ProtectedRoute>
                       <Perfil />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path='/perfil-proveedor/:id'
+                  element={
+                    <ProtectedRoute>
+                      <PerfilProveedor />
                     </ProtectedRoute>
                   }
                 />

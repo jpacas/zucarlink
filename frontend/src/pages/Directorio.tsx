@@ -168,7 +168,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
           .includes(filtros.nombre.toLowerCase().trim())
         const matchPais =
           !filtros.pais ||
-          proveedor.pais?.toLowerCase() === filtros.pais?.toLowerCase()
+          proveedor.nombrePais?.toLowerCase() === filtros.pais?.toLowerCase()
         return matchNombre && matchPais
       })
     }
@@ -680,6 +680,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
               boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
             },
           }}
+          onClick={() => navigate(`/perfil-proveedor/${proveedor.id}`)}
         >
           <CardContent
             sx={{
@@ -754,7 +755,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
 
             {/* Contenido principal */}
             <Box sx={{ flex: 1 }}>
-              {proveedor.pais && (
+              {proveedor.nombrePais && (
                 <Typography
                   variant='body2'
                   sx={{
@@ -765,7 +766,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                     gap: 0.5,
                   }}
                 >
-                  <strong>País:</strong> {proveedor.pais}
+                  <strong>País:</strong> {proveedor.nombrePais}
                 </Typography>
               )}
               {proveedor.descripcion && (
@@ -783,7 +784,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                   {proveedor.descripcion}
                 </Typography>
               )}
-              {proveedor.webpage && (
+              {proveedor.paginaWeb && (
                 <Box
                   sx={{
                     mt: 2,
@@ -796,9 +797,10 @@ const Directorio: React.FC<DirectorioProps> = () => {
                   <Typography
                     variant='body2'
                     component='a'
-                    href={proveedor.webpage}
+                    href={proveedor.paginaWeb}
                     target='_blank'
                     rel='noopener noreferrer'
+                    onClick={(e) => e.stopPropagation()}
                     sx={{
                       color: '#ff6347',
                       textDecoration: 'none',
