@@ -8,12 +8,6 @@ module.exports = {
     await queryInterface.removeColumn('Proveedors', 'webpage')
 
     // 2. Agregar nuevas columnas requeridas en Versión 2
-    await queryInterface.addColumn('Proveedors', 'nombrePais', {
-      type: Sequelize.STRING(255),
-      allowNull: false,
-      defaultValue: 'Desconocido', // Valor por defecto si no hay datos previos
-    })
-
     await queryInterface.addColumn('Proveedors', 'fechaRegistro', {
       type: Sequelize.DATE,
       allowNull: false,
