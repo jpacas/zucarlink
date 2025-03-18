@@ -172,7 +172,6 @@ const registerProveedor = async (req, res) => {
       return res.status(200).json(proveedorExistente)
     }
 
-    console.log('Buscando país...')
     const paisId = await Pais.findOne({ where: { nombre: pais } })
 
     if (!paisId) {
@@ -182,7 +181,6 @@ const registerProveedor = async (req, res) => {
     let logo =
       'https://zucarlink-profiles.s3.us-east-2.amazonaws.com/uploads/avatar-generico.jpg'
     if (req.file) {
-      console.log('Subiendo logo a S3...')
       logo = await uploadToS3(req.file)
     }
 
@@ -200,14 +198,9 @@ const registerProveedor = async (req, res) => {
     })
 
     if (!proveedor) {
-      console.log('Error al crear el proveedor')
       return res.status(400).json({ error: 'Error al registrar proveedor' })
     }
 
-    console.log(
-      'Proveedor creado exitosamente:',
-      JSON.stringify(proveedor.toJSON(), null, 2)
-    )
     res.status(201).json(proveedor)
   } catch (error) {
     console.error('Error en registerProveedor:', error)

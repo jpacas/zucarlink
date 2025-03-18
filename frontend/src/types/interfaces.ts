@@ -149,3 +149,32 @@ export interface Maquinaria {
   createdAt: Date
   updatedAt: Date
 }
+
+export interface FormData {
+  nombre: string
+  apellido: string
+  email: string
+  fecha_nacimiento: string
+  pais: string
+  avatarUrl: File | null
+  ingenio: string
+  area: string | null
+  proveedor: string
+  password: string
+  confirmPassword: string
+  paginaWeb: string
+  descripcion: string
+}
+
+export interface Message {
+  type: 'success' | 'error'
+  text: string
+}
+
+export interface Plan {
+  id: string
+  name: string
+  price: number
+  interval: 'month' | 'year'
+  features: string[]
+}

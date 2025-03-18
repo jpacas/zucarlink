@@ -47,42 +47,13 @@ import {
   fetchIngenios,
   fetchProveedores,
 } from '../functions/fetchFunctions'
-import { Ingenio, Proveedor, Area } from '../types/interfaces'
+import { Ingenio, Proveedor, Area, Message, Plan } from '../types/interfaces'
+import type { FormData } from '../types/interfaces'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
 import PaymentForm from '../components/PaymentForm'
-
-// Definir interfaces para los tipos
-interface FormData {
-  nombre: string
-  apellido: string
-  email: string
-  fecha_nacimiento: string
-  pais: string
-  avatarUrl: File | null
-  ingenio: string
-  area: string | null
-  proveedor: string
-  password: string
-  confirmPassword: string
-  paginaWeb: string
-  descripcion: string
-}
-
-interface Message {
-  type: 'success' | 'error'
-  text: string
-}
-
-interface Plan {
-  id: string
-  name: string
-  price: number
-  interval: 'month' | 'year'
-  features: string[]
-}
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY)
 
@@ -1925,7 +1896,7 @@ const Register: React.FC = () => {
                         textTransform: 'none',
                         fontSize: '1.1rem',
                       }}
-                      disabled={!selectedPlan}
+                      disabled={!selectedPlan || loading}
                       onClick={handleSubmit}
                     >
                       Continuar al Pago
