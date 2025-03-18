@@ -65,6 +65,11 @@ const Directorio: React.FC<DirectorioProps> = () => {
         setAreas(areasRes.data.map((area) => area.nombre))
 
         if (tipo === 'usuarios') {
+          if (!currentUser) {
+            setError('Debes iniciar sesión para ver el directorio de usuarios')
+            setLoading(false)
+            return
+          }
           const [usuariosRes, ingeniosRes] = await Promise.all([
             axiosInstance.get('/users/usuarios'),
             axiosInstance.get('/helper/ingenios'),
@@ -93,7 +98,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
     }
 
     fetchData()
-  }, [tipo])
+  }, [tipo, currentUser])
 
   useEffect(() => {
     if (tipo === 'usuarios') {
@@ -891,102 +896,160 @@ const Directorio: React.FC<DirectorioProps> = () => {
       }}
     >
       <Container maxWidth='lg'>
-        <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
-          {/* Sidebar de Filtros */}
-          <Grid
-            item
+        {tipo === 'usuarios' && !currentUser ? (
+          <Box
             sx={{
-              flex: { xs: '1 1 auto', md: '0 0 25%' },
-              maxWidth: { xs: '100%', md: '25%' },
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              p: 4,
+              textAlign: 'center',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+              borderRadius: '16px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
             }}
           >
-            {renderFiltros()}
-          </Grid>
-          {/* Resultados */}
-          <Grid
-            item
-            sx={{ flex: { xs: '1 1 auto', md: '1' }, maxWidth: '100%' }}
-          >
-            {error && (
-              <Typography color='error' textAlign='center' sx={{ mb: 3 }}>
-                {error}
-              </Typography>
-            )}
-            <Grid container spacing={3}>
-              {loading ? (
-                <Grid item xs={12}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      minHeight: '400px',
-                    }}
-                  >
-                    <CircularProgress
-                      sx={{
-                        color: '#ff6347',
-                        width: '60px !important',
-                        height: '60px !important',
-                      }}
-                    />
-                  </Box>
-                </Grid>
-              ) : elementosFiltrados.length > 0 ? (
-                elementosFiltrados.map((item, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={index}>
-                    {renderCard(item)}
-                  </Grid>
-                ))
-              ) : (
-                <Grid item xs={12}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      p: 4,
-                      textAlign: 'center',
-                      background:
-                        'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                      borderRadius: '16px',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                    }}
-                  >
-                    <Typography
-                      variant='h6'
-                      sx={{
-                        mb: 2,
-                        fontWeight: 600,
-                        color: '#1a1a1a',
-                      }}
-                    >
-                      {tipo === 'proveedores'
-                        ? 'No hay proveedores registrados'
-                        : tipo === 'ingenios'
-                        ? 'No hay ingenios registrados'
-                        : 'No hay usuarios registrados'}
-                    </Typography>
-                    <Typography
-                      variant='body1'
-                      sx={{
-                        color: '#4a4a4a',
-                        maxWidth: '600px',
-                      }}
-                    >
-                      {tipo === 'proveedores'
-                        ? 'Por el momento no hay proveedores registrados en el directorio. Vuelve más tarde para ver los proveedores disponibles.'
-                        : tipo === 'ingenios'
-                        ? 'Por el momento no hay ingenios registrados en el directorio. Vuelve más tarde para ver los ingenios disponibles.'
-                        : 'Por el momento no hay usuarios registrados en el directorio. Vuelve más tarde para ver los usuarios disponibles.'}
-                    </Typography>
-                  </Box>
-                </Grid>
+            <Typography
+              variant='h6'
+              sx={{
+                mb: 2,
+                fontWeight: 600,
+                color: '#1a1a1a',
+              }}
+            >
+              Acceso Restringido
+            </Typography>
+            <Typography
+              variant='body1'
+              sx={{
+                color: '#4a4a4a',
+                maxWidth: '600px',
+                mb: 3,
+              }}
+            >
+              Para acceder al directorio de usuarios, necesitas iniciar sesión
+              en la plataforma.
+            </Typography>
+            <Button
+              variant='contained'
+              onClick={() => navigate('/login')}
+              sx={{
+                backgroundColor: '#ff6347',
+                color: '#fff',
+                textTransform: 'none',
+                borderRadius: '50px',
+                padding: '10px 24px',
+                boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  backgroundColor: '#e5533f',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
+                },
+              }}
+            >
+              Iniciar Sesión
+            </Button>
+          </Box>
+        ) : (
+          <Grid container spacing={4} direction={{ xs: 'column', md: 'row' }}>
+            {/* Sidebar de Filtros */}
+            <Grid
+              item
+              sx={{
+                flex: { xs: '1 1 auto', md: '0 0 25%' },
+                maxWidth: { xs: '100%', md: '25%' },
+              }}
+            >
+              {renderFiltros()}
+            </Grid>
+            {/* Resultados */}
+            <Grid
+              item
+              sx={{ flex: { xs: '1 1 auto', md: '1' }, maxWidth: '100%' }}
+            >
+              {error && (
+                <Typography color='error' textAlign='center' sx={{ mb: 3 }}>
+                  {error}
+                </Typography>
               )}
+              <Grid container spacing={3}>
+                {loading ? (
+                  <Grid item xs={12}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        minHeight: '400px',
+                      }}
+                    >
+                      <CircularProgress
+                        sx={{
+                          color: '#ff6347',
+                          width: '60px !important',
+                          height: '60px !important',
+                        }}
+                      />
+                    </Box>
+                  </Grid>
+                ) : elementosFiltrados.length > 0 ? (
+                  elementosFiltrados.map((item, index) => (
+                    <Grid item xs={12} sm={6} md={4} key={index}>
+                      {renderCard(item)}
+                    </Grid>
+                  ))
+                ) : (
+                  <Grid item xs={12}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        p: 4,
+                        textAlign: 'center',
+                        background:
+                          'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                        borderRadius: '16px',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                      }}
+                    >
+                      <Typography
+                        variant='h6'
+                        sx={{
+                          mb: 2,
+                          fontWeight: 600,
+                          color: '#1a1a1a',
+                        }}
+                      >
+                        {tipo === 'proveedores'
+                          ? 'No hay proveedores registrados'
+                          : tipo === 'ingenios'
+                          ? 'No hay ingenios registrados'
+                          : 'No hay usuarios registrados'}
+                      </Typography>
+                      <Typography
+                        variant='body1'
+                        sx={{
+                          color: '#4a4a4a',
+                          maxWidth: '600px',
+                        }}
+                      >
+                        {tipo === 'proveedores'
+                          ? 'Por el momento no hay proveedores registrados en el directorio. Vuelve más tarde para ver los proveedores disponibles.'
+                          : tipo === 'ingenios'
+                          ? 'Por el momento no hay ingenios registrados en el directorio. Vuelve más tarde para ver los ingenios disponibles.'
+                          : 'Por el momento no hay usuarios registrados en el directorio. Vuelve más tarde para ver los usuarios disponibles.'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                )}
+              </Grid>
             </Grid>
           </Grid>
-        </Grid>
+        )}
       </Container>
     </Box>
   )

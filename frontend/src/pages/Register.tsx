@@ -464,28 +464,6 @@ const Register: React.FC = () => {
           }}
         >
           <Box sx={{ textAlign: 'center', mb: 6 }}>
-            <Typography
-              variant='h3'
-              sx={{
-                fontWeight: 'bold',
-                background: 'linear-gradient(45deg, #1976d2, #42a5f5)',
-                backgroundClip: 'text',
-                textFillColor: 'transparent',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                mb: 2,
-              }}
-            >
-              Registro de Usuario
-            </Typography>
-            <Typography
-              variant='h6'
-              color='text.secondary'
-              sx={{ maxWidth: '600px', mx: 'auto', lineHeight: 1.6, mb: 2 }}
-            >
-              Selecciona el tipo de cuenta que mejor se adapte a tus necesidades
-              y comienza a disfrutar de todos los beneficios
-            </Typography>
             <Box
               sx={{
                 backgroundColor: 'info.light',
@@ -501,13 +479,13 @@ const Register: React.FC = () => {
               <Store sx={{ color: 'info.main', fontSize: 40 }} />
               <Typography
                 variant='body1'
-                color='info.dark'
+                color='white'
                 sx={{ textAlign: 'left' }}
               >
                 <strong>¿Eres una empresa proveedora?</strong> Para registrar
                 usuarios de tu empresa, primero debes registrar tu empresa en la
                 plataforma. Una vez registrada, tus empleados podrán crear sus
-                cuentas seleccionando "Usuario Proveedor".
+                cuentas seleccionando "Usuarios de Proveedores".
               </Typography>
             </Box>
           </Box>

@@ -79,7 +79,7 @@ const sendReminderEmail = async (to, messageInfo) => {
                   </p>
                   
                   <div style="text-align: center; margin-top: 30px;">
-                    <a href="${process.env.FRONTEND_URL}" 
+                    <a href="https://zucarlink.com/" 
                        style="background-color: #2C5282; color: white; padding: 12px 24px; 
                               text-decoration: none; border-radius: 5px; font-weight: bold;
                               display: inline-block;">

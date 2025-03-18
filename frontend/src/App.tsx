@@ -68,22 +68,8 @@ const App: React.FC = () => {
                   element={<MaquinariaDetalle />}
                 />
                 <Route path='/registro-exitoso' element={<RegistroExitoso />} />
-                <Route
-                  path='/directorio'
-                  element={
-                    <ProtectedRoute>
-                      <DirectorioSelector />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path='/directorio/:tipo'
-                  element={
-                    <ProtectedRoute>
-                      <Directorio />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path='/directorio' element={<DirectorioSelector />} />
+                <Route path='/directorio/:tipo' element={<Directorio />} />
                 <Route
                   path='/perfil/:id'
                   element={

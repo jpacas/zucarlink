@@ -212,10 +212,11 @@ const Navbar: React.FC = () => {
             <>
               <Button
                 component={Link}
-                to='/services'
-                color='inherit'
+                to='/directorio'
+                color={isActive('/directorio') ? 'primary' : 'inherit'}
                 sx={{
                   fontSize: '1rem',
+                  fontWeight: isActive('/directorio') ? 'bold' : 'normal',
                   color: '#4a4a4a',
                   transition: 'all 0.3s ease',
                   '&:hover': {
@@ -224,7 +225,7 @@ const Navbar: React.FC = () => {
                   },
                 }}
               >
-                Servicios
+                Directorio
               </Button>
               <Button
                 component={Link}
@@ -262,6 +263,22 @@ const Navbar: React.FC = () => {
               </Button>
             </>
           )}
+          <Button
+            component={Link}
+            to='/services'
+            color='inherit'
+            sx={{
+              fontSize: '1rem',
+              color: '#4a4a4a',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                color: '#ff6347',
+                transform: 'translateY(-2px)',
+              },
+            }}
+          >
+            Servicios
+          </Button>
           <Button
             component={Link}
             to='/contact'
@@ -575,7 +592,7 @@ const Navbar: React.FC = () => {
             <>
               <ListItemButton
                 component={Link}
-                to='/services'
+                to='/directorio'
                 onClick={() => toggleDrawer(false)}
                 sx={{
                   borderRadius: '8px',
@@ -588,10 +605,11 @@ const Navbar: React.FC = () => {
                 }}
               >
                 <ListItemText
-                  primary='Servicios'
+                  primary='Directorio'
                   primaryTypographyProps={{
                     sx: {
                       color: '#4a4a4a',
+                      fontWeight: isActive('/directorio') ? 'bold' : 'normal',
                     },
                   }}
                 />
@@ -646,6 +664,30 @@ const Navbar: React.FC = () => {
               </ListItemButton>
             </>
           )}
+
+          <ListItemButton
+            component={Link}
+            to='/services'
+            onClick={() => toggleDrawer(false)}
+            sx={{
+              borderRadius: '8px',
+              mb: 1,
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                transform: 'translateX(8px)',
+              },
+            }}
+          >
+            <ListItemText
+              primary='Servicios'
+              primaryTypographyProps={{
+                sx: {
+                  color: '#4a4a4a',
+                },
+              }}
+            />
+          </ListItemButton>
 
           <ListItemButton
             component={Link}

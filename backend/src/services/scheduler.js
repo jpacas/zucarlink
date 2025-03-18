@@ -5,7 +5,7 @@ const User = require('../models/User')
 
 // Programar la tarea para ejecutarse cada hora
 const scheduleReminderChecks = () => {
-  cron.schedule('*/5 * * * *', async () => {
+  cron.schedule('0 9 * * *', async () => {
     console.log('Ejecutando verificación de mensajes no leídos...')
     try {
       await checkUnreadMessagesAndSendReminders(Message, User)

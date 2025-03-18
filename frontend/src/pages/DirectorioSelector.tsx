@@ -6,14 +6,18 @@ import {
   Typography,
   Grid,
   Container,
+  Button,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import BusinessIcon from '@mui/icons-material/Business'
 import GroupIcon from '@mui/icons-material/Group'
 import LocalShippingIcon from '@mui/icons-material/LocalShipping'
+import LockIcon from '@mui/icons-material/Lock'
+import { useAuth } from '../context/AuthContext'
 
 const DirectorioSelector: React.FC = () => {
   const navigate = useNavigate()
+  const { user: currentUser } = useAuth()
 
   const options = [
     {
@@ -21,18 +25,21 @@ const DirectorioSelector: React.FC = () => {
       icon: <BusinessIcon sx={{ fontSize: 60 }} />,
       path: '/directorio/ingenios',
       description: 'Explora el directorio de ingenios azucareros',
+      disabled: false,
     },
     {
       title: 'Proveedores',
       icon: <LocalShippingIcon sx={{ fontSize: 60 }} />,
       path: '/directorio/proveedores',
       description: 'Descubre proveedores del sector azucarero',
+      disabled: false,
     },
     {
       title: 'Usuarios',
       icon: <GroupIcon sx={{ fontSize: 60 }} />,
       path: '/directorio/usuarios',
       description: 'Conecta con profesionales del sector',
+      disabled: !currentUser,
     },
   ]
 
@@ -76,18 +83,25 @@ const DirectorioSelector: React.FC = () => {
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
-                  cursor: 'pointer',
+                  cursor: option.disabled ? 'not-allowed' : 'pointer',
                   transition: 'all 0.3s ease',
                   borderRadius: '16px',
                   background:
                     'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                  opacity: option.disabled ? 0.7 : 1,
                   '&:hover': {
-                    transform: 'translateY(-8px)',
-                    boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
+                    transform: option.disabled ? 'none' : 'translateY(-8px)',
+                    boxShadow: option.disabled
+                      ? '0 4px 20px rgba(0,0,0,0.05)'
+                      : '0 12px 40px rgba(0,0,0,0.12)',
                   },
                 }}
-                onClick={() => navigate(option.path)}
+                onClick={() => {
+                  if (!option.disabled) {
+                    navigate(option.path)
+                  }
+                }}
               >
                 <CardContent
                   sx={{
@@ -104,7 +118,7 @@ const DirectorioSelector: React.FC = () => {
                       mb: 3,
                       transition: 'transform 0.3s ease',
                       '&:hover': {
-                        transform: 'rotate(10deg)',
+                        transform: option.disabled ? 'none' : 'rotate(10deg)',
                       },
                     }}
                   >
@@ -120,6 +134,16 @@ const DirectorioSelector: React.FC = () => {
                     }}
                   >
                     {option.title}
+                    {option.disabled && (
+                      <LockIcon
+                        sx={{
+                          ml: 1,
+                          fontSize: 20,
+                          color: '#ff6347',
+                          verticalAlign: 'middle',
+                        }}
+                      />
+                    )}
                   </Typography>
                   <Typography
                     variant='body1'
@@ -130,6 +154,32 @@ const DirectorioSelector: React.FC = () => {
                   >
                     {option.description}
                   </Typography>
+                  {option.disabled && (
+                    <Button
+                      variant='contained'
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate('/login')
+                      }}
+                      sx={{
+                        mt: 2,
+                        backgroundColor: '#ff6347',
+                        color: '#fff',
+                        textTransform: 'none',
+                        borderRadius: '50px',
+                        padding: '8px 20px',
+                        boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          backgroundColor: '#e5533f',
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
+                        },
+                      }}
+                    >
+                      Iniciar Sesión
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </Grid>

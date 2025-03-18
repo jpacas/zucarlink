@@ -82,7 +82,7 @@ const initializeDatabase = async () => {
 initializeDatabase()
 
 // Inicializar el programador de recordatorios
-//scheduleReminderChecks()
+scheduleReminderChecks()
 
 // Rutas
 app.use('/users', userRoutes)
