@@ -14,6 +14,7 @@ import {
   Container,
   CardActions,
   Button,
+  CircularProgress,
 } from '@mui/material'
 import { User, Ingenio, Area, Proveedor } from '../types/interfaces'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -46,6 +47,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
   const [ingeniosList, setIngeniosList] = useState<Ingenio[]>([])
   const [ingeniosFiltrados, setIngeniosFiltrados] = useState<Ingenio[]>([])
   const [areas, setAreas] = useState<Area[]>([])
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const { startChat } = useChat()
   const { user: currentUser } = useAuth()
@@ -53,6 +55,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true)
         const [paisesRes, areasRes] = await Promise.all([
           axiosInstance.get<{ nombre: string }[]>('/helper/paises'),
           axiosInstance.get<{ nombre: string }[]>('/helper/areas'),
@@ -84,6 +87,8 @@ const Directorio: React.FC<DirectorioProps> = () => {
         } else {
           setError('Error desconocido.')
         }
+      } finally {
+        setLoading(false)
       }
     }
 
@@ -908,7 +913,26 @@ const Directorio: React.FC<DirectorioProps> = () => {
               </Typography>
             )}
             <Grid container spacing={3}>
-              {elementosFiltrados.length > 0 ? (
+              {loading ? (
+                <Grid item xs={12}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      minHeight: '400px',
+                    }}
+                  >
+                    <CircularProgress
+                      sx={{
+                        color: '#ff6347',
+                        width: '60px !important',
+                        height: '60px !important',
+                      }}
+                    />
+                  </Box>
+                </Grid>
+              ) : elementosFiltrados.length > 0 ? (
                 elementosFiltrados.map((item, index) => (
                   <Grid item xs={12} sm={6} md={4} key={index}>
                     {renderCard(item)}

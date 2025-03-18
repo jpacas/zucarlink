@@ -38,24 +38,13 @@ const createPaymentIntent = async (req, res) => {
         metadata: metadata || {}, // Asegurarse de que metadata no sea null
       })
 
-      console.log('Cliente de Stripe creado:', {
-        customerId: customer.id,
-        email: customer.email,
-        metadata: customer.metadata,
-      })
-
       // Actualizar el proveedor con el stripeCustomerId
       if (metadata?.proveedorId) {
-        console.log('Actualizando proveedor con stripeCustomerId:', {
-          proveedorId: metadata.proveedorId,
-          customerId: customer.id,
-        })
         const proveedor = await Proveedor.findByPk(metadata.proveedorId)
         if (proveedor) {
           await proveedor.update({
             stripeCustomerId: customer.id,
           })
-          console.log('Proveedor actualizado con stripeCustomerId')
         } else {
           console.error(
             'No se encontró el proveedor para actualizar:',
@@ -73,18 +62,15 @@ const createPaymentIntent = async (req, res) => {
           },
         ],
         payment_behavior: 'default_incomplete',
-        payment_settings: { save_default_payment_method: 'on_subscription' },
+        payment_settings: {
+          save_default_payment_method: 'on_subscription',
+          payment_method_types: ['card'],
+        },
         expand: ['latest_invoice.payment_intent'],
         metadata: {
           ...metadata,
           customerId: customer.id,
         },
-      })
-
-      console.log('Suscripción creada:', {
-        subscriptionId: subscription.id,
-        customerId: subscription.customer,
-        metadata: subscription.metadata,
       })
 
       // Verificar que se creó el payment intent

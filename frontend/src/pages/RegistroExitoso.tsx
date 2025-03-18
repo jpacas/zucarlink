@@ -44,9 +44,9 @@ const RegistroExitoso = () => {
         window.localStorage.removeItem('proveedorLogo')
         window.sessionStorage.removeItem('proveedorData')
 
-        // Redirigir al login después de 3 segundos
+        // Redirigir al registro después de 3 segundos
         setTimeout(() => {
-          navigate('/login')
+          navigate('/register')
         }, 3000)
       } catch (error: any) {
         console.error('Error al verificar pago:', error)

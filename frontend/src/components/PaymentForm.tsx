@@ -78,7 +78,16 @@ const PaymentForm = ({
 
   return (
     <Box sx={{ width: '100%' }}>
-      <PaymentElement />
+      <PaymentElement
+        options={{
+          defaultValues: {
+            billingDetails: {
+              email: email,
+              name: nombre,
+            },
+          },
+        }}
+      />
       {error && (
         <Typography color='error' sx={{ mt: 2 }}>
           {error}
