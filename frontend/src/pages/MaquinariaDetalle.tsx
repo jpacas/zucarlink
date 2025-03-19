@@ -983,10 +983,7 @@ const MaquinariaDetalle: React.FC = () => {
                           }}
                         >
                           {ingeniosFiltrados.map((ingenio) => (
-                            <MenuItem
-                              key={`ingenio-${ingenio.id}`}
-                              value={ingenio.nombre}
-                            >
+                            <MenuItem key={ingenio.id} value={ingenio.nombre}>
                               {ingenio.nombre}
                             </MenuItem>
                           ))}

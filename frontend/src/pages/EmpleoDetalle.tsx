@@ -84,9 +84,9 @@ const EmpleoDetalle: React.FC = () => {
           axios.get(`${import.meta.env.VITE_API_URL}/helper/paises`),
         ])
 
-        setAreas(areasRes.data)
+        setAreas(areasRes.data.map((area: { nombre: string }) => area.nombre))
         setIngenios(ingeniosRes.data)
-        setPaises(paisesRes.data)
+        setPaises(paisesRes.data.map((pais: { nombre: string }) => pais.nombre))
       } catch (error) {
         console.error('Error al cargar datos:', error)
       }
