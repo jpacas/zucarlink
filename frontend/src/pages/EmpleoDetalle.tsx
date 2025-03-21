@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import axios from 'axios'
+import axiosInstance from '../utils/axiosConfig'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
@@ -79,9 +79,9 @@ const EmpleoDetalle: React.FC = () => {
     const fetchData = async () => {
       try {
         const [areasRes, ingeniosRes, paisesRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_URL}/helper/areas`),
-          axios.get(`${import.meta.env.VITE_API_URL}/helper/ingenios`),
-          axios.get(`${import.meta.env.VITE_API_URL}/helper/paises`),
+          axiosInstance.get(`${import.meta.env.VITE_API_URL}/helper/areas`),
+          axiosInstance.get(`${import.meta.env.VITE_API_URL}/helper/ingenios`),
+          axiosInstance.get(`${import.meta.env.VITE_API_URL}/helper/paises`),
         ])
 
         setAreas(areasRes.data.map((area: { nombre: string }) => area.nombre))
@@ -101,18 +101,15 @@ const EmpleoDetalle: React.FC = () => {
       setLoading(true)
       setError(null)
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/empleos/${empleoId}`,
-        {
-          timeout: 5000,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          params: {
-            incrementView: !searchParams.get('edit'), // No incrementar vistas en modo edición
-          },
-        }
-      )
+      const response = await axiosInstance.get(`/empleos/${empleoId}`, {
+        timeout: 5000,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        params: {
+          incrementView: !searchParams.get('edit'), // No incrementar vistas en modo edición
+        },
+      })
 
       setEmpleo(response.data)
 
@@ -180,8 +177,8 @@ const EmpleoDetalle: React.FC = () => {
         formDataToSend.append('archivos', file)
       })
 
-      const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/empleos/${empleoId}`,
+      const response = await axiosInstance.put(
+        `/empleos/${empleoId}`,
         formDataToSend,
         {
           headers: {
@@ -208,7 +205,7 @@ const EmpleoDetalle: React.FC = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/empleos/${empleoId}`)
+      await axiosInstance.delete(`/empleos/${empleoId}`)
       enqueueSnackbar('Oferta de empleo eliminada con éxito', {
         variant: 'success',
       })

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
-import axios from 'axios'
 
 import {
   Box,
@@ -42,6 +41,7 @@ import {
   Close,
 } from '@mui/icons-material'
 import { useSnackbar } from 'notistack'
+import axiosInstance from '../utils/axiosConfig'
 import { Maquinaria, Pais, Ingenio } from '../types/interfaces'
 import { useAuth } from '../context/AuthContext'
 import { fetchIngenios, fetchPaises } from '../functions/fetchFunctions'
@@ -138,18 +138,11 @@ const MaquinariaDetalle: React.FC = () => {
       setLoading(true)
       setError(null)
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/maquinaria/${maquinariaId}`,
-        {
-          timeout: 5000,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          params: {
-            incrementView: !searchParams.get('edit'), // No incrementar vistas en modo edición
-          },
-        }
-      )
+      const response = await axiosInstance.get(`/maquinaria/${maquinariaId}`, {
+        params: {
+          incrementView: !searchParams.get('edit'), // No incrementar vistas en modo edición
+        },
+      })
 
       setMaquinaria(response.data)
 
@@ -202,15 +195,11 @@ const MaquinariaDetalle: React.FC = () => {
         formDataObj.append('archivosToDelete', id.toString())
       })
 
-      await axios.put(
-        `${import.meta.env.VITE_API_URL}/maquinaria/${maquinariaId}`,
-        formDataObj,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      )
+      await axiosInstance.put(`/maquinaria/${maquinariaId}`, formDataObj, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
 
       enqueueSnackbar('Maquinaria actualizada exitosamente', {
         variant: 'success',
@@ -227,9 +216,7 @@ const MaquinariaDetalle: React.FC = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(
-        `${import.meta.env.VITE_API_URL}/maquinaria/${maquinariaId}`
-      )
+      await axiosInstance.delete(`/maquinaria/${maquinariaId}`)
       enqueueSnackbar('Maquinaria eliminada exitosamente', {
         variant: 'success',
       })

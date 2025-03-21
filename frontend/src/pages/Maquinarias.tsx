@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
 import { useSnackbar } from 'notistack'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -51,6 +50,7 @@ import {
 import { fetchPaises, fetchIngenios } from '../functions/fetchFunctions'
 import { Maquinaria, Pais, Ingenio } from '../types/interfaces'
 import { useAuth } from '../context/AuthContext'
+import axiosInstance from '../utils/axiosConfig'
 
 const Maquinarias: React.FC = () => {
   const [maquinarias, setMaquinarias] = useState<Maquinaria[]>([])
@@ -120,9 +120,7 @@ const Maquinarias: React.FC = () => {
   const fetchMaquinarias = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/maquinaria`
-      )
+      const response = await axiosInstance.get('/maquinaria')
       setMaquinarias(response.data)
     } catch (error) {
       console.error('Error al cargar maquinarias:', error)
@@ -235,8 +233,8 @@ const Maquinarias: React.FC = () => {
       }
 
       if (editMode && currentMaquinariaId) {
-        await axios.put(
-          `${import.meta.env.VITE_API_URL}/maquinaria/${currentMaquinariaId}`,
+        await axiosInstance.put(
+          `/maquinaria/${currentMaquinariaId}`,
           formDataObj,
           config
         )
@@ -244,11 +242,7 @@ const Maquinarias: React.FC = () => {
           variant: 'success',
         })
       } else {
-        await axios.post(
-          `${import.meta.env.VITE_API_URL}/maquinaria`,
-          formDataObj,
-          config
-        )
+        await axiosInstance.post('/maquinaria', formDataObj, config)
         enqueueSnackbar('Maquinaria publicada exitosamente', {
           variant: 'success',
         })
@@ -274,15 +268,8 @@ const Maquinarias: React.FC = () => {
     }
 
     try {
-      await axios({
-        method: 'DELETE',
-        url: `${
-          import.meta.env.VITE_API_URL
-        }/maquinaria/${selectedMaquinariaId}`,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        data: JSON.stringify({ usuarioId: user.id }),
+      await axiosInstance.delete(`/maquinaria/${selectedMaquinariaId}`, {
+        data: { usuarioId: user.id },
       })
       enqueueSnackbar('Maquinaria eliminada exitosamente', {
         variant: 'success',
@@ -311,7 +298,7 @@ const Maquinarias: React.FC = () => {
     setEditMode(true)
     setModalOpen(true)
     setMenuAnchorEl(null)
-    setSelectedMaquinariaId(null)
+    setSelectedMaquinariaId(null) //Porque esto?
   }
 
   const handleMaquinariaClick = (maquinariaId: number) => {

@@ -24,7 +24,7 @@ import {
   DialogTitle,
   Container,
 } from '@mui/material'
-import axios from 'axios'
+import axiosInstance from '../utils/axiosConfig'
 import { useAuth } from '../context/AuthContext'
 import { useSnackbar } from 'notistack'
 import { Empleo, Ingenio, Area } from '../types/interfaces'
@@ -91,9 +91,7 @@ const Empleos: React.FC = () => {
   const fetchEmpleos = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/empleos`
-      )
+      const response = await axiosInstance.get('/empleos')
       setEmpleos(response.data)
     } catch (error) {
       console.error('Error al cargar empleos:', error)
@@ -276,16 +274,10 @@ const Empleos: React.FC = () => {
 
     try {
       setFormLoading(true)
-      console.log(`Eliminando empleo con ID: ${selectedEmpleoId}`)
 
-      // Verificar la URL completa para depuración
-      const deleteUrl = `${
-        import.meta.env.VITE_API_URL
-      }/empleos/${selectedEmpleoId}`
-      console.log(`URL de eliminación: ${deleteUrl}`)
-
-      const response = await axios.delete(deleteUrl)
-      console.log('Respuesta del servidor:', response)
+      const response = await axiosInstance.delete(
+        `/empleos/${selectedEmpleoId}`
+      )
 
       if (response.status === 200 || response.status === 204) {
         // Actualizar el estado local eliminando el empleo
@@ -380,20 +372,17 @@ const Empleos: React.FC = () => {
       })
 
       let response: { data: Empleo }
-      let url: string
 
       if (editMode && currentEmpleoId) {
         // Actualizar empleo existente
-        url = `${import.meta.env.VITE_API_URL}/empleos/${currentEmpleoId}`
-        console.log(`Actualizando empleo en: ${url}`)
 
-        response = await axios.put(url, formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        })
-
-        console.log('Respuesta de actualización:', response)
+        response = await axiosInstance.put(
+          `/empleos/${currentEmpleoId}`,
+          formDataToSend,
+          {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          }
+        )
 
         // Actualizar el empleo en el estado
         setEmpleos((prev) =>
@@ -407,16 +396,9 @@ const Empleos: React.FC = () => {
         })
       } else {
         // Crear nuevo empleo
-        url = `${import.meta.env.VITE_API_URL}/empleos`
-        console.log(`Creando empleo en: ${url}`)
-
-        response = await axios.post(url, formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+        const response = await axiosInstance.post('/empleos', formDataToSend, {
+          headers: { 'Content-Type': 'multipart/form-data' },
         })
-
-        console.log('Respuesta de creación:', response)
 
         setEmpleos((prev) => [response.data, ...prev])
 
