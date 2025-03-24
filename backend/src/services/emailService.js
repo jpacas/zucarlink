@@ -287,8 +287,164 @@ const sendWelcomeEmail = async (to, userName) => {
   }
 }
 
+// Función para enviar notificación de nuevo post
+const sendNewPostNotification = async (to, userName, postInfo) => {
+  const { titulo, contenido, autor } = postInfo
+
+  const htmlTemplate = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Nuevo mensaje de tu área - Zucarlink</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, sans-serif;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+          <td style="padding: 20px 0; text-align: center; background-color: #ffffff;">
+            <img src="https://sawa-dev-2-storage-bucket.storage.googleapis.com/profiles/xhcujhfcadwkupzz-88efb.png" 
+                 alt="Zucarlink Logo" 
+                 style="width: 200px; height: auto; margin-bottom: 10px;">
+          </td>
+        </tr>
+      </table>
+      
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+          <td>
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <div>
+                <h2 style="color: #e5533f; text-align: center; font-size: 24px; background-color: #f8f9fa; padding: 20px; margin: 0; border-top-left-radius: 8px; border-top-right-radius: 8px;">
+                  Nuevo mensaje en tu área
+                </h2>
+                
+                <div style="background-color: #f8f9fa; border-radius: 0 0 5px 5px; margin: 0 0 20px 0; padding: 20px;">
+                  <p style="color: #4A5568; font-size: 16px; line-height: 1.6;">
+                    Hola ${userName},<br><br>
+                    ${autor} ha compartido un nuevo mensaje en tu área:
+                  </p>
+                  
+                  <div style="background-color: #ffffff; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                    <h3 style="color: #2C5282; margin: 0 0 10px 0; font-size: 18px;">
+                      ${titulo}
+                    </h3>
+                    <p style="color: #4A5568; font-size: 14px; line-height: 1.6; margin: 0;">
+                      ${contenido.substring(0, 150)}${
+    contenido.length > 100 ? '...' : ''
+  }
+                    </p>
+                  </div>
+                  
+                  <div style="text-align: center; margin-top: 30px;">
+                    <a href="https://zucarlink.com/" 
+                       style="background-color: #e5533f; color: white; padding: 12px 24px; 
+                              text-decoration: none; border-radius: 5px; font-weight: bold;
+                              display: inline-block;">
+                      Ver mensaje completo
+                    </a>
+                  </div>
+                </div>
+              </div>
+              
+              <div style="background-color: #e5533f; padding: 20px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                <p style="color: #ffffff; text-align: center; margin: 0; font-size: 14px;">
+                  © ${new Date().getFullYear()} Zucarlink - La red social de la industria azucarera
+                </p>
+                <p style="color: #E2E8F0; font-size: 12px; text-align: center; margin-top: 10px;">
+                  Este es un correo automático, por favor no responder.
+                </p>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `
+
+  const mailOptions = {
+    from: {
+      name: 'Zucarlink',
+      address: process.env.EMAIL_USER,
+    },
+    to: to,
+    subject: 'Nuevo mensaje en el foro - Zucarlink',
+    html: htmlTemplate,
+  }
+
+  try {
+    await transporter.sendMail(mailOptions)
+    console.log('Notificación de nuevo post enviada exitosamente')
+    return true
+  } catch (error) {
+    console.error('Error al enviar notificación de nuevo post:', error)
+    throw error
+  }
+}
+
+// Función para verificar y enviar notificaciones de nuevos posts
+const checkNewPostsAndSendNotifications = async (Post, User, Area) => {
+  try {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+
+    // Buscar posts creados en las últimas 24 horas
+    const recentPosts = await Post.findAll({
+      where: {
+        createdAt: {
+          [Op.gte]: twentyFourHoursAgo,
+        },
+      },
+      include: [
+        {
+          model: User,
+          as: 'autor',
+          attributes: ['nombre', 'apellido'],
+        },
+        {
+          model: Area,
+          as: 'area',
+          attributes: ['id'],
+        },
+      ],
+    })
+
+    // Para cada post, encontrar usuarios en la misma área
+    for (const post of recentPosts) {
+      if (!post.area) continue // Saltar si el post no tiene área asignada
+
+      const usersInSameArea = await User.findAll({
+        where: {
+          areaId: post.area.id,
+        },
+        attributes: ['email', 'nombre', 'apellido'],
+      })
+
+      // Enviar notificación a cada usuario
+      for (const user of usersInSameArea) {
+        await sendNewPostNotification(
+          user.email,
+          `${user.nombre} ${user.apellido}`,
+          {
+            titulo: post.titulo,
+            contenido: post.contenido,
+            autor: `${post.autor.nombre} ${post.autor.apellido}`,
+          }
+        )
+      }
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error al procesar notificaciones de nuevos posts:', error)
+    throw error
+  }
+}
+
 module.exports = {
   sendReminderEmail,
   checkUnreadMessagesAndSendReminders,
   sendWelcomeEmail,
+  sendNewPostNotification,
+  checkNewPostsAndSendNotifications,
 }
