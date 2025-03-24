@@ -7,6 +7,7 @@ const Ingenio = require('../models/Ingenio')
 const Area = require('../models/Area')
 const Proveedor = require('../models/Proveedor')
 const { uploadToS3 } = require('./serverFunctions')
+const { sendWelcomeEmail } = require('../services/emailService')
 
 // Configuración del transportador de correo
 const transporter = nodemailer.createTransport({
@@ -211,6 +212,14 @@ const registerUser = async (req, res) => {
       ingenioId: foundIngenio ? foundIngenio.id : null,
       proveedorId: foundProveedor ? foundProveedor.id : null,
     })
+
+    // Enviar correo de bienvenida
+    try {
+      await sendWelcomeEmail(email, `${nombre} ${apellido}`)
+    } catch (emailError) {
+      console.error('Error al enviar correo de bienvenida:', emailError)
+      // No enviamos error al cliente si falla el envío del correo
+    }
 
     // Desestructurar el objeto user excluyendo el password
     const {
