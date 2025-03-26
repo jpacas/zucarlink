@@ -584,7 +584,7 @@ const MaquinariaDetalle: React.FC = () => {
                   Archivos Adjuntos
                 </Typography>
                 <Grid container spacing={2}>
-                  {maquinaria.archivos.map((archivo) => (
+                  {maquinaria.archivos?.map((archivo) => (
                     <Grid item xs={12} sm={6} md={4} key={archivo.id}>
                       <Card
                         sx={{
@@ -969,8 +969,8 @@ const MaquinariaDetalle: React.FC = () => {
                             },
                           }}
                         >
-                          {ingeniosFiltrados.map((ingenio) => (
-                            <MenuItem key={ingenio.id} value={ingenio.nombre}>
+                          {ingeniosFiltrados.map((ingenio, i) => (
+                            <MenuItem key={i} value={ingenio.nombre}>
                               {ingenio.nombre}
                             </MenuItem>
                           ))}

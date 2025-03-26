@@ -283,7 +283,15 @@ const Maquinarias: React.FC = () => {
   }
 
   const handleEdit = (maquinaria: Maquinaria) => {
-    setCurrentMaquinariaId(maquinaria.id)
+    const paisSeleccionado = maquinaria.pais?.nombre || ''
+    const ingeniosDelPais = ingenios.filter(
+      (ingenio) => ingenio.pais.toLowerCase() === paisSeleccionado.toLowerCase()
+    )
+    setIngeniosFiltrados(ingeniosDelPais)
+
+    const ingenioValido = ingeniosDelPais.some(
+      (i) => i.nombre === maquinaria.ingenio?.nombre
+    )
     setFormData({
       nombre: maquinaria.nombre || '',
       descripcion: maquinaria.descripcion || '',
@@ -292,9 +300,10 @@ const Maquinarias: React.FC = () => {
       marca: maquinaria.marca || '',
       modelo: maquinaria.modelo || '',
       pais: maquinaria.pais?.nombre || '',
-      ingenio: maquinaria.ingenio?.nombre || '',
+      ingenio: ingenioValido ? maquinaria.ingenio?.nombre || '' : '',
     })
     setPreviewUrl(maquinaria.foto || null)
+    setCurrentMaquinariaId(maquinaria.id)
     setEditMode(true)
     setModalOpen(true)
     setMenuAnchorEl(null)
@@ -331,8 +340,7 @@ const Maquinarias: React.FC = () => {
       filtros.pais === '' || maquinaria.pais?.nombre === filtros.pais
 
     const matchIngenio =
-      filtros.ingenio === '' ||
-      maquinaria.ingenio?.id.toString() === filtros.ingenio
+      filtros.ingenio === '' || maquinaria.ingenio?.nombre === filtros.ingenio
 
     return matchBusqueda && matchPrecio && matchPais && matchIngenio
   })
@@ -499,11 +507,8 @@ const Maquinarias: React.FC = () => {
                     },
                   }}
                 >
-                  {ingeniosFiltrados.map((ingenio) => (
-                    <MenuItem
-                      key={`ingenio-${ingenio.id}`}
-                      value={ingenio.nombre}
-                    >
+                  {ingeniosFiltrados.map((ingenio, i) => (
+                    <MenuItem key={i} value={ingenio.nombre}>
                       {ingenio.nombre}
                     </MenuItem>
                   ))}
@@ -633,7 +638,10 @@ const Maquinarias: React.FC = () => {
                           </IconButton>
                           <Menu
                             anchorEl={menuAnchorEl}
-                            open={Boolean(menuAnchorEl)}
+                            open={
+                              Boolean(menuAnchorEl) &&
+                              selectedMaquinariaId === maquinaria.id
+                            }
                             onClose={() => {
                               setMenuAnchorEl(null)
                               setSelectedMaquinariaId(null)
@@ -1060,7 +1068,13 @@ const Maquinarias: React.FC = () => {
                 <FormControl fullWidth required>
                   <InputLabel>Ingenio</InputLabel>
                   <Select
-                    value={formData.ingenio}
+                    value={
+                      ingeniosFiltrados.some(
+                        (i) => i.nombre === formData.ingenio
+                      )
+                        ? formData.ingenio
+                        : ''
+                    }
                     label='Ingenio'
                     onChange={(e) => {
                       setFormData({ ...formData, ingenio: e.target.value })
@@ -1082,11 +1096,8 @@ const Maquinarias: React.FC = () => {
                       },
                     }}
                   >
-                    {ingeniosFiltrados.map((ingenio) => (
-                      <MenuItem
-                        key={`ingenio-${ingenio.id}`}
-                        value={ingenio.nombre}
-                      >
+                    {ingeniosFiltrados.map((ingenio, i) => (
+                      <MenuItem key={i} value={ingenio.nombre}>
                         {ingenio.nombre}
                       </MenuItem>
                     ))}
