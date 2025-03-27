@@ -901,7 +901,7 @@ const Maquinarias: React.FC = () => {
         }}
         keepMounted={false}
         disablePortal
-        disableEnforceFocus
+        //disableEnforceFocus
       >
         <DialogTitle
           sx={{
@@ -1249,7 +1249,7 @@ const Maquinarias: React.FC = () => {
         }}
         keepMounted={false}
         disablePortal
-        disableEnforceFocus
+        //disableEnforceFocus
       >
         <DialogTitle
           sx={{

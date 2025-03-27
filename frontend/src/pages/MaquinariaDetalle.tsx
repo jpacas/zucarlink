@@ -173,7 +173,8 @@ const MaquinariaDetalle: React.FC = () => {
     setSelectedFiles((prevFiles) => prevFiles.filter((_, i) => i !== index))
   }
 
-  const handleUpdate = async () => {
+  const handleUpdate = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault() // Evita la recarga de la página
     try {
       const formDataObj = new FormData()
       Object.entries(formData).forEach(([key, value]) => {
@@ -194,6 +195,8 @@ const MaquinariaDetalle: React.FC = () => {
       filesToDelete.forEach((id) => {
         formDataObj.append('archivosToDelete', id.toString())
       })
+
+      formDataObj.append('usuarioId', user?.id || '')
 
       await axiosInstance.put(`/maquinaria/${maquinariaId}`, formDataObj, {
         headers: {
@@ -744,7 +747,7 @@ const MaquinariaDetalle: React.FC = () => {
               >
                 Editar Maquinaria
               </DialogTitle>
-              <form onSubmit={handleUpdate}>
+              <form onSubmit={(e) => handleUpdate(e)}>
                 <DialogContent>
                   <Grid container spacing={2}>
                     <Grid item xs={12}>
