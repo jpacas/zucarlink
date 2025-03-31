@@ -1158,7 +1158,10 @@ const Maquinarias: React.FC = () => {
                   {editMode &&
                     maquinarias
                       .find((m) => m.id === currentMaquinariaId)
-                      ?.archivos?.map((archivo) => (
+                      ?.archivos?.filter(
+                        (archivo) => !filesToDelete.includes(archivo.id)
+                      )
+                      .map((archivo) => (
                         <ListItem key={archivo.id}>
                           <ListItemIcon>
                             <AttachFile />

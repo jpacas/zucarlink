@@ -250,6 +250,7 @@ const updateMaquinaria = async (req, res) => {
     pais,
     ingenio,
     usuarioId,
+    archivosToDelete,
   } = req.body
 
   try {
@@ -259,8 +260,18 @@ const updateMaquinaria = async (req, res) => {
       return res.status(404).json({ error: 'Maquinaria no encontrada.' })
     }
 
-    const ingenioData = await Ingenio.findOne({ where: { nombre: ingenio } })
+    // Verificar que el usuario es el propietario (asegúrate de que usuarioId se envíe correctamente desde el frontend)
+    // Convertir ambos a string o number para comparación segura si es necesario
+    if (String(maquinaria.usuarioId) !== String(usuarioId)) {
+      console.warn(
+        `Intento de edición no autorizado: Maquinaria ${id}, Usuario ${usuarioId}, Propietario ${maquinaria.usuarioId}`
+      )
+      return res
+        .status(403)
+        .json({ error: 'No autorizado para editar esta maquinaria.' })
+    }
 
+    const ingenioData = await Ingenio.findOne({ where: { nombre: ingenio } })
     if (!ingenioData) {
       return res
         .status(400)
@@ -268,35 +279,19 @@ const updateMaquinaria = async (req, res) => {
     }
 
     const paisData = await Pais.findOne({ where: { nombre: pais } })
-
     if (!paisData) {
       return res.status(400).json({ error: 'El país especificado no existe.' })
-    }
-
-    // Verificar que el usuario es el propietario
-    if (maquinaria.usuarioId !== usuarioId) {
-      return res
-        .status(403)
-        .json({ error: 'No autorizado para editar esta maquinaria.' })
     }
 
     // Manejar la foto principal
     let fotoUrl = maquinaria.foto
     if (req.files && req.files.foto) {
-      // Eliminar foto anterior si existe
+      // Eliminar foto anterior si existe y es diferente
       if (maquinaria.foto) {
         try {
-          const oldKey = maquinaria.foto.split('/').pop()
-          if (process.env.AWS_BUCKET_NAME) {
-            await s3
-              .deleteObject({
-                Bucket: process.env.AWS_BUCKET_NAME,
-                Key: `maquinarias/fotos/${oldKey}`,
-              })
-              .promise()
-          }
+          await deleteFromS3(maquinaria.foto)
         } catch (error) {
-          console.error('Error al eliminar foto anterior:', error)
+          console.error('Error al eliminar foto anterior de S3:', error)
           // Continuamos con la actualización aunque falle la eliminación
         }
       }
@@ -312,23 +307,67 @@ const updateMaquinaria = async (req, res) => {
 
     // Actualizar maquinaria
     await maquinaria.update({
-      nombre,
-      descripcion,
-      precio,
-      contacto,
-      marca,
-      modelo,
-      anio,
+      nombre: nombre || maquinaria.nombre, // Usar valor existente si no se proporciona
+      descripcion: descripcion || maquinaria.descripcion,
+      precio: precio ? parseFloat(precio) : maquinaria.precio,
+      contacto: contacto || maquinaria.contacto,
+      marca: marca || maquinaria.marca,
+      modelo: modelo || maquinaria.modelo,
+      anio: anio ? parseInt(anio) : maquinaria.anio,
       paisId: paisData.id,
       ingenioId: ingenioData.id,
       foto: fotoUrl,
     })
+
+    // ---- INICIO: Lógica para eliminar archivos existentes ----
+    if (archivosToDelete && archivosToDelete.length > 0) {
+      // Asegurarse de que archivosToDelete sea siempre un array
+      const idsToDeleteInput = Array.isArray(archivosToDelete)
+        ? archivosToDelete
+        : [archivosToDelete]
+
+      // Convertir IDs a números y filtrar inválidos/NaN
+      const numericIdsToDelete = idsToDeleteInput
+        .map((idStr) => parseInt(idStr, 10))
+        .filter((idNum) => !isNaN(idNum) && idNum > 0)
+
+      if (numericIdsToDelete.length > 0) {
+        // Obtener los registros de archivos a eliminar que pertenecen a esta maquinaria
+        const archivosParaBorrar = await Archivo.findAll({
+          where: {
+            id: numericIdsToDelete,
+            maquinariaId: maquinaria.id, // Asegurar que pertenezcan a esta maquinaria
+          },
+        })
+
+        // Iterar y eliminar cada archivo encontrado
+        for (const archivo of archivosParaBorrar) {
+          try {
+            // 1. Eliminar de S3
+            if (archivo.url) {
+              await deleteFromS3(archivo.url)
+            }
+            // 2. Eliminar de la base de datos
+            await archivo.destroy()
+          } catch (deleteError) {
+            console.error(
+              `Error al eliminar el archivo ID ${archivo.id} (URL: ${archivo.url}):`,
+              deleteError
+            )
+            // Considerar si se debe notificar al frontend o parar la ejecución
+          }
+        }
+      } else {
+      }
+    }
+    // ---- FIN: Lógica para eliminar archivos existentes ----
 
     // Manejar archivos adjuntos nuevos
     if (req.files && req.files.archivos) {
       const archivosPromises = req.files.archivos.map(async (archivo) => {
         try {
           const url = await uploadToS3(archivo)
+
           return Archivo.create({
             nombre: archivo.originalname,
             url,
@@ -336,7 +375,10 @@ const updateMaquinaria = async (req, res) => {
             maquinariaId: maquinaria.id,
           })
         } catch (error) {
-          console.error('Error al subir archivo adjunto:', error)
+          console.error(
+            `Error al subir archivo adjunto ${archivo.originalname}:`,
+            error
+          )
           return null
         }
       })
@@ -345,11 +387,14 @@ const updateMaquinaria = async (req, res) => {
       const archivosExitosos = resultados.filter(Boolean)
 
       if (archivosExitosos.length < req.files.archivos.length) {
-        console.warn('Algunos archivos no se pudieron subir correctamente')
+        console.warn(
+          'Algunos archivos adjuntos nuevos no se pudieron subir correctamente'
+        )
+        // Podrías considerar devolver una advertencia parcial en la respuesta
       }
     }
 
-    // Obtener la maquinaria actualizada con sus relaciones
+    // Obtener la maquinaria actualizada con sus relaciones (incluyendo archivos restantes)
     const maquinariaActualizada = await Maquinaria.findByPk(maquinaria.id, {
       include: [
         {
@@ -377,7 +422,7 @@ const updateMaquinaria = async (req, res) => {
 
     res.status(200).json({
       message: 'Maquinaria actualizada exitosamente.',
-      maquinaria: maquinariaActualizada,
+      maquinaria: maquinariaActualizada, // Enviar la maquinaria actualizada
     })
   } catch (error) {
     console.error('Error al actualizar maquinaria:', error)
@@ -387,7 +432,10 @@ const updateMaquinaria = async (req, res) => {
         details: error.errors.map((err) => err.message),
       })
     }
-    res.status(500).json({ error: 'Error al actualizar la maquinaria.' })
+    res.status(500).json({
+      error: 'Error al actualizar la maquinaria.',
+      details: error.message,
+    })
   }
 }
 

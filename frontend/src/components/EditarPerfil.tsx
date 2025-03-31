@@ -154,6 +154,7 @@ const EditarPerfil: React.FC = () => {
       formDataToSend.append('area', formData.area)
       formDataToSend.append('ingenio', formData.ingenio)
       formDataToSend.append('acercaDe', formData.acercaDe)
+      formDataToSend.append('usuarioId', user?.id || '')
       if (avatar) {
         formDataToSend.append('avatar', avatar)
       }

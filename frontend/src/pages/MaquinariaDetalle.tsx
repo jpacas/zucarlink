@@ -207,8 +207,15 @@ const MaquinariaDetalle: React.FC = () => {
       enqueueSnackbar('Maquinaria actualizada exitosamente', {
         variant: 'success',
       })
-      setEditMode(false)
-      fetchMaquinaria()
+
+      // Limpiar estados temporales de edición
+      setSelectedFile(null)
+      setPreviewUrl(null)
+      setSelectedFiles([]) // <-- Limpiar archivos nuevos
+      setFilesToDelete([]) // <-- Limpiar archivos marcados para borrar
+
+      setSearchParams({}) // Limpiar el parámetro URL, el useEffect se encargará del estado
+      fetchMaquinaria() // Recargar datos (ahora incluye el nuevo archivo como "existente")
     } catch (error) {
       console.error('Error al actualizar la maquinaria:', error)
       enqueueSnackbar('Error al actualizar la maquinaria', {
@@ -715,13 +722,10 @@ const MaquinariaDetalle: React.FC = () => {
               open={editMode}
               onClose={() => {
                 setSearchParams({})
-                setEditMode(false)
               }}
               maxWidth='md'
               fullWidth
               keepMounted={false}
-              disablePortal
-              disableEnforceFocus
               PaperProps={{
                 sx: {
                   borderRadius: '16px',
@@ -1060,28 +1064,32 @@ const MaquinariaDetalle: React.FC = () => {
 
                       <List>
                         {/* Archivos existentes */}
-                        {maquinaria.archivos?.map((archivo) => (
-                          <ListItem key={archivo.id}>
-                            <ListItemIcon>
-                              <AttachFile />
-                            </ListItemIcon>
-                            <ListItemText primary={archivo.nombre} />
-                            <ListItemSecondaryAction>
-                              <IconButton
-                                edge='end'
-                                onClick={() => {
-                                  setFilesToDelete((prev) => [
-                                    ...prev,
-                                    archivo.id,
-                                  ])
-                                }}
-                                color='error'
-                              >
-                                <Close />
-                              </IconButton>
-                            </ListItemSecondaryAction>
-                          </ListItem>
-                        ))}
+                        {maquinaria.archivos
+                          ?.filter(
+                            (archivo) => !filesToDelete.includes(archivo.id)
+                          )
+                          .map((archivo) => (
+                            <ListItem key={archivo.id}>
+                              <ListItemIcon>
+                                <AttachFile />
+                              </ListItemIcon>
+                              <ListItemText primary={archivo.nombre} />
+                              <ListItemSecondaryAction>
+                                <IconButton
+                                  edge='end'
+                                  onClick={() => {
+                                    setFilesToDelete((prev) => [
+                                      ...prev,
+                                      archivo.id,
+                                    ])
+                                  }}
+                                  color='error'
+                                >
+                                  <Close />
+                                </IconButton>
+                              </ListItemSecondaryAction>
+                            </ListItem>
+                          ))}
 
                         {/* Nuevos archivos */}
                         {selectedFiles.map((file, index) => (
@@ -1113,7 +1121,6 @@ const MaquinariaDetalle: React.FC = () => {
                   <Button
                     onClick={() => {
                       setSearchParams({})
-                      setEditMode(false)
                     }}
                     sx={{
                       color: '#4a4a4a',

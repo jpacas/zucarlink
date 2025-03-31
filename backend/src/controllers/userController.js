@@ -79,10 +79,9 @@ const getAllUsers = async (req, res) => {
 
     res.status(200).json(usuarios)
   } catch (error) {
+    console.error(error)
     res.status(500).json({
       message: 'Error al obtener los usuarios',
-      error,
-      error: error.message,
     })
   }
 }
@@ -237,7 +236,6 @@ const registerUser = async (req, res) => {
     console.error(error)
     return res.status(500).json({
       message: 'Error al registrar el usuario',
-      error,
     })
   }
 }
@@ -313,12 +311,19 @@ const getUserById = async (req, res) => {
 
 const updateUserProfile = async (req, res) => {
   const { id } = req.params
-  const { nombre, apellido, pais, acercaDe, ingenio, area } = req.body
+  const { nombre, apellido, pais, acercaDe, ingenio, area, usuarioId } =
+    req.body
 
   try {
     const usuario = await User.findByPk(id)
     if (!usuario) {
       return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    if (usuarioId !== usuario.id) {
+      return res
+        .status(403)
+        .json({ message: 'No tienes permisos para actualizar este perfil' })
     }
 
     // Si el usuario sube una nueva imagen
