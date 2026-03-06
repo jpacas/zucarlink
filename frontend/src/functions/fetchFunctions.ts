@@ -1,11 +1,10 @@
 import axios from 'axios'
+import axiosInstance from '../utils/axiosConfig'
 import { Ingenio, Area, Proveedor } from '../types/interfaces'
 
 export const fetchAreas = async () => {
   try {
-    const response = await axios.get<{ nombre: Area }[]>(
-      `${import.meta.env.VITE_API_URL}/helper/areas`
-    )
+    const response = await axiosInstance.get<{ nombre: Area }[]>('/helper/areas')
     return { areas: response.data.map((area) => area.nombre), error: null }
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -20,9 +19,7 @@ export const fetchAreas = async () => {
 
 export const fetchIngenios = async () => {
   try {
-    const response = await axios.get<Ingenio[]>(
-      `${import.meta.env.VITE_API_URL}/helper/ingenios`
-    )
+    const response = await axiosInstance.get<Ingenio[]>('/helper/ingenios')
     return {
       ingenios: response.data,
       error: null,
@@ -40,9 +37,7 @@ export const fetchIngenios = async () => {
 
 export const fetchPaises = async () => {
   try {
-    const response = await axios.get<{ nombre: string }[]>(
-      `${import.meta.env.VITE_API_URL}/helper/paises`
-    )
+    const response = await axiosInstance.get<{ nombre: string }[]>('/helper/paises')
     return { paises: response.data.map((pais) => pais.nombre), error: null }
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -57,9 +52,7 @@ export const fetchPaises = async () => {
 
 export const fetchProveedores = async () => {
   try {
-    const response = await axios.get<Proveedor[]>(
-      `${import.meta.env.VITE_API_URL}/helper/proveedores`
-    )
+    const response = await axiosInstance.get<Proveedor[]>('/helper/proveedores')
     return {
       proveedores: response.data,
       error: null,

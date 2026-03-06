@@ -4,6 +4,7 @@ const Pais = require('../models/Pais')
 const Archivo = require('../models/Archivo')
 const Ingenio = require('../models/Ingenio')
 const { uploadToS3, deleteFromS3 } = require('./serverFunctions')
+const { parsePaginationParams, buildPaginationResponse } = require('../utils/pagination')
 
 ////////////////////////////////////////////////////////////
 // Obtener todas las maquinarias
@@ -11,7 +12,10 @@ const { uploadToS3, deleteFromS3 } = require('./serverFunctions')
 
 const getMaquinaria = async (req, res) => {
   try {
-    const maquinarias = await Maquinaria.findAll({
+    // Parsear parámetros de paginación
+    const { page, limit, offset } = parsePaginationParams(req.query)
+
+    const { count, rows: maquinarias } = await Maquinaria.findAndCountAll({
       include: [
         {
           model: User,
@@ -35,8 +39,15 @@ const getMaquinaria = async (req, res) => {
         },
       ],
       order: [['createdAt', 'DESC']],
+      limit,
+      offset,
+      distinct: true,
     })
-    res.status(200).json(maquinarias)
+
+    res.status(200).json({
+      data: maquinarias,
+      pagination: buildPaginationResponse(count, page, limit),
+    })
   } catch (error) {
     console.error('Error al obtener maquinarias:', error)
     res.status(500).json({ error: 'Error al obtener las maquinarias.' })
@@ -105,8 +116,8 @@ const createMaquinaria = async (req, res) => {
       modelo,
       pais,
       ingenio,
-      usuarioId,
     } = req.body
+    const usuarioId = req.user?.id
 
     // Validar campos requeridos
     if (
@@ -117,7 +128,8 @@ const createMaquinaria = async (req, res) => {
       !marca ||
       !modelo ||
       !pais ||
-      !ingenio
+      !ingenio ||
+      !usuarioId
     ) {
       return res.status(400).json({
         error: 'Todos los campos requeridos deben ser proporcionados.',
@@ -130,6 +142,7 @@ const createMaquinaria = async (req, res) => {
           modelo: !modelo,
           pais: !pais,
           ingenio: !ingenio,
+          usuarioId: !usuarioId,
         },
       })
     }
@@ -239,19 +252,19 @@ const createMaquinaria = async (req, res) => {
 
 const updateMaquinaria = async (req, res) => {
   const { id } = req.params
-  const {
-    nombre,
-    descripcion,
-    precio,
-    contacto,
-    marca,
-    modelo,
-    anio,
-    pais,
-    ingenio,
-    usuarioId,
-    archivosToDelete,
-  } = req.body
+    const {
+      nombre,
+      descripcion,
+      precio,
+      contacto,
+      marca,
+      modelo,
+      anio,
+      pais,
+      ingenio,
+      archivosToDelete,
+    } = req.body
+    const usuarioId = req.user?.id
 
   try {
     const maquinaria = await Maquinaria.findByPk(id)
@@ -445,7 +458,7 @@ const updateMaquinaria = async (req, res) => {
 
 const deleteMaquinaria = async (req, res) => {
   const { id } = req.params
-  const { usuarioId } = req.body
+  const usuarioId = req.user?.id
 
   try {
     const maquinaria = await Maquinaria.findByPk(id, {
@@ -459,6 +472,13 @@ const deleteMaquinaria = async (req, res) => {
 
     if (!maquinaria) {
       return res.status(404).json({ error: 'Maquinaria no encontrada.' })
+    }
+
+    // Verificar que el usuario es el propietario
+    if (String(maquinaria.usuarioId) !== String(usuarioId)) {
+      return res
+        .status(403)
+        .json({ error: 'No autorizado para eliminar esta maquinaria.' })
     }
 
     // Eliminar foto principal si existe

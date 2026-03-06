@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -c:*)",
+      "Bash(ls:*)",
+      "Bash(for file in src/routes/*.js)",
+      "Bash(do node -c \"$file\")",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash(for file in src/models/*.js)",
+      "Bash(for file in src/middleware/*.js)",
+      "Bash(for file in src/services/*.js)",
+      "Bash(for file in src/utils/*.js)",
+      "Bash(timeout 5s node:*)",
+      "Bash(test $? -eq 124)",
+      "Bash(npm install:*)"
+    ]
+  }
+}

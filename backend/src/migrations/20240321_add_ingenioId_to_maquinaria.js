@@ -2,7 +2,27 @@ const { DataTypes } = require('sequelize')
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn('Maquinaria', 'ingenioId', {
+    const tables = await queryInterface.showAllTables()
+    const tableNames = tables.map((table) => {
+      if (typeof table === 'string') {
+        return table
+      }
+      return table.tableName || table.name
+    })
+
+    const targetTable =
+      tableNames.find(
+        (name) => name && name.toLowerCase() === 'maquinaria'
+      ) ||
+      tableNames.find(
+        (name) => name && name.toLowerCase() === 'maquinarias'
+      )
+
+    if (!targetTable) {
+      return
+    }
+
+    await queryInterface.addColumn(targetTable, 'ingenioId', {
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
@@ -15,6 +35,26 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.removeColumn('Maquinaria', 'ingenioId')
+    const tables = await queryInterface.showAllTables()
+    const tableNames = tables.map((table) => {
+      if (typeof table === 'string') {
+        return table
+      }
+      return table.tableName || table.name
+    })
+
+    const targetTable =
+      tableNames.find(
+        (name) => name && name.toLowerCase() === 'maquinaria'
+      ) ||
+      tableNames.find(
+        (name) => name && name.toLowerCase() === 'maquinarias'
+      )
+
+    if (!targetTable) {
+      return
+    }
+
+    await queryInterface.removeColumn(targetTable, 'ingenioId')
   },
 }

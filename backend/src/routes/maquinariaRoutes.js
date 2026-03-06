@@ -7,6 +7,7 @@ const {
   deleteMaquinaria,
 } = require('../controllers/maquinariaController')
 const upload = require('../middleware/multer')
+const authMiddleware = require('../middleware/authMiddleware')
 
 const router = express.Router()
 
@@ -21,8 +22,8 @@ router.get('/', getMaquinaria)
 router.get('/:id', getMaquinariaById)
 
 // Rutas protegidas
-router.post('/', upload.fields(uploadFields), createMaquinaria)
-router.put('/:id', upload.fields(uploadFields), updateMaquinaria)
-router.delete('/:id', deleteMaquinaria)
+router.post('/', authMiddleware, upload.fields(uploadFields), createMaquinaria)
+router.put('/:id', authMiddleware, upload.fields(uploadFields), updateMaquinaria)
+router.delete('/:id', authMiddleware, deleteMaquinaria)
 
 module.exports = router

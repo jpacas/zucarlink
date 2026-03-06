@@ -1,4 +1,5 @@
 const { Server } = require('socket.io')
+const jwt = require('jsonwebtoken')
 const { Message, Conversation, User } = require('./models')
 const { Op } = require('sequelize')
 
@@ -69,16 +70,32 @@ async function getOrCreateConversation(user1Id, user2Id) {
   return conversation
 }
 
+// Lista blanca de origenes permitidos (igual que en app.js)
+const allowedOrigins = [
+  'https://zucarlink.com',
+  'https://www.zucarlink.com',
+]
+
+// Agregar localhost solo en desarrollo
+if (process.env.NODE_ENV !== 'production') {
+  allowedOrigins.push('http://localhost:5173')
+  allowedOrigins.push('http://localhost:3000')
+}
+
 function initializeSocket(server) {
   const io = new Server(server, {
     cors: {
-      origin: [
-        'https://zucarlink.com',
-        'http://zucarlink.com',
-        'http://localhost:5173',
-        /\.zucarlink\.com$/,
-      ],
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      origin: (origin, callback) => {
+        // Permitir requests sin origin en desarrollo
+        if (!origin && process.env.NODE_ENV !== 'production') {
+          return callback(null, true)
+        }
+        if (allowedOrigins.includes(origin)) {
+          return callback(null, true)
+        }
+        return callback(new Error('No permitido por CORS'))
+      },
+      methods: ['GET', 'POST'],
       credentials: true,
       allowedHeaders: ['Content-Type', 'Authorization'],
     },
@@ -88,7 +105,15 @@ function initializeSocket(server) {
     serveClient: false,
     maxHttpBufferSize: 1e6,
     allowRequest: (req, callback) => {
-      callback(null, true)
+      // Validar origen en allowRequest también
+      const origin = req.headers.origin
+      if (!origin && process.env.NODE_ENV !== 'production') {
+        return callback(null, true)
+      }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true)
+      }
+      return callback('Origin no permitido', false)
     },
     cookie: {
       name: 'io',
@@ -98,21 +123,43 @@ function initializeSocket(server) {
     },
   })
 
-  // Middleware de autenticación
+  // Middleware de autenticación con JWT
   io.use(async (socket, next) => {
     try {
-      const userId = socket.handshake.auth.userId
+      const token = socket.handshake.auth.token
       const userName = socket.handshake.auth.userName
-      if (!userId) {
-        return next(new Error('Usuario no autenticado'))
+
+      if (!token) {
+        return next(new Error('Token de autenticación requerido'))
       }
 
-      socket.userId = userId
-      socket.userName = userName
+      // Verificar el JWT
+      let decoded
+      try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET)
+      } catch (jwtError) {
+        if (jwtError.name === 'TokenExpiredError') {
+          return next(new Error('Token expirado'))
+        }
+        return next(new Error('Token inválido'))
+      }
 
-      const oldSocketId = connectedUsers.get(userId)
+      // Verificar que el usuario existe en la BD
+      const user = await User.findByPk(decoded.id, {
+        attributes: ['id', 'nombre', 'apellido'],
+      })
+
+      if (!user) {
+        return next(new Error('Usuario no encontrado'))
+      }
+
+      // Asignar datos del usuario al socket
+      socket.userId = decoded.id
+      socket.userName = userName || `${user.nombre} ${user.apellido}`
+
+      const oldSocketId = connectedUsers.get(decoded.id)
       if (oldSocketId && oldSocketId !== socket.id) {
-        connectedUsers.set(userId, socket.id)
+        connectedUsers.set(decoded.id, socket.id)
       }
 
       next()

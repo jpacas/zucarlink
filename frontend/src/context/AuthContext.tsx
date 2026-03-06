@@ -18,7 +18,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   })
   const [user, setUser] = useState<User | null>(() => {
     const storedUser = localStorage.getItem('user')
-    return storedUser ? JSON.parse(storedUser) : null
+    if (!storedUser) return null
+    try {
+      return JSON.parse(storedUser)
+    } catch (error) {
+      console.error('Error al parsear datos de usuario:', error)
+      localStorage.removeItem('user')
+      return null
+    }
   })
   const navigate = useNavigate()
 
@@ -37,6 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null)
     localStorage.removeItem('user')
     localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
     localStorage.removeItem('zucarIA_conversation')
     navigate('/login')
   }

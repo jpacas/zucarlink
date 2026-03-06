@@ -70,12 +70,19 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     if (user && !socket) {
+      // Obtener el token de localStorage para autenticación JWT
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('No hay token de autenticación disponible')
+        return
+      }
+
       // Solo crear un nuevo socket si no existe uno
       const newSocket = io(
         import.meta.env.VITE_API_URL || 'http://localhost:5001',
         {
           auth: {
-            userId: user.id,
+            token: token,
             userName: `${user.nombre} ${user.apellido}`,
           },
           transports: ['websocket', 'polling'],

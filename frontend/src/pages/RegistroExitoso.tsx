@@ -72,9 +72,11 @@ const RegistroExitoso = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            borderRadius: 2,
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+            borderRadius: '16px',
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
           }}
         >
           <CircularProgress size={60} sx={{ color: 'primary.main', mb: 2 }} />
@@ -97,9 +99,11 @@ const RegistroExitoso = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            borderRadius: 2,
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+            borderRadius: '16px',
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
           }}
         >
           <Typography variant='h6' color='error' align='center'>
@@ -120,13 +124,15 @@ const RegistroExitoso = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          borderRadius: 2,
-          background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+          borderRadius: '16px',
+          backgroundColor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
+          boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
           transition: 'all 0.3s ease',
           '&:hover': {
             transform: 'translateY(-4px)',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.1)',
+            boxShadow: '0 12px 28px rgba(16, 24, 40, 0.12)',
           },
         }}
       >

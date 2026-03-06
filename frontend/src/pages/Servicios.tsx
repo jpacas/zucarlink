@@ -59,7 +59,7 @@ const ServiciosZucarlink: React.FC = () => {
   return (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        backgroundColor: 'background.default',
         minHeight: '100vh',
         pt: 10,
         pb: 8,
@@ -72,7 +72,7 @@ const ServiciosZucarlink: React.FC = () => {
           sx={{
             mb: 6,
             fontWeight: 700,
-            color: '#1a1a1a',
+            color: 'text.primary',
             letterSpacing: '-0.5px',
             position: 'relative',
             '&::after': {
@@ -80,7 +80,7 @@ const ServiciosZucarlink: React.FC = () => {
               display: 'block',
               width: '60px',
               height: '4px',
-              backgroundColor: '#ff6347',
+              backgroundColor: 'primary.main',
               margin: '16px auto',
               borderRadius: '2px',
             },
@@ -99,14 +99,14 @@ const ServiciosZucarlink: React.FC = () => {
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
-                    borderRadius: '16px',
-                    background:
-                      'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                    backgroundColor: 'background.paper',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
                     transition: 'all 0.3s ease',
                     '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
+                      transform: 'translateY(-6px)',
+                      boxShadow: '0 12px 28px rgba(16, 24, 40, 0.12)',
                     },
                   }}
                 >
@@ -119,7 +119,7 @@ const ServiciosZucarlink: React.FC = () => {
                   >
                     <Box
                       sx={{
-                        backgroundColor: '#ff6347',
+                        backgroundColor: 'primary.main',
                         borderRadius: '50%',
                         width: 70,
                         height: 70,
@@ -127,11 +127,11 @@ const ServiciosZucarlink: React.FC = () => {
                         justifyContent: 'center',
                         alignItems: 'center',
                         margin: '0 auto 24px',
-                        boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
+                        boxShadow: '0 8px 16px rgba(228, 93, 69, 0.24)',
                         transition: 'all 0.3s ease',
                         '&:hover': {
                           transform: 'scale(1.05)',
-                          boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
+                          boxShadow: '0 12px 22px rgba(228, 93, 69, 0.28)',
                         },
                       }}
                     >
@@ -142,14 +142,14 @@ const ServiciosZucarlink: React.FC = () => {
                       sx={{
                         mb: 2,
                         fontWeight: 700,
-                        color: '#1a1a1a',
+                        color: 'text.primary',
                         position: 'relative',
                         '&::after': {
                           content: '""',
                           display: 'block',
                           width: '40px',
                           height: '3px',
-                          backgroundColor: '#ff6347',
+                          backgroundColor: 'primary.main',
                           margin: '8px auto',
                           borderRadius: '2px',
                         },
@@ -160,7 +160,7 @@ const ServiciosZucarlink: React.FC = () => {
                     <Typography
                       variant='body1'
                       sx={{
-                        color: '#4a4a4a',
+                        color: 'text.secondary',
                         lineHeight: 1.7,
                       }}
                     >

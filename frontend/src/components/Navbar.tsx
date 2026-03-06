@@ -43,9 +43,10 @@ const Navbar: React.FC = () => {
     <AppBar
       position='fixed'
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-        color: '#1a1a1a',
+        backgroundColor: 'background.paper',
+        color: 'text.primary',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
         px: '5%',
       }}
     >
@@ -266,9 +267,10 @@ const Navbar: React.FC = () => {
           <Button
             component={Link}
             to='/services'
-            color='inherit'
+            color={isActive('/services') ? 'primary' : 'inherit'}
             sx={{
               fontSize: '1rem',
+              fontWeight: isActive('/services') ? 'bold' : 'normal',
               color: '#4a4a4a',
               transition: 'all 0.3s ease',
               '&:hover': {
@@ -405,9 +407,9 @@ const Navbar: React.FC = () => {
         <IconButton
           sx={{
             display: { xs: 'block', md: 'none' },
-            color: '#4a4a4a',
+            color: 'text.secondary',
             '&:hover': {
-              color: '#ff6347',
+              color: 'primary.main',
             },
           }}
           onClick={() => toggleDrawer(true)}
@@ -424,8 +426,7 @@ const Navbar: React.FC = () => {
         PaperProps={{
           sx: {
             width: 280,
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+            backgroundColor: 'background.paper',
           },
         }}
       >
@@ -684,6 +685,7 @@ const Navbar: React.FC = () => {
               primaryTypographyProps={{
                 sx: {
                   color: '#4a4a4a',
+                  fontWeight: isActive('/services') ? 'bold' : 'normal',
                 },
               }}
             />

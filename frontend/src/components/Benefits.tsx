@@ -22,51 +22,48 @@ const BenefitCard: React.FC<{
 }> = ({ title, description, Icon }) => (
   <Card
     sx={{
-      boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
       textAlign: 'center',
-      borderRadius: '16px',
       padding: 3,
-      minWidth: '280px',
-      maxWidth: '320px',
+      width: { xs: '100%', sm: '320px' },
+      maxWidth: { xs: '100%', sm: '340px' },
       margin: '0 auto',
-      background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
       transition: 'all 0.3s ease',
       '&:hover': {
-        transform: 'translateY(-5px)',
-        boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
+        transform: 'translateY(-6px)',
+        boxShadow: '0 12px 28px rgba(16, 24, 40, 0.12)',
       },
     }}
   >
     <CardContent>
-      <Avatar
-        sx={{
-          margin: '0 auto',
-          bgcolor: '#ff6347',
-          width: 70,
-          height: 70,
-          boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
-          transition: 'all 0.3s ease',
-          '&:hover': {
-            transform: 'scale(1.05)',
-            boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
-          },
-        }}
-      >
-        <Icon sx={{ fontSize: 35 }} />
+        <Avatar
+          sx={{
+            margin: '0 auto',
+            bgcolor: 'primary.main',
+            width: 76,
+            height: 76,
+            boxShadow: '0 8px 16px rgba(228, 93, 69, 0.24)',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'scale(1.05)',
+              boxShadow: '0 12px 22px rgba(228, 93, 69, 0.28)',
+            },
+          }}
+        >
+        <Icon sx={{ fontSize: 38 }} />
       </Avatar>
       <Typography
         variant='h6'
         sx={{
           mt: 2.5,
           fontWeight: 700,
-          color: '#1a1a1a',
+          color: 'text.primary',
           position: 'relative',
           '&::after': {
             content: '""',
             display: 'block',
             width: '40px',
             height: '3px',
-            backgroundColor: '#ff6347',
+            backgroundColor: 'primary.main',
             margin: '8px auto',
             borderRadius: '2px',
           },
@@ -76,7 +73,7 @@ const BenefitCard: React.FC<{
       </Typography>
       <Typography
         variant='body2'
-        sx={{ mt: 1.5, color: '#4a4a4a', lineHeight: 1.7 }}
+        sx={{ mt: 1.5, color: 'text.secondary', lineHeight: 1.7 }}
       >
         {description}
       </Typography>
@@ -112,7 +109,8 @@ const Benefits: React.FC = () => {
         style={{
           width: '10px',
           height: '10px',
-          border: '1px solid #ff6347',
+          border: '1px solid',
+          borderColor: 'primary.main',
           borderRadius: '50%',
           background: 'transparent',
           transition: 'all 0.3s ease',
@@ -198,12 +196,14 @@ const Benefits: React.FC = () => {
       sx={{
         py: 8,
         px: '5%',
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        backgroundColor: 'background.paper',
         borderRadius: { xs: 0, md: '16px' },
         maxWidth: '1800px',
         mx: 'auto',
         my: 4,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+        border: { xs: 'none', md: '1px solid' },
+        borderColor: { xs: 'transparent', md: 'divider' },
+        boxShadow: { xs: 'none', md: '0 8px 24px rgba(16, 24, 40, 0.08)' },
       }}
     >
       <Typography
@@ -212,7 +212,7 @@ const Benefits: React.FC = () => {
         sx={{
           mb: 6,
           fontWeight: 700,
-          color: '#1a1a1a',
+          color: 'text.primary',
           letterSpacing: '-0.5px',
           position: 'relative',
           '&::after': {
@@ -220,7 +220,7 @@ const Benefits: React.FC = () => {
             display: 'block',
             width: '60px',
             height: '4px',
-            backgroundColor: '#ff6347',
+            backgroundColor: 'primary.main',
             margin: '16px auto',
             borderRadius: '2px',
           },
@@ -235,7 +235,7 @@ const Benefits: React.FC = () => {
               variant='h4'
               sx={{
                 mb: 4,
-                color: '#ff6347',
+                color: 'primary.main',
                 fontWeight: 600,
               }}
             >

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   Box,
   Typography,
@@ -45,6 +45,7 @@ import {
   fetchIngenios,
 } from '../functions/fetchFunctions'
 import { useNavigate } from 'react-router-dom'
+import { useFilteredIngenios } from '../hooks/useFilteredIngenios'
 
 const Empleos: React.FC = () => {
   const [empleos, setEmpleos] = useState<Empleo[]>([])
@@ -63,7 +64,6 @@ const Empleos: React.FC = () => {
   const [paises, setPaises] = useState<string[]>([])
   const [areas, setAreas] = useState<Area[]>([])
   const [ingenios, setIngenios] = useState<Ingenio[]>([])
-  const [ingeniosFiltrados, setIngeniosFiltrados] = useState<Ingenio[]>([])
   const [filtros, setFiltros] = useState({
     busqueda: '',
     pais: '',
@@ -83,17 +83,39 @@ const Empleos: React.FC = () => {
   const [formLoading, setFormLoading] = useState(false)
   const [archivos, setArchivos] = useState<File[]>([])
   const fileInputRef = React.useRef<HTMLInputElement>(null)
-  // Estado para ingenios filtrados en el formulario
-  const [formIngeniosFiltrados, setFormIngeniosFiltrados] = useState<Ingenio[]>(
-    []
-  )
 
-  const fetchEmpleos = async () => {
+  // Callbacks para resetear ingenios cuando cambia el país
+  const handleFilterIngenioReset = useCallback(() => {
+    setFiltros((prev) => ({ ...prev, ingenio: '' }))
+  }, [])
+
+  const handleFormIngenioReset = useCallback(() => {
+    setFormData((prev) => ({ ...prev, ingenio: '' }))
+  }, [])
+
+  // Hook para filtrar ingenios en los filtros
+  const { ingeniosFiltrados } = useFilteredIngenios({
+    ingenios,
+    selectedPais: filtros.pais,
+    selectedIngenio: filtros.ingenio,
+    onIngenioReset: handleFilterIngenioReset,
+  })
+
+  // Hook para filtrar ingenios en el formulario
+  const { ingeniosFiltrados: formIngeniosFiltrados } = useFilteredIngenios({
+    ingenios,
+    selectedPais: formData.pais,
+    selectedIngenio: formData.ingenio,
+    onIngenioReset: handleFormIngenioReset,
+  })
+
+  const fetchEmpleos = async (signal?: AbortSignal) => {
     try {
       setLoading(true)
-      const response = await axiosInstance.get('/empleos')
-      setEmpleos(response.data)
-    } catch (error) {
+      const response = await axiosInstance.get('/empleos', { signal })
+      setEmpleos(response.data?.data || [])
+    } catch (error: any) {
+      if (error.code === 'ERR_CANCELED') return
       console.error('Error al cargar empleos:', error)
       enqueueSnackbar('Error al cargar los empleos', { variant: 'error' })
     } finally {
@@ -102,7 +124,9 @@ const Empleos: React.FC = () => {
   }
 
   useEffect(() => {
-    fetchEmpleos()
+    const controller = new AbortController()
+
+    fetchEmpleos(controller.signal)
 
     // Cargar datos para filtros
     fetchPaises().then(({ paises, error }) => {
@@ -116,25 +140,15 @@ const Empleos: React.FC = () => {
     fetchIngenios().then(({ ingenios, error }) => {
       if (!error) {
         setIngenios(ingenios || [])
-        setIngeniosFiltrados(ingenios || [])
       }
     })
+
+    return () => {
+      controller.abort()
+    }
   }, [])
 
-  // Filtrar ingenios por país seleccionado
-  useEffect(() => {
-    if (filtros.pais) {
-      const ingeniosPorPais = ingenios.filter(
-        (ingenio) => ingenio.pais.toLowerCase() === filtros.pais.toLowerCase()
-      )
-      setIngeniosFiltrados(ingeniosPorPais)
-      if (!ingeniosPorPais.some((ing) => ing.nombre === filtros.ingenio)) {
-        setFiltros((prev) => ({ ...prev, ingenio: '' }))
-      }
-    } else {
-      setIngeniosFiltrados(ingenios)
-    }
-  }, [filtros.pais, ingenios])
+  // Filtrado de ingenios ahora se maneja con useFilteredIngenios hook
 
   // Función para manejar cambios en los filtros
   const handleFiltroChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -485,7 +499,7 @@ const Empleos: React.FC = () => {
   return (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        backgroundColor: 'background.default',
         minHeight: '100vh',
         pt: 10,
         pb: 8,
@@ -506,15 +520,13 @@ const Empleos: React.FC = () => {
               elevation={0}
               sx={{
                 p: 3,
-                borderRadius: 2,
-                backgroundColor: '#fff',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                position: 'sticky',
-                top: '80px',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
-                },
+                borderRadius: '16px',
+                backgroundColor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'divider',
+                boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
+                position: { xs: 'static', md: 'sticky' },
+                top: { md: '80px' },
                 ml: { md: -2 },
               }}
             >
@@ -522,7 +534,7 @@ const Empleos: React.FC = () => {
                 variant='h5'
                 sx={{
                   mb: 3,
-                  color: '#1a1a1a',
+                  color: 'text.primary',
                   fontWeight: 700,
                   position: 'relative',
                   '&::after': {
@@ -530,7 +542,7 @@ const Empleos: React.FC = () => {
                     display: 'block',
                     width: '40px',
                     height: '3px',
-                    backgroundColor: '#ff6347',
+                    backgroundColor: 'primary.main',
                     mt: 1,
                     borderRadius: '2px',
                   },
@@ -609,21 +621,11 @@ const Empleos: React.FC = () => {
                 disabled={!user}
                 sx={{
                   mt: 2,
-                  py: 1.5,
-                  fontWeight: 'bold',
-                  bgcolor: '#ff6347',
-                  '&:hover': {
-                    bgcolor: '#e5533f',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 15px rgba(255,99,71,0.3)',
-                  },
-                  transition: 'all 0.2s ease',
+                  py: 1.4,
+                  transition: 'transform 0.2s ease',
+                  '&:hover': { transform: 'translateY(-2px)' },
                   '&.Mui-disabled': {
-                    bgcolor: '#cccccc',
-                    color: '#666666',
                     '&:hover': {
-                      bgcolor: '#cccccc',
-                      boxShadow: 'none',
                       transform: 'none',
                     },
                   },
@@ -645,7 +647,7 @@ const Empleos: React.FC = () => {
           >
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-                <CircularProgress sx={{ color: '#ff6347' }} />
+                <CircularProgress sx={{ color: 'primary.main' }} />
               </Box>
             ) : empleosFiltrados.length === 0 ? (
               <Paper
@@ -653,15 +655,17 @@ const Empleos: React.FC = () => {
                 sx={{
                   p: 4,
                   textAlign: 'center',
-                  borderRadius: 2,
-                  backgroundColor: '#fff',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                  borderRadius: '16px',
+                  backgroundColor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
                 }}
               >
                 <Typography
                   variant='h6'
                   sx={{
-                    color: '#4a4a4a',
+                    color: 'text.secondary',
                     fontWeight: 500,
                   }}
                 >
@@ -677,14 +681,15 @@ const Empleos: React.FC = () => {
                         height: '100%',
                         display: 'flex',
                         flexDirection: 'column',
-                        borderRadius: 2,
                         overflow: 'hidden',
                         transition: 'all 0.3s ease',
-                        backgroundColor: '#fff',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                        backgroundColor: 'background.paper',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
                         '&:hover': {
                           transform: 'translateY(-5px)',
-                          boxShadow: '0 8px 30px rgba(0,0,0,0.1)',
+                          boxShadow: '0 12px 28px rgba(16, 24, 40, 0.12)',
                         },
                         position: 'relative',
                         mx: 1,
@@ -708,7 +713,7 @@ const Empleos: React.FC = () => {
                               onClick={(e) => handleMenuOpen(e, empleo.id || 0)}
                               sx={{
                                 bgcolor: 'background.paper',
-                                '&:hover': { bgcolor: '#ff634710' },
+                                '&:hover': { bgcolor: 'rgba(228, 93, 69, 0.08)' },
                               }}
                             >
                               <MoreVert fontSize='small' />
@@ -724,7 +729,7 @@ const Empleos: React.FC = () => {
                           align='center'
                           sx={{
                             fontWeight: 700,
-                            color: '#1a1a1a',
+                            color: 'text.primary',
                             mb: 2,
                             position: 'relative',
                             '&::after': {
@@ -732,7 +737,7 @@ const Empleos: React.FC = () => {
                               display: 'block',
                               width: '40px',
                               height: '3px',
-                              backgroundColor: '#ff6347',
+                              backgroundColor: 'primary.main',
                               margin: '8px auto',
                               borderRadius: '2px',
                             },
@@ -746,11 +751,11 @@ const Empleos: React.FC = () => {
                         >
                           <Business
                             fontSize='small'
-                            sx={{ mr: 1, color: '#ff6347' }}
+                            sx={{ mr: 1, color: 'primary.main' }}
                           />
                           <Typography
                             variant='subtitle1'
-                            sx={{ color: '#1a1a1a', fontWeight: 500 }}
+                            sx={{ color: 'text.primary', fontWeight: 500 }}
                           >
                             {empleo.ingenio?.nombre ||
                               'Ingenio no especificado'}
@@ -762,7 +767,7 @@ const Empleos: React.FC = () => {
                         >
                           <LocationOn
                             fontSize='small'
-                            sx={{ mr: 1, color: '#4a4a4a' }}
+                            sx={{ mr: 1, color: 'text.secondary' }}
                           />
                           <Typography variant='body2' color='text.secondary'>
                             {empleo.pais?.nombre || 'País no especificado'}
@@ -774,7 +779,7 @@ const Empleos: React.FC = () => {
                         >
                           <Category
                             fontSize='small'
-                            sx={{ mr: 1, color: '#4a4a4a' }}
+                            sx={{ mr: 1, color: 'text.secondary' }}
                           />
                           <Typography variant='body2' color='text.secondary'>
                             {empleo.area?.nombre || 'Área no especificada'}
@@ -786,7 +791,7 @@ const Empleos: React.FC = () => {
                         >
                           <CalendarToday
                             fontSize='small'
-                            sx={{ mr: 1, color: '#4a4a4a' }}
+                            sx={{ mr: 1, color: 'text.secondary' }}
                           />
                           <Typography variant='body2' color='text.secondary'>
                             Publicado: {formatFecha(empleo.createdAt)}
@@ -799,7 +804,7 @@ const Empleos: React.FC = () => {
                           variant='body2'
                           sx={{
                             mt: 2,
-                            color: '#4a4a4a',
+                            color: 'text.secondary',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             display: '-webkit-box',

@@ -269,7 +269,7 @@ const EmpleoDetalle: React.FC = () => {
   return (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        backgroundColor: 'background.default',
         minHeight: '100vh',
         padding: 3,
         marginTop: '64px',
@@ -280,10 +280,10 @@ const EmpleoDetalle: React.FC = () => {
         onClick={() => navigate('/empleos')}
         sx={{
           mb: 2,
-          color: '#4a4a4a',
+          color: 'text.secondary',
           '&:hover': {
-            backgroundColor: 'rgba(255, 99, 71, 0.1)',
-            color: '#ff6347',
+            backgroundColor: 'rgba(228, 93, 69, 0.08)',
+            color: 'primary.main',
           },
         }}
       >
@@ -293,11 +293,10 @@ const EmpleoDetalle: React.FC = () => {
       <Card
         sx={{
           borderRadius: '16px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-          transition: 'all 0.3s ease',
-          '&:hover': {
-            boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
-          },
+          backgroundColor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
+          boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
         }}
       >
         <CardContent>

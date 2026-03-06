@@ -4,6 +4,10 @@ const sequelize = require('../config/database')
 const ZucarIA = sequelize.define(
   'ZucarIA',
   {
+    usuarioId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     messages: {
       type: DataTypes.JSON, // Almacena los mensajes en formato JSON
       allowNull: false,

@@ -52,7 +52,7 @@ const Contact: React.FC = () => {
   return (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        backgroundColor: 'background.default',
         minHeight: '100vh',
         pt: 10,
         pb: 8,
@@ -64,8 +64,10 @@ const Contact: React.FC = () => {
           sx={{
             p: { xs: 3, md: 6 },
             borderRadius: '16px',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
           }}
         >
           <Typography
@@ -74,7 +76,7 @@ const Contact: React.FC = () => {
             sx={{
               mb: 4,
               fontWeight: 700,
-              color: '#1a1a1a',
+              color: 'text.primary',
               letterSpacing: '-0.5px',
               position: 'relative',
               '&::after': {
@@ -82,7 +84,7 @@ const Contact: React.FC = () => {
                 display: 'block',
                 width: '60px',
                 height: '4px',
-                backgroundColor: '#ff6347',
+                backgroundColor: 'primary.main',
                 margin: '16px auto',
                 borderRadius: '2px',
               },
@@ -95,7 +97,7 @@ const Contact: React.FC = () => {
             align='center'
             sx={{
               mb: 6,
-              color: '#4a4a4a',
+              color: 'text.secondary',
               fontWeight: 500,
             }}
           >
@@ -110,19 +112,6 @@ const Contact: React.FC = () => {
               onChange={(e) => setName(e.target.value)}
               margin='normal'
               required
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: '#ff6347',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#ff6347',
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: '#ff6347',
-                },
-              }}
             />
             <TextField
               fullWidth
@@ -132,19 +121,6 @@ const Contact: React.FC = () => {
               type='email'
               margin='normal'
               required
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: '#ff6347',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#ff6347',
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: '#ff6347',
-                },
-              }}
             />
             <TextField
               fullWidth
@@ -155,19 +131,6 @@ const Contact: React.FC = () => {
               rows={6}
               margin='normal'
               required
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&:hover fieldset': {
-                    borderColor: '#ff6347',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#ff6347',
-                  },
-                },
-                '& .MuiInputLabel-root.Mui-focused': {
-                  color: '#ff6347',
-                },
-              }}
             />
             <Box
               sx={{
@@ -179,30 +142,17 @@ const Contact: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                size='large'
                 disabled={isLoading}
                 startIcon={
                   isLoading ? <CircularProgress size={20} /> : <SendIcon />
                 }
                 sx={{
-                  backgroundColor: '#ff6347',
-                  color: '#fff',
-                  padding: '12px 32px',
                   fontSize: '1.1rem',
-                  fontWeight: 'bold',
-                  textTransform: 'none',
-                  borderRadius: '50px',
-                  boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
                   transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: '#e5533f',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
-                  },
+                  '&:hover': { transform: 'translateY(-2px)' },
                   '&:active': {
                     transform: 'translateY(0)',
-                  },
-                  '&.Mui-disabled': {
-                    backgroundColor: '#ffaa99',
                   },
                 }}
               >
@@ -224,7 +174,7 @@ const Contact: React.FC = () => {
           severity='success'
           sx={{
             width: '100%',
-            backgroundColor: '#ff6347',
+            backgroundColor: 'primary.main',
             color: '#fff',
             '& .MuiAlert-icon': {
               color: '#fff',

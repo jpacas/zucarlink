@@ -14,6 +14,7 @@ const Archivo = require('./Archivo')
 const Maquinaria = require('./Maquinaria')
 const Noticia = require('./Noticia')
 const ZucarIA = require('./ZucarIA')
+const RefreshToken = require('./RefreshToken')
 
 module.exports = {
   User,
@@ -32,4 +33,5 @@ module.exports = {
   Maquinaria,
   Noticia,
   ZucarIA,
+  RefreshToken,
 }

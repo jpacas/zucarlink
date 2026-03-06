@@ -12,7 +12,7 @@ const PolPrivacidad: React.FC = () => {
   return (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        backgroundColor: 'background.default',
         minHeight: '100vh',
         pt: 10,
         pb: 8,
@@ -24,8 +24,10 @@ const PolPrivacidad: React.FC = () => {
           sx={{
             p: { xs: 3, md: 6 },
             borderRadius: '16px',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
           }}
         >
           <Typography
@@ -33,7 +35,7 @@ const PolPrivacidad: React.FC = () => {
             sx={{
               mb: 4,
               fontWeight: 700,
-              color: '#1a1a1a',
+              color: 'text.primary',
               letterSpacing: '-0.5px',
               textAlign: 'center',
               position: 'relative',
@@ -42,7 +44,7 @@ const PolPrivacidad: React.FC = () => {
                 display: 'block',
                 width: '60px',
                 height: '4px',
-                backgroundColor: '#ff6347',
+                backgroundColor: 'primary.main',
                 margin: '16px auto',
                 borderRadius: '2px',
               },
@@ -54,7 +56,7 @@ const PolPrivacidad: React.FC = () => {
             variant='body1'
             paragraph
             sx={{
-              color: '#4a4a4a',
+              color: 'text.secondary',
               lineHeight: 1.7,
               mb: 4,
             }}
@@ -69,7 +71,7 @@ const PolPrivacidad: React.FC = () => {
               variant='h5'
               gutterBottom
               sx={{
-                color: '#1a1a1a',
+                color: 'text.primary',
                 fontWeight: 600,
                 position: 'relative',
                 '&::after': {
@@ -77,7 +79,7 @@ const PolPrivacidad: React.FC = () => {
                   display: 'block',
                   width: '40px',
                   height: '3px',
-                  backgroundColor: '#ff6347',
+                  backgroundColor: 'primary.main',
                   mt: 1,
                   borderRadius: '2px',
                 },
@@ -85,7 +87,7 @@ const PolPrivacidad: React.FC = () => {
             >
               1. Información que Recopilamos
             </Typography>
-            <List sx={{ pl: 2, color: '#4a4a4a' }}>
+            <List sx={{ pl: 2, color: 'text.secondary' }}>
               <ListItem sx={{ display: 'list-item', listStyleType: 'disc' }}>
                 Datos personales como nombre, correo electrónico, país y datos
                 de perfil.
@@ -104,7 +106,7 @@ const PolPrivacidad: React.FC = () => {
               variant='h5'
               gutterBottom
               sx={{
-                color: '#1a1a1a',
+                color: 'text.primary',
                 fontWeight: 600,
                 position: 'relative',
                 '&::after': {
@@ -112,7 +114,7 @@ const PolPrivacidad: React.FC = () => {
                   display: 'block',
                   width: '40px',
                   height: '3px',
-                  backgroundColor: '#ff6347',
+                  backgroundColor: 'primary.main',
                   mt: 1,
                   borderRadius: '2px',
                 },

@@ -58,7 +58,7 @@ const PasswordChangeForm = () => {
         sx={{
           textAlign: 'center',
           mb: 4,
-          color: '#1a1a1a',
+          color: 'text.primary',
           fontWeight: 700,
           position: 'relative',
           '&::after': {
@@ -66,7 +66,7 @@ const PasswordChangeForm = () => {
             display: 'block',
             width: '60px',
             height: '4px',
-            backgroundColor: '#ff6347',
+            backgroundColor: 'primary.main',
             margin: '16px auto',
             borderRadius: '2px',
           },
@@ -87,22 +87,6 @@ const PasswordChangeForm = () => {
             })
           }
           margin='normal'
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: '#e0e0e0',
-              },
-              '&:hover fieldset': {
-                borderColor: '#ff6347',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#ff6347',
-              },
-            },
-            '& .MuiInputLabel-root.Mui-focused': {
-              color: '#ff6347',
-            },
-          }}
         />
         <TextField
           fullWidth
@@ -113,22 +97,6 @@ const PasswordChangeForm = () => {
             setPasswordData({ ...passwordData, newPassword: e.target.value })
           }
           margin='normal'
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: '#e0e0e0',
-              },
-              '&:hover fieldset': {
-                borderColor: '#ff6347',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#ff6347',
-              },
-            },
-            '& .MuiInputLabel-root.Mui-focused': {
-              color: '#ff6347',
-            },
-          }}
         />
         <TextField
           fullWidth
@@ -142,22 +110,6 @@ const PasswordChangeForm = () => {
             })
           }
           margin='normal'
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: '#e0e0e0',
-              },
-              '&:hover fieldset': {
-                borderColor: '#ff6347',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#ff6347',
-              },
-            },
-            '& .MuiInputLabel-root.Mui-focused': {
-              color: '#ff6347',
-            },
-          }}
         />
         <Button
           type='submit'
@@ -167,18 +119,9 @@ const PasswordChangeForm = () => {
           sx={{
             mt: 4,
             mb: 2,
-            backgroundColor: '#ff6347',
-            color: '#fff',
-            textTransform: 'none',
-            borderRadius: '50px',
             padding: '12px',
-            boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              backgroundColor: '#e5533f',
-              transform: 'translateY(-2px)',
-              boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
-            },
+            transition: 'transform 0.3s ease',
+            '&:hover': { transform: 'translateY(-2px)' },
           }}
         >
           Cambiar Contraseña
@@ -199,7 +142,7 @@ const PasswordChangeForm = () => {
               boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
               borderRadius: 2,
               backgroundColor:
-                message.type === 'success' ? '#ff6347' : undefined,
+                message.type === 'success' ? 'primary.main' : undefined,
               color: message.type === 'success' ? '#fff' : undefined,
               '& .MuiAlert-icon': {
                 color: message.type === 'success' ? '#fff' : undefined,

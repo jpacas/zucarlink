@@ -22,6 +22,8 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   alignItems: 'center',
   maxWidth: '400px',
   margin: '0 auto',
+  border: `1px solid ${theme.palette.divider}`,
+  boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
 }))
 
 const Login: React.FC = () => {
@@ -75,12 +77,12 @@ const Login: React.FC = () => {
         password,
       })
 
-      const { token, user } = response.data
-      const payload = JSON.parse(atob(token.split('.')[1]))
+      const { token, refreshToken, user } = response.data
 
       login(user)
       localStorage.setItem('token', token)
-      navigate(`/perfil/${payload.id}`)
+      localStorage.setItem('refreshToken', refreshToken)
+      navigate(`/perfil/${user.id}`)
     } catch (error: any) {
       setErrorMessage(
         error.response?.data?.message ||
@@ -97,7 +99,11 @@ const Login: React.FC = () => {
   }
 
   return (
-    <Container component='main' maxWidth='xs' sx={{ marginTop: '150px' }}>
+    <Container
+      component='main'
+      maxWidth='xs'
+      sx={{ marginTop: { xs: '96px', md: '150px' } }}
+    >
       <StyledPaper elevation={3}>
         <Typography component='h1' variant='h5' gutterBottom>
           {isForgotPassword ? 'Recuperar Contraseña' : 'Inicia Sesión'}
@@ -152,14 +158,7 @@ const Login: React.FC = () => {
             type='submit'
             fullWidth
             variant='contained'
-            sx={{
-              mt: 3,
-              mb: 2,
-              bgcolor: '#ff6347',
-              '&:hover': {
-                bgcolor: '#e5533f',
-              },
-            }}
+            sx={{ mt: 3, mb: 2 }}
           >
             {isForgotPassword ? 'Enviar Instrucciones' : 'Ingresar'}
           </Button>
@@ -172,7 +171,7 @@ const Login: React.FC = () => {
                     component={Link}
                     to='/register'
                     sx={{
-                      color: '#ff6347',
+                      color: 'primary.main',
                       textDecoration: 'none',
                       '&:hover': {
                         textDecoration: 'underline',
@@ -187,7 +186,7 @@ const Login: React.FC = () => {
                     component='button'
                     onClick={() => toggleForgotPassword(true)}
                     sx={{
-                      color: '#ff6347',
+                      color: 'primary.main',
                       textDecoration: 'none',
                       '&:hover': {
                         textDecoration: 'underline',
@@ -204,7 +203,7 @@ const Login: React.FC = () => {
                   component='button'
                   onClick={() => toggleForgotPassword(false)}
                   sx={{
-                    color: '#ff6347',
+                    color: 'primary.main',
                     textDecoration: 'none',
                     '&:hover': {
                       textDecoration: 'underline',

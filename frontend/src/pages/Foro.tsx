@@ -33,7 +33,7 @@ import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { Post, Area } from '../types/interfaces'
+import { Post } from '../types/interfaces'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import AttachFileIcon from '@mui/icons-material/AttachFile'
@@ -51,7 +51,7 @@ const Foro: React.FC = () => {
   const [areaFiltro, setAreaFiltro] = useState<string>('')
   const [temaFiltro, setTemaFiltro] = useState<string>('')
   const [area, setArea] = useState<string>('')
-  const [areas, setAreas] = useState<Area[]>([])
+  const [areas, setAreas] = useState<string[]>([])
   const [titulo, setTitulo] = useState<string>('')
   const [contenido, setContenido] = useState<string>('')
   const [error, setError] = useState<string | null>(null)
@@ -73,7 +73,7 @@ const Foro: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [postToDelete, setPostToDelete] = useState<number | null>(null)
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (signal?: AbortSignal) => {
     try {
       setIsLoading(true)
       const response = await axiosInstance.get('/posts', {
@@ -83,27 +83,27 @@ const Foro: React.FC = () => {
           autor: autorFiltro.trim(),
           orden: ordenamiento,
         },
+        signal,
       })
-      if (Array.isArray(response.data)) {
-        setPosts(response.data)
-      } else {
-        throw new Error('Los datos recibidos no son un arreglo.')
-      }
+      setPosts(response.data?.data || [])
       setError(null)
-    } catch (err) {
+    } catch (err: any) {
+      if (err.code === 'ERR_CANCELED') return
       setError('Error al cargar los posts.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const fetchAreas = async () => {
+  const fetchAreas = async (signal?: AbortSignal) => {
     try {
       const response = await axiosInstance.get<{ nombre: string }[]>(
-        '/helper/areas'
+        '/helper/areas',
+        { signal }
       )
       setAreas(response.data.map((area: { nombre: string }) => area.nombre))
-    } catch (err) {
+    } catch (err: any) {
+      if (err.code === 'ERR_CANCELED') return
       if (isAxiosError(err)) {
         setError(err.response?.data?.message || 'Error al cargar los datos.')
       } else {
@@ -113,11 +113,19 @@ const Foro: React.FC = () => {
   }
 
   useEffect(() => {
-    fetchAreas()
+    const controller = new AbortController()
+    fetchAreas(controller.signal)
+    return () => {
+      controller.abort()
+    }
   }, [])
 
   useEffect(() => {
-    fetchPosts()
+    const controller = new AbortController()
+    fetchPosts(controller.signal)
+    return () => {
+      controller.abort()
+    }
   }, [areaFiltro, temaFiltro, autorFiltro, ordenamiento])
 
   const handleLikeToggle = async (postId: number) => {
@@ -323,7 +331,7 @@ const Foro: React.FC = () => {
   return (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        backgroundColor: 'background.default',
         minHeight: '100vh',
         padding: 3,
         marginTop: '64px',
@@ -339,23 +347,21 @@ const Foro: React.FC = () => {
         >
           <Box
             sx={{
-              backgroundColor: '#fff',
+              backgroundColor: 'background.paper',
               padding: 3,
-              borderRadius: 2,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-              position: 'sticky',
-              top: '80px',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
-              },
+              borderRadius: '16px',
+              border: '1px solid',
+              borderColor: 'divider',
+              boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
+              position: { xs: 'static', md: 'sticky' },
+              top: { md: '80px' },
             }}
           >
             <Typography
               variant='h5'
               marginBottom={2}
               sx={{
-                color: '#1a1a1a',
+                color: 'text.primary',
                 fontWeight: 700,
                 position: 'relative',
                 '&::after': {
@@ -363,7 +369,7 @@ const Foro: React.FC = () => {
                   display: 'block',
                   width: '40px',
                   height: '3px',
-                  backgroundColor: '#ff6347',
+                  backgroundColor: 'primary.main',
                   marginTop: '8px',
                   borderRadius: '2px',
                 },

@@ -15,6 +15,7 @@ const Noticia = require('./Noticia')
 const ZucarIA = require('./ZucarIA')
 const Conversation = require('./Conversation')
 const Message = require('./Message')
+const RefreshToken = require('./RefreshToken')
 
 const setupAssociations = () => {
   // Relaciones de User
@@ -172,6 +173,10 @@ const setupAssociations = () => {
   Message.belongsTo(User, { foreignKey: 'recipientId', as: 'recipient' })
   User.hasMany(Message, { foreignKey: 'senderId', as: 'sentMessages' })
   User.hasMany(Message, { foreignKey: 'recipientId', as: 'receivedMessages' })
+
+  // Relaciones de RefreshToken
+  RefreshToken.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+  User.hasMany(RefreshToken, { foreignKey: 'userId', as: 'refreshTokens' })
 }
 
 module.exports = setupAssociations

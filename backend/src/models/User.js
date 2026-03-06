@@ -50,6 +50,14 @@ const User = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    paisId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    areaId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,

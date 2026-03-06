@@ -40,9 +40,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         sx={{
           position: 'fixed',
           bottom: 0,
-          right: '1rem',
+          right: { xs: 0, sm: '1rem' },
+          left: { xs: 0, sm: 'auto' },
+          width: { xs: '100%', sm: 'auto' },
           display: 'flex',
           gap: 1,
+          flexWrap: 'wrap',
+          justifyContent: { xs: 'flex-end', sm: 'flex-start' },
+          px: { xs: 1, sm: 0 },
+          pb: { xs: 1, sm: 0 },
         }}
       >
         {activeChats.map((chat) => (
@@ -54,13 +60,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             }}
             variant='contained'
             sx={{
-              backgroundColor: '#ff6347',
+              backgroundColor: 'primary.main',
               borderRadius: '8px 8px 0 0',
               textTransform: 'none',
               '&:hover': {
-                backgroundColor: '#e5533f',
+                backgroundColor: 'primary.dark',
               },
               position: 'relative',
+              fontSize: { xs: '0.85rem', sm: '0.95rem' },
+              maxWidth: { xs: '45%', sm: 'auto' },
             }}
           >
             <Typography
@@ -79,7 +87,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   position: 'absolute',
                   top: -8,
                   right: -8,
-                  backgroundColor: '#dc3545',
+                  backgroundColor: 'error.main',
                   color: 'white',
                   borderRadius: '50%',
                   padding: '2px 6px',
@@ -104,8 +112,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       sx={{
         position: 'fixed',
         bottom: 0,
-        right: '1rem',
-        width: '24rem',
+        right: { xs: 0, sm: '1rem' },
+        left: { xs: 0, sm: 'auto' },
+        width: { xs: '100%', sm: '24rem' },
         bgcolor: 'background.paper',
         borderRadius: '8px 8px 0 0',
         boxShadow: 3,
@@ -122,7 +131,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           justifyContent: 'space-between',
           alignItems: 'center',
           p: 2,
-          bgcolor: '#ff6347',
+          bgcolor: 'primary.main',
           color: 'white',
           borderRadius: '8px 8px 0 0',
         }}
@@ -176,7 +185,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       <Box
         sx={{
           flexGrow: 1,
-          height: '24rem',
+          height: { xs: '45vh', sm: '24rem' },
           overflowY: 'auto',
           p: 2,
           display: 'flex',
@@ -204,9 +213,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   maxWidth: '70%',
                   p: 1.5,
                   borderRadius: 2,
-                  ...(message.from === user?.id
+                      ...(message.from === user?.id
                     ? {
-                        bgcolor: '#ff6347',
+                        bgcolor: 'primary.main',
                         color: 'white',
                         borderBottomRightRadius: 0,
                       }
@@ -244,25 +253,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder='Escribe un mensaje...'
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              '&:hover fieldset': {
-                borderColor: '#ff6347',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#ff6347',
-              },
-            },
-          }}
         />
         <Button
           type='submit'
           variant='contained'
           sx={{
-            bgcolor: '#ff6347',
-            '&:hover': {
-              bgcolor: '#e5533f',
-            },
+            bgcolor: 'primary.main',
+            '&:hover': { bgcolor: 'primary.dark' },
           }}
         >
           Enviar

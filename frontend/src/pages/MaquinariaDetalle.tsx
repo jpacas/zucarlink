@@ -306,7 +306,7 @@ const MaquinariaDetalle: React.FC = () => {
   return (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        backgroundColor: 'background.default',
         minHeight: '100vh',
         pt: 10,
         pb: 8,
@@ -318,10 +318,10 @@ const MaquinariaDetalle: React.FC = () => {
           onClick={() => navigate('/maquinarias')}
           sx={{
             mb: 3,
-            color: '#4a4a4a',
+            color: 'text.secondary',
             '&:hover': {
-              backgroundColor: 'rgba(255, 99, 71, 0.1)',
-              color: '#ff6347',
+              backgroundColor: 'rgba(228, 93, 69, 0.08)',
+              color: 'primary.main',
             },
           }}
         >

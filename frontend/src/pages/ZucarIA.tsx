@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import axiosInstance from '../utils/axiosConfig'
 import {
   Box,
   TextField,
@@ -23,7 +23,12 @@ const ZucarIA: React.FC = () => {
   useEffect(() => {
     const savedMessages = localStorage.getItem('zucarIA_conversation')
     if (savedMessages) {
-      setMessages(JSON.parse(savedMessages))
+      try {
+        setMessages(JSON.parse(savedMessages))
+      } catch (error) {
+        console.error('Error al parsear mensajes guardados:', error)
+        localStorage.removeItem('zucarIA_conversation')
+      }
     }
   }, [])
 
@@ -37,19 +42,10 @@ const ZucarIA: React.FC = () => {
     if (!user?.id) return
 
     try {
-      const token = localStorage.getItem('token')
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/conversations/save`,
-        {
-          userId: user.id,
-          messages: conversation,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
+      await axiosInstance.post('/zucaria/save', {
+        userId: user.id,
+        messages: conversation,
+      })
     } catch (error) {
       console.error(
         'Error al guardar la conversación en la base de datos:',
@@ -76,19 +72,9 @@ const ZucarIA: React.FC = () => {
 
       const messagesToSend = [systemMessage, ...newMessages]
 
-      const response = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
-        {
-          model: 'ft:gpt-3.5-turbo-0125:personal::Axk617ow',
-          messages: messagesToSend,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      )
+      const response = await axiosInstance.post('/zucaria/chat', {
+        messages: messagesToSend,
+      })
 
       const updatedMessages = [
         ...newMessages,
@@ -109,7 +95,7 @@ const ZucarIA: React.FC = () => {
   return (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        backgroundColor: 'background.default',
         minHeight: '100vh',
         pt: 10,
         pb: 8,
@@ -122,7 +108,7 @@ const ZucarIA: React.FC = () => {
           textAlign='center'
           mb={4}
           sx={{
-            color: '#1a1a1a',
+            color: 'text.primary',
             fontWeight: 700,
             letterSpacing: '-0.5px',
             position: 'relative',
@@ -131,7 +117,7 @@ const ZucarIA: React.FC = () => {
               display: 'block',
               width: '60px',
               height: '4px',
-              backgroundColor: '#ff6347',
+              backgroundColor: 'primary.main',
               margin: '16px auto',
               borderRadius: '2px',
             },
@@ -146,12 +132,10 @@ const ZucarIA: React.FC = () => {
             p: 3,
             mb: 3,
             borderRadius: 2,
-            backgroundColor: '#fff',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
-            },
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
           }}
         >
           {messages.map((msg, index) => (
@@ -168,8 +152,9 @@ const ZucarIA: React.FC = () => {
                 sx={{
                   p: 2,
                   borderRadius: 2,
-                  backgroundColor: msg.role === 'user' ? '#ff6347' : '#fff',
-                  color: msg.role === 'user' ? '#fff' : '#4a4a4a',
+                  backgroundColor:
+                    msg.role === 'user' ? 'primary.main' : 'background.paper',
+                  color: msg.role === 'user' ? '#fff' : 'text.secondary',
                   maxWidth: '70%',
                   boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
                   transition: 'all 0.3s ease',
@@ -195,7 +180,7 @@ const ZucarIA: React.FC = () => {
           ))}
           {loading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-              <CircularProgress size={24} sx={{ color: '#ff6347' }} />
+              <CircularProgress size={24} sx={{ color: 'primary.main' }} />
             </Box>
           )}
         </Paper>
@@ -215,16 +200,16 @@ const ZucarIA: React.FC = () => {
           maxRows={4}
           sx={{
             '& .MuiOutlinedInput-root': {
-              backgroundColor: '#fff',
+              backgroundColor: 'background.paper',
               borderRadius: 2,
               transition: 'all 0.3s ease',
               '&:hover': {
                 '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#ff6347',
+                  borderColor: 'primary.main',
                 },
               },
               '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                borderColor: '#ff6347',
+                borderColor: 'primary.main',
                 borderWidth: 2,
               },
             },
@@ -237,14 +222,14 @@ const ZucarIA: React.FC = () => {
                   onClick={sendMessage}
                   disabled={loading}
                   sx={{
-                    color: '#ff6347',
+                    color: 'primary.main',
                     '&:hover': {
-                      backgroundColor: 'rgba(255, 99, 71, 0.1)',
+                      backgroundColor: 'rgba(228, 93, 69, 0.08)',
                     },
                   }}
                 >
                   {loading ? (
-                    <CircularProgress size={24} sx={{ color: '#ff6347' }} />
+                    <CircularProgress size={24} sx={{ color: 'primary.main' }} />
                   ) : (
                     <SendIcon />
                   )}

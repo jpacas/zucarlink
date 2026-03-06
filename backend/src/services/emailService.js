@@ -12,18 +12,21 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
   tls: {
-    rejectUnauthorized: false, // Necesario en algunos casos para desarrollo local
+    // En producción siempre validar certificados para prevenir ataques MITM
+    rejectUnauthorized: process.env.NODE_ENV === 'production',
   },
 })
 
-// Verificar la conexión
-transporter.verify(function (error, success) {
-  if (error) {
-    console.log('Error en la configuración del servidor de correo:', error)
-  } else {
-    console.log('Servidor de correo listo para enviar mensajes')
-  }
-})
+// Verificar la conexión (evitar fallos en dev cuando no hay credenciales reales)
+if (process.env.NODE_ENV === 'production') {
+  transporter.verify(function (error, success) {
+    if (error) {
+      console.log('Error en la configuración del servidor de correo:', error)
+    } else {
+      console.log('Servidor de correo listo para enviar mensajes')
+    }
+  })
+}
 
 // Función para enviar correo de recordatorio
 const sendReminderEmail = async (to, messageInfo) => {
@@ -441,10 +444,100 @@ const checkNewPostsAndSendNotifications = async (Post, User, Area) => {
   }
 }
 
+// Función para enviar correo de recuperación de contraseña
+const sendPasswordResetEmail = async (to, resetUrl) => {
+  const htmlTemplate = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Recuperación de Contraseña - Zucarlink</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, sans-serif;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+          <td style="padding: 20px 0; text-align: center; background-color: #ffffff;">
+            <img src="https://sawa-dev-2-storage-bucket.storage.googleapis.com/profiles/xhcujhfcadwkupzz-88efb.png"
+                 alt="Zucarlink Logo"
+                 style="width: 200px; height: auto; margin-bottom: 10px;">
+          </td>
+        </tr>
+      </table>
+
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+          <td style="padding: 20px;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <div style="padding: 30px;">
+                <h2 style="color: #e5533f; text-align: center; margin-bottom: 30px; font-size: 24px;">
+                  Recuperación de Contraseña
+                </h2>
+
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                  <p style="color: #4A5568; font-size: 16px; line-height: 1.6;">
+                    Has solicitado recuperar tu contraseña. Haz clic en el siguiente botón para restablecerla:
+                  </p>
+
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetUrl}"
+                       style="background-color: #e5533f; color: white; padding: 12px 24px;
+                              text-decoration: none; border-radius: 5px; font-weight: bold;
+                              display: inline-block;">
+                      Restablecer Contraseña
+                    </a>
+                  </div>
+
+                  <p style="color: #4A5568; font-size: 14px; line-height: 1.6;">
+                    Este enlace expirará en 1 hora.
+                  </p>
+                  <p style="color: #4A5568; font-size: 14px; line-height: 1.6;">
+                    Si no solicitaste este cambio, por favor ignora este correo.
+                  </p>
+                </div>
+              </div>
+
+              <div style="background-color: #e5533f; padding: 20px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                <p style="color: #ffffff; text-align: center; margin: 0; font-size: 14px;">
+                  © ${new Date().getFullYear()} Zucarlink - La red social de la industria azucarera
+                </p>
+                <p style="color: #E2E8F0; font-size: 12px; text-align: center; margin-top: 10px;">
+                  Este es un correo automático, por favor no responder.
+                </p>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `
+
+  const mailOptions = {
+    from: {
+      name: 'Zucarlink',
+      address: process.env.EMAIL_USER,
+    },
+    to: to,
+    subject: 'Recuperación de Contraseña - Zucarlink',
+    html: htmlTemplate,
+  }
+
+  try {
+    await transporter.sendMail(mailOptions)
+    console.log('Correo de recuperación enviado exitosamente')
+    return true
+  } catch (error) {
+    console.error('Error al enviar correo de recuperación:', error)
+    throw error
+  }
+}
+
 module.exports = {
   sendReminderEmail,
   checkUnreadMessagesAndSendReminders,
   sendWelcomeEmail,
   sendNewPostNotification,
   checkNewPostsAndSendNotifications,
+  sendPasswordResetEmail,
 }

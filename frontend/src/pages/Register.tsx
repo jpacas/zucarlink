@@ -449,16 +449,18 @@ const Register: React.FC = () => {
           justifyContent: 'center',
           py: 6,
           px: 3,
-          background: 'linear-gradient(to bottom right, #f5f7fa, #e4e8ec)',
+          backgroundColor: 'background.default',
         }}
       >
         <Box
           sx={{
             width: '100%',
             maxWidth: '1200px',
-            backgroundColor: '#fff',
-            borderRadius: 4,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+            backgroundColor: 'background.paper',
+            borderRadius: '16px',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
             overflow: 'hidden',
             p: { xs: 3, md: 6 },
           }}
@@ -466,7 +468,7 @@ const Register: React.FC = () => {
           <Box sx={{ textAlign: 'center', mb: 6 }}>
             <Box
               sx={{
-                backgroundColor: 'info.light',
+                backgroundColor: 'background.default',
                 p: 2,
                 borderRadius: 2,
                 maxWidth: '800px',
@@ -476,11 +478,10 @@ const Register: React.FC = () => {
                 gap: 2,
               }}
             >
-              <Store sx={{ color: 'info.main', fontSize: 40 }} />
+              <Store sx={{ color: 'primary.main', fontSize: 40 }} />
               <Typography
                 variant='body1'
-                color='white'
-                sx={{ textAlign: 'left' }}
+                sx={{ textAlign: 'left', color: 'text.secondary' }}
               >
                 <strong>¿Eres una empresa proveedora?</strong> Para registrar
                 usuarios de tu empresa, primero debes registrar tu empresa en la

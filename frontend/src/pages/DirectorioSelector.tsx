@@ -46,7 +46,7 @@ const DirectorioSelector: React.FC = () => {
   return (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        backgroundColor: 'background.default',
         minHeight: '100vh',
         pt: 10,
         pb: 8,
@@ -59,7 +59,7 @@ const DirectorioSelector: React.FC = () => {
           sx={{
             mb: 6,
             fontWeight: 700,
-            color: '#1a1a1a',
+            color: 'text.primary',
             letterSpacing: '-0.5px',
             position: 'relative',
             '&::after': {
@@ -67,7 +67,7 @@ const DirectorioSelector: React.FC = () => {
               display: 'block',
               width: '60px',
               height: '4px',
-              backgroundColor: '#ff6347',
+              backgroundColor: 'primary.main',
               margin: '16px auto',
               borderRadius: '2px',
             },
@@ -85,16 +85,16 @@ const DirectorioSelector: React.FC = () => {
                   flexDirection: 'column',
                   cursor: option.disabled ? 'not-allowed' : 'pointer',
                   transition: 'all 0.3s ease',
-                  borderRadius: '16px',
-                  background:
-                    'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                  backgroundColor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
                   opacity: option.disabled ? 0.7 : 1,
                   '&:hover': {
                     transform: option.disabled ? 'none' : 'translateY(-8px)',
                     boxShadow: option.disabled
-                      ? '0 4px 20px rgba(0,0,0,0.05)'
-                      : '0 12px 40px rgba(0,0,0,0.12)',
+                      ? '0 8px 24px rgba(16, 24, 40, 0.08)'
+                      : '0 12px 28px rgba(16, 24, 40, 0.12)',
                   },
                 }}
                 onClick={() => {
@@ -114,7 +114,7 @@ const DirectorioSelector: React.FC = () => {
                 >
                   <Box
                     sx={{
-                      color: '#ff6347',
+                      color: 'primary.main',
                       mb: 3,
                       transition: 'transform 0.3s ease',
                       '&:hover': {
@@ -130,7 +130,7 @@ const DirectorioSelector: React.FC = () => {
                     sx={{
                       mb: 2,
                       fontWeight: 600,
-                      color: '#1a1a1a',
+                      color: 'text.primary',
                     }}
                   >
                     {option.title}
@@ -139,7 +139,7 @@ const DirectorioSelector: React.FC = () => {
                         sx={{
                           ml: 1,
                           fontSize: 20,
-                          color: '#ff6347',
+                          color: 'primary.main',
                           verticalAlign: 'middle',
                         }}
                       />
@@ -148,7 +148,7 @@ const DirectorioSelector: React.FC = () => {
                   <Typography
                     variant='body1'
                     sx={{
-                      color: '#4a4a4a',
+                      color: 'text.secondary',
                       lineHeight: 1.7,
                     }}
                   >
@@ -163,18 +163,8 @@ const DirectorioSelector: React.FC = () => {
                       }}
                       sx={{
                         mt: 2,
-                        backgroundColor: '#ff6347',
-                        color: '#fff',
-                        textTransform: 'none',
-                        borderRadius: '50px',
-                        padding: '8px 20px',
-                        boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
                         transition: 'all 0.3s ease',
-                        '&:hover': {
-                          backgroundColor: '#e5533f',
-                          transform: 'translateY(-2px)',
-                          boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
-                        },
+                        '&:hover': { transform: 'translateY(-2px)' },
                       }}
                     >
                       Iniciar Sesión

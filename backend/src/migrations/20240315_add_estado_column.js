@@ -3,7 +3,23 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     try {
-      await queryInterface.addColumn('Proveedors', 'estado', {
+      const tables = await queryInterface.showAllTables()
+      const tableNames = tables.map((table) => {
+        if (typeof table === 'string') {
+          return table
+        }
+        return table.tableName || table.name
+      })
+
+      const targetTable =
+        tableNames.find((name) => name && name.toLowerCase() === 'proveedors') ||
+        tableNames.find((name) => name && name.toLowerCase() === 'proveedores')
+
+      if (!targetTable) {
+        return
+      }
+
+      await queryInterface.addColumn(targetTable, 'estado', {
         type: Sequelize.ENUM('activo', 'inactivo', 'pendiente'),
         defaultValue: 'pendiente',
         allowNull: false,
@@ -16,10 +32,23 @@ module.exports = {
 
   down: async (queryInterface, Sequelize) => {
     try {
-      await queryInterface.removeColumn('Proveedors', 'estado')
-      await queryInterface.sequelize.query(
-        'DROP TYPE IF EXISTS "enum_Proveedors_estado";'
-      )
+      const tables = await queryInterface.showAllTables()
+      const tableNames = tables.map((table) => {
+        if (typeof table === 'string') {
+          return table
+        }
+        return table.tableName || table.name
+      })
+
+      const targetTable =
+        tableNames.find((name) => name && name.toLowerCase() === 'proveedors') ||
+        tableNames.find((name) => name && name.toLowerCase() === 'proveedores')
+
+      if (!targetTable) {
+        return
+      }
+
+      await queryInterface.removeColumn(targetTable, 'estado')
     } catch (error) {
       console.error('Error al revertir la migración:', error)
       throw error

@@ -17,9 +17,17 @@ const uploadToS3 = async (file) => {
 }
 
 const deleteFromS3 = async (url) => {
+  let key = url
+  try {
+    const parsedUrl = new URL(url)
+    key = parsedUrl.pathname.replace(/^\/+/, '')
+  } catch (error) {
+    key = url.replace(/^\/+/, '')
+  }
+
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
-    Key: url,
+    Key: key,
   }
   await s3.deleteObject(params).promise()
 }

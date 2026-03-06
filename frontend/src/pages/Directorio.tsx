@@ -53,12 +53,18 @@ const Directorio: React.FC<DirectorioProps> = () => {
   const { user: currentUser } = useAuth()
 
   useEffect(() => {
+    const controller = new AbortController()
+
     const fetchData = async () => {
       try {
         setLoading(true)
         const [paisesRes, areasRes] = await Promise.all([
-          axiosInstance.get<{ nombre: string }[]>('/helper/paises'),
-          axiosInstance.get<{ nombre: string }[]>('/helper/areas'),
+          axiosInstance.get<{ nombre: string }[]>('/helper/paises', {
+            signal: controller.signal,
+          }),
+          axiosInstance.get<{ nombre: string }[]>('/helper/areas', {
+            signal: controller.signal,
+          }),
         ])
 
         setPaises(paisesRes.data.map((pais) => pais.nombre))
@@ -71,23 +77,28 @@ const Directorio: React.FC<DirectorioProps> = () => {
             return
           }
           const [usuariosRes, ingeniosRes] = await Promise.all([
-            axiosInstance.get('/users/usuarios'),
-            axiosInstance.get('/helper/ingenios'),
+            axiosInstance.get('/users/usuarios', { signal: controller.signal }),
+            axiosInstance.get('/helper/ingenios', { signal: controller.signal }),
           ])
           setUsuarios(usuariosRes.data)
           setIngeniosList(ingeniosRes.data)
           setIngeniosFiltrados(ingeniosRes.data)
         } else if (tipo === 'ingenios') {
-          const ingeniosRes = await axiosInstance.get('/helper/ingenios')
+          const ingeniosRes = await axiosInstance.get('/helper/ingenios', {
+            signal: controller.signal,
+          })
           setIngenios(ingeniosRes.data)
           setIngeniosList(ingeniosRes.data)
           setIngeniosFiltrados(ingeniosRes.data)
         } else if (tipo === 'proveedores') {
-          const proveedoresRes = await axiosInstance.get('/helper/proveedores')
+          const proveedoresRes = await axiosInstance.get('/helper/proveedores', {
+            signal: controller.signal,
+          })
           setProveedores(proveedoresRes.data)
         }
       } catch (err) {
         if (isAxiosError(err)) {
+          if (err.code === 'ERR_CANCELED') return // Petición cancelada, no hacer nada
           setError(err.response?.data?.message || 'Error al cargar los datos.')
         } else {
           setError('Error desconocido.')
@@ -98,6 +109,10 @@ const Directorio: React.FC<DirectorioProps> = () => {
     }
 
     fetchData()
+
+    return () => {
+      controller.abort()
+    }
   }, [tipo, currentUser])
 
   useEffect(() => {
@@ -189,12 +204,14 @@ const Directorio: React.FC<DirectorioProps> = () => {
     return (
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+          backgroundColor: 'background.paper',
           p: 4,
           borderRadius: '16px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-          position: 'sticky',
-          top: '80px',
+          border: '1px solid',
+          borderColor: 'divider',
+          boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
+          position: { xs: 'static', md: 'sticky' },
+          top: { md: '80px' },
         }}
       >
         <Typography
@@ -202,14 +219,14 @@ const Directorio: React.FC<DirectorioProps> = () => {
           sx={{
             mb: 3,
             fontWeight: 700,
-            color: '#1a1a1a',
+            color: 'text.primary',
             position: 'relative',
             '&::after': {
               content: '""',
               display: 'block',
               width: '40px',
               height: '3px',
-              backgroundColor: '#ff6347',
+              backgroundColor: 'primary.main',
               mt: 1,
               borderRadius: '2px',
             },
@@ -225,19 +242,6 @@ const Directorio: React.FC<DirectorioProps> = () => {
           onChange={handleFiltroChange}
           variant='outlined'
           margin='normal'
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              '&:hover fieldset': {
-                borderColor: '#ff6347',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#ff6347',
-              },
-            },
-            '& .MuiInputLabel-root.Mui-focused': {
-              color: '#ff6347',
-            },
-          }}
         />
         {(tipo === 'usuarios' ||
           tipo === 'ingenios' ||
@@ -254,19 +258,6 @@ const Directorio: React.FC<DirectorioProps> = () => {
                 label='País'
                 margin='normal'
                 fullWidth
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '&:hover fieldset': {
-                      borderColor: '#ff6347',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#ff6347',
-                    },
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: '#ff6347',
-                  },
-                }}
               />
             )}
           />
@@ -285,19 +276,6 @@ const Directorio: React.FC<DirectorioProps> = () => {
                   label='Ingenio'
                   margin='normal'
                   fullWidth
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&:hover fieldset': {
-                        borderColor: '#ff6347',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#ff6347',
-                      },
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#ff6347',
-                    },
-                  }}
                 />
               )}
             />
@@ -313,19 +291,6 @@ const Directorio: React.FC<DirectorioProps> = () => {
                   label='Área'
                   margin='normal'
                   fullWidth
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&:hover fieldset': {
-                        borderColor: '#ff6347',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#ff6347',
-                      },
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#ff6347',
-                    },
-                  }}
                 />
               )}
             />
@@ -334,7 +299,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                 variant='subtitle1'
                 sx={{
                   fontWeight: 600,
-                  color: '#1a1a1a',
+                  color: 'text.primary',
                   mb: 1,
                 }}
               >
@@ -353,12 +318,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                       checked={filtros.tipoUsuario.ingenio}
                       onChange={handleTipoUsuarioChange}
                       name='ingenio'
-                      sx={{
-                        color: '#ff6347',
-                        '&.Mui-checked': {
-                          color: '#ff6347',
-                        },
-                      }}
+                      color='primary'
                     />
                   }
                   label='Ingenio'
@@ -369,12 +329,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                       checked={filtros.tipoUsuario.proveedor}
                       onChange={handleTipoUsuarioChange}
                       name='proveedor'
-                      sx={{
-                        color: '#ff6347',
-                        '&.Mui-checked': {
-                          color: '#ff6347',
-                        },
-                      }}
+                      color='primary'
                     />
                   }
                   label='Proveedor'
@@ -395,15 +350,16 @@ const Directorio: React.FC<DirectorioProps> = () => {
           sx={{
             cursor: 'pointer',
             transition: 'all 0.3s ease',
-            borderRadius: '16px',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
             '&:hover': {
-              transform: 'translateY(-8px)',
-              boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
+              transform: 'translateY(-6px)',
+              boxShadow: '0 12px 28px rgba(16, 24, 40, 0.12)',
             },
           }}
           onClick={() => navigate(`/perfil/${usuario.id}`)}
@@ -427,8 +383,8 @@ const Directorio: React.FC<DirectorioProps> = () => {
                   borderRadius: '50%',
                   mb: 3,
                   overflow: 'hidden',
-                  border: '3px solid #ff6347',
-                  boxShadow: '0 4px 15px rgba(255, 99, 71, 0.2)',
+                  border: '3px solid #E45D45',
+                  boxShadow: '0 8px 16px rgba(228, 93, 69, 0.18)',
                 }}
               >
                 <img
@@ -451,9 +407,9 @@ const Directorio: React.FC<DirectorioProps> = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: '#f5f5f5',
-                  border: '3px solid #ff6347',
-                  boxShadow: '0 4px 15px rgba(255, 99, 71, 0.2)',
+                  backgroundColor: 'background.default',
+                  border: '3px solid #E45D45',
+                  boxShadow: '0 8px 16px rgba(228, 93, 69, 0.18)',
                 }}
               >
                 <Typography variant='body2' color='text.secondary'>
@@ -466,7 +422,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
               sx={{
                 mb: 2,
                 fontWeight: 600,
-                color: '#1a1a1a',
+                color: 'text.primary',
               }}
             >
               {usuario.nombre} {usuario.apellido}
@@ -475,7 +431,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
               variant='body2'
               sx={{
                 mb: 1,
-                color: '#4a4a4a',
+                color: 'text.secondary',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0.5,
@@ -487,7 +443,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
               <Typography
                 variant='body2'
                 sx={{
-                  color: '#4a4a4a',
+                  color: 'text.secondary',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 0.5,
@@ -501,7 +457,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                   variant='body2'
                   sx={{
                     mb: 1,
-                    color: '#4a4a4a',
+                    color: 'text.secondary',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 0.5,
@@ -512,7 +468,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                 <Typography
                   variant='body2'
                   sx={{
-                    color: '#4a4a4a',
+                    color: 'text.secondary',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 0.5,
@@ -527,23 +483,10 @@ const Directorio: React.FC<DirectorioProps> = () => {
             <CardActions sx={{ justifyContent: 'center', pb: 3 }}>
               <Button
                 variant='contained'
+                size='small'
                 onClick={(e) => {
                   e.stopPropagation()
                   startChat(usuario.id, `${usuario.nombre} ${usuario.apellido}`)
-                }}
-                sx={{
-                  backgroundColor: '#ff6347',
-                  color: '#fff',
-                  textTransform: 'none',
-                  borderRadius: '50px',
-                  padding: '6px 16px',
-                  boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: '#e5533f',
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
-                  },
                 }}
               >
                 Enviar Mensaje
@@ -562,12 +505,13 @@ const Directorio: React.FC<DirectorioProps> = () => {
             flexDirection: 'column',
             cursor: 'pointer',
             transition: 'all 0.3s ease',
-            borderRadius: '16px',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
             '&:hover': {
-              transform: 'translateY(-8px)',
-              boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
+              transform: 'translateY(-6px)',
+              boxShadow: '0 12px 28px rgba(16, 24, 40, 0.12)',
             },
           }}
         >
@@ -585,7 +529,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
               sx={{
                 mb: 2,
                 fontWeight: 600,
-                color: '#1a1a1a',
+                color: 'text.primary',
               }}
             >
               {ingenio.nombre}
@@ -594,7 +538,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
               variant='body1'
               sx={{
                 mb: 2,
-                color: '#4a4a4a',
+                color: 'text.secondary',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0.5,
@@ -606,13 +550,13 @@ const Directorio: React.FC<DirectorioProps> = () => {
               variant='body2'
               sx={{
                 mb: 2,
-                color: '#4a4a4a',
+                color: 'text.secondary',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 1,
               }}
             >
-              <PeopleIcon sx={{ color: '#ff6347' }} />
+              <PeopleIcon sx={{ color: 'primary.main' }} />
               {ingenio.usuariosCount}
             </Typography>
             {ingenio.webpage && (
@@ -632,7 +576,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                   target='_blank'
                   rel='noopener noreferrer'
                   sx={{
-                    color: '#ff6347',
+                    color: 'primary.main',
                     textDecoration: 'none',
                     '&:hover': {
                       textDecoration: 'underline',
@@ -658,7 +602,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                   component='a'
                   href={`mailto:${ingenio.correo}`}
                   sx={{
-                    color: '#ff6347',
+                    color: 'primary.main',
                     textDecoration: 'none',
                     '&:hover': {
                       textDecoration: 'underline',
@@ -682,12 +626,13 @@ const Directorio: React.FC<DirectorioProps> = () => {
             flexDirection: 'column',
             cursor: 'pointer',
             transition: 'all 0.3s ease',
-            borderRadius: '16px',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
             '&:hover': {
-              transform: 'translateY(-8px)',
-              boxShadow: '0 12px 40px rgba(0,0,0,0.12)',
+              transform: 'translateY(-6px)',
+              boxShadow: '0 12px 28px rgba(16, 24, 40, 0.12)',
             },
           }}
           onClick={() => navigate(`/perfil-proveedor/${proveedor.id}`)}
@@ -716,7 +661,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                 variant='h6'
                 sx={{
                   fontWeight: 600,
-                  color: '#1a1a1a',
+                  color: 'text.primary',
                   flex: 1,
                 }}
               >
@@ -751,8 +696,8 @@ const Directorio: React.FC<DirectorioProps> = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: '8px',
+                    backgroundColor: 'background.default',
+                    borderRadius: 2,
                     flexShrink: 0,
                   }}
                 >
@@ -770,7 +715,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                   variant='body2'
                   sx={{
                     mb: 1,
-                    color: '#4a4a4a',
+                    color: 'text.secondary',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 0.5,
@@ -783,7 +728,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                 <Typography
                   variant='body2'
                   sx={{
-                    color: '#4a4a4a',
+                    color: 'text.secondary',
                     display: '-webkit-box',
                     WebkitLineClamp: 3,
                     WebkitBoxOrient: 'vertical',
@@ -803,7 +748,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                     gap: 1,
                   }}
                 >
-                  <LanguageIcon sx={{ color: '#ff6347' }} />
+                  <LanguageIcon sx={{ color: 'primary.main' }} />
                   <Typography
                     variant='body2'
                     component='a'
@@ -812,7 +757,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                     rel='noopener noreferrer'
                     onClick={(e) => e.stopPropagation()}
                     sx={{
-                      color: '#ff6347',
+                      color: 'primary.main',
                       textDecoration: 'none',
                       '&:hover': {
                         textDecoration: 'underline',
@@ -834,7 +779,8 @@ const Directorio: React.FC<DirectorioProps> = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 width: '100%',
-                borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+                borderTop: '1px solid',
+                borderColor: 'divider',
               }}
             >
               <Box
@@ -847,7 +793,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                 {proveedor.email && (
                   <EmailIcon
                     sx={{
-                      color: '#ff6347',
+                      color: 'primary.main',
                       cursor: 'pointer',
                     }}
                     onClick={(e) => {
@@ -867,14 +813,14 @@ const Directorio: React.FC<DirectorioProps> = () => {
                 <Typography
                   variant='body2'
                   sx={{
-                    color: '#4a4a4a',
+                    color: 'text.secondary',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
                   }}
                 >
                   {proveedor.usuariosCount || 0}
-                  <PeopleIcon sx={{ color: '#ff6347' }} />
+                  <PeopleIcon sx={{ color: 'primary.main' }} />
                 </Typography>
               </Box>
             </Box>
@@ -889,7 +835,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
   return (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        backgroundColor: 'background.default',
         minHeight: '100vh',
         pt: 10,
         pb: 8,
@@ -905,9 +851,11 @@ const Directorio: React.FC<DirectorioProps> = () => {
               justifyContent: 'center',
               p: 4,
               textAlign: 'center',
-              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+              backgroundColor: 'background.paper',
               borderRadius: '16px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+              border: '1px solid',
+              borderColor: 'divider',
+              boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
             }}
           >
             <Typography
@@ -915,7 +863,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
               sx={{
                 mb: 2,
                 fontWeight: 600,
-                color: '#1a1a1a',
+                color: 'text.primary',
               }}
             >
               Acceso Restringido
@@ -923,7 +871,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
             <Typography
               variant='body1'
               sx={{
-                color: '#4a4a4a',
+                color: 'text.secondary',
                 maxWidth: '600px',
                 mb: 3,
               }}
@@ -933,21 +881,8 @@ const Directorio: React.FC<DirectorioProps> = () => {
             </Typography>
             <Button
               variant='contained'
+              size='large'
               onClick={() => navigate('/login')}
-              sx={{
-                backgroundColor: '#ff6347',
-                color: '#fff',
-                textTransform: 'none',
-                borderRadius: '50px',
-                padding: '10px 24px',
-                boxShadow: '0 4px 15px rgba(255, 99, 71, 0.3)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  backgroundColor: '#e5533f',
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 6px 20px rgba(255, 99, 71, 0.4)',
-                },
-              }}
             >
               Iniciar Sesión
             </Button>
@@ -987,7 +922,7 @@ const Directorio: React.FC<DirectorioProps> = () => {
                     >
                       <CircularProgress
                         sx={{
-                          color: '#ff6347',
+                          color: 'primary.main',
                           width: '60px !important',
                           height: '60px !important',
                         }}
@@ -1006,37 +941,38 @@ const Directorio: React.FC<DirectorioProps> = () => {
                       sx={{
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        p: 4,
-                        textAlign: 'center',
-                        background:
-                          'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                        borderRadius: '16px',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      p: 4,
+                      textAlign: 'center',
+                      backgroundColor: 'background.paper',
+                      borderRadius: '16px',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
+                    }}
+                  >
+                    <Typography
+                      variant='h6'
+                      sx={{
+                        mb: 2,
+                        fontWeight: 600,
+                        color: 'text.primary',
                       }}
                     >
-                      <Typography
-                        variant='h6'
-                        sx={{
-                          mb: 2,
-                          fontWeight: 600,
-                          color: '#1a1a1a',
-                        }}
-                      >
                         {tipo === 'proveedores'
                           ? 'No hay proveedores registrados'
                           : tipo === 'ingenios'
                           ? 'No hay ingenios registrados'
                           : 'No hay usuarios registrados'}
                       </Typography>
-                      <Typography
-                        variant='body1'
-                        sx={{
-                          color: '#4a4a4a',
-                          maxWidth: '600px',
-                        }}
-                      >
+                    <Typography
+                      variant='body1'
+                      sx={{
+                        color: 'text.secondary',
+                        maxWidth: '600px',
+                      }}
+                    >
                         {tipo === 'proveedores'
                           ? 'Por el momento no hay proveedores registrados en el directorio. Vuelve más tarde para ver los proveedores disponibles.'
                           : tipo === 'ingenios'

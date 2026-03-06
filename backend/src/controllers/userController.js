@@ -1,22 +1,23 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const nodemailer = require('nodemailer')
 const User = require('../models/User')
 const Pais = require('../models/Pais')
 const Ingenio = require('../models/Ingenio')
 const Area = require('../models/Area')
 const Proveedor = require('../models/Proveedor')
 const { uploadToS3 } = require('./serverFunctions')
-const { sendWelcomeEmail } = require('../services/emailService')
-
-// Configuración del transportador de correo
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-})
+const {
+  sendWelcomeEmail,
+  sendPasswordResetEmail,
+} = require('../services/emailService')
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  refreshTokens,
+  revokeRefreshToken,
+  revokeAllUserTokens,
+} = require('../services/tokenService')
+const { mapUserToResponse, mapUsersToResponse } = require('../utils/mappers')
 
 ////////////////////////////////////////////////////////////
 ///// Obtener todos los usuarios //////////////////////////
@@ -60,22 +61,8 @@ const getAllUsers = async (req, res) => {
       ],
     })
 
-    //Preparar la respuesta para el frontend
-
-    const usuarios = response.map((usuario) => {
-      return {
-        id: usuario.id,
-        nombre: usuario.nombre,
-        apellido: usuario.apellido,
-        email: usuario.email,
-        avatarUrl: usuario.avatarUrl,
-        pais: usuario.pais.nombre,
-        ingenio: usuario.ingenio?.nombre || null,
-        area: usuario.area?.nombre || null,
-        acercaDe: usuario.acercaDe,
-        proveedor: usuario.proveedor?.nombre || null,
-      }
-    })
+    // Usar mapper centralizado
+    const usuarios = mapUsersToResponse(response)
 
     res.status(200).json(usuarios)
   } catch (error) {
@@ -173,6 +160,7 @@ const registerUser = async (req, res) => {
 
     // Valida que los registros existan en la BD (solo los que se hayan solicitado)
     if (
+      !foundPais ||
       (hasIngenio && !foundIngenio) ||
       (hasProveedor && !foundProveedor) ||
       (hasIngenio && !foundArea)
@@ -286,18 +274,8 @@ const getUserById = async (req, res) => {
       return res.status(404).json({ message: 'Usuario no encontrado' })
     }
 
-    const usuario = {
-      id: response.id,
-      nombre: response.nombre,
-      apellido: response.apellido,
-      email: response.email,
-      avatarUrl: response.avatarUrl,
-      pais: response.pais.nombre,
-      ingenio: response.ingenio?.nombre || null,
-      area: response.area?.nombre || null,
-      acercaDe: response.acercaDe,
-      proveedor: response.proveedor?.nombre || null,
-    }
+    // Usar mapper centralizado
+    const usuario = mapUserToResponse(response)
 
     res.status(200).json(usuario)
   } catch (error) {
@@ -311,8 +289,8 @@ const getUserById = async (req, res) => {
 
 const updateUserProfile = async (req, res) => {
   const { id } = req.params
-  const { nombre, apellido, pais, acercaDe, ingenio, area, usuarioId } =
-    req.body
+  const { nombre, apellido, pais, acercaDe, ingenio, area } = req.body
+  const usuarioId = req.user?.id
 
   try {
     const usuario = await User.findByPk(id)
@@ -320,7 +298,7 @@ const updateUserProfile = async (req, res) => {
       return res.status(404).json({ message: 'Usuario no encontrado' })
     }
 
-    if (usuarioId !== usuario.id) {
+    if (String(usuarioId) !== String(usuario.id)) {
       return res
         .status(403)
         .json({ message: 'No tienes permisos para actualizar este perfil' })
@@ -348,9 +326,15 @@ const updateUserProfile = async (req, res) => {
     // Actualizar datos del usuario
     usuario.nombre = nombre || usuario.nombre
     usuario.apellido = apellido || usuario.apellido
-    usuario.paisId = paisId.id || usuario.paisId
-    usuario.ingenioId = ingenioId.id || usuario.ingenioId
-    usuario.areaId = areaId.id || usuario.areaId
+    if (paisId) {
+      usuario.paisId = paisId.id
+    }
+    if (ingenioId) {
+      usuario.ingenioId = ingenioId.id
+    }
+    if (areaId) {
+      usuario.areaId = areaId.id
+    }
     usuario.acercaDe = acercaDe || usuario.acercaDe
     usuario.avatarUrl = avatarUrl
 
@@ -380,6 +364,7 @@ const updateUserProfile = async (req, res) => {
 
 const changeUserPassword = async (req, res) => {
   const { id } = req.params
+  const usuarioId = req.user?.id
   const { currentPassword, newPassword, confirmPassword } = req.body
 
   try {
@@ -393,6 +378,11 @@ const changeUserPassword = async (req, res) => {
     const usuario = await User.findByPk(id)
     if (!usuario) {
       return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+    if (String(usuarioId) !== String(usuario.id)) {
+      return res.status(403).json({
+        message: 'No tienes permisos para cambiar esta contraseña',
+      })
     }
 
     // Verificar la contraseña actual
@@ -429,6 +419,7 @@ const changeUserPassword = async (req, res) => {
 
 const uploadProfilePicture = async (req, res) => {
   const { id } = req.params
+  const usuarioId = req.user?.id
 
   if (!req.file) {
     return res.status(400).json({ message: 'No se subió ningún archivo.' })
@@ -440,6 +431,11 @@ const uploadProfilePicture = async (req, res) => {
 
     if (!usuario) {
       return res.status(404).json({ message: 'Usuario no encontrado.' })
+    }
+    if (String(usuarioId) !== String(usuario.id)) {
+      return res.status(403).json({
+        message: 'No tienes permisos para actualizar esta foto.',
+      })
     }
 
     usuario.avatarUrl = avatarUrl
@@ -484,16 +480,9 @@ const loginUser = async (req, res) => {
         .json({ message: 'Error del servidor: JWT_SECRET no definido' })
     }
 
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: '6h',
-      }
-    )
+    // Generar access token (15 min) y refresh token (7 días)
+    const accessToken = generateAccessToken(user)
+    const refreshToken = await generateRefreshToken(user.id)
 
     // Desestructurar el objeto user excluyendo el password
     const {
@@ -505,7 +494,8 @@ const loginUser = async (req, res) => {
 
     res.status(200).json({
       message: 'Login exitoso',
-      token,
+      token: accessToken,
+      refreshToken,
       user: userWithoutPassword,
     })
   } catch (error) {
@@ -517,14 +507,46 @@ const loginUser = async (req, res) => {
 ///// Logout //////////////////////////////////////////////
 ///////////////////////////////////////////////////////////
 
-const logout = (req, res) => {
+const logout = async (req, res) => {
   try {
+    const { refreshToken } = req.body
+
+    // Revocar el refresh token si se proporciona
+    if (refreshToken) {
+      await revokeRefreshToken(refreshToken)
+    }
+
     res.status(200).json({
-      message: 'Logout exitoso, elimina el token en el frontend',
+      message: 'Logout exitoso',
     })
   } catch (error) {
     console.error('Error en logout:', error)
     res.status(500).json({ message: 'Error al cerrar sesión' })
+  }
+}
+
+////////////////////////////////////////////////////////////
+///// Refrescar token /////////////////////////////////////
+///////////////////////////////////////////////////////////
+
+const refreshUserToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body
+
+    if (!refreshToken) {
+      return res.status(400).json({ message: 'Refresh token requerido' })
+    }
+
+    const tokens = await refreshTokens(refreshToken)
+
+    res.status(200).json({
+      message: 'Tokens renovados exitosamente',
+      token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    })
+  } catch (error) {
+    console.error('Error al refrescar token:', error)
+    res.status(401).json({ message: error.message || 'Error al refrescar token' })
   }
 }
 
@@ -565,16 +587,11 @@ const getProviderUsers = async (req, res) => {
       return res.status(204).send([]) // No hay contenido
     }
 
-    const usuarios = response.map((usuario) => ({
-      id: usuario.id,
-      nombre: usuario.nombre,
-      apellido: usuario.apellido,
-      email: usuario.email,
-      avatarUrl: usuario.avatarUrl,
-      pais: usuario.pais.nombre,
-      area: usuario.area?.nombre || null,
-      acercaDe: usuario.acercaDe,
-    }))
+    // Usar mapper centralizado (sin ingenio ni proveedor)
+    const usuarios = mapUsersToResponse(response, {
+      includeIngenio: false,
+      includeProveedor: false,
+    })
 
     res.status(200).json(usuarios)
   } catch (error) {
@@ -608,24 +625,8 @@ const forgotPassword = async (req, res) => {
     // Crear URL de recuperación
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`
 
-    // Configurar el correo
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Recuperación de Contraseña - ZucarLink',
-      html: `
-        <h2>Recuperación de Contraseña</h2>
-        <p>Has solicitado recuperar tu contraseña. Haz clic en el siguiente enlace para restablecerla:</p>
-        <a href="${resetUrl}" style="background-color: #ff6347; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-          Restablecer Contraseña
-        </a>
-        <p>Este enlace expirará en 1 hora.</p>
-        <p>Si no solicitaste este cambio, por favor ignora este correo.</p>
-      `,
-    }
-
-    // Enviar el correo
-    await transporter.sendMail(mailOptions)
+    // Enviar el correo usando el servicio centralizado
+    await sendPasswordResetEmail(email, resetUrl)
 
     res.status(200).json({
       message:
@@ -694,4 +695,5 @@ module.exports = {
   getProviderUsers,
   forgotPassword,
   resetPassword,
+  refreshUserToken,
 }

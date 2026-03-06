@@ -20,6 +20,8 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   alignItems: 'center',
   maxWidth: '400px',
   margin: '0 auto',
+  border: `1px solid ${theme.palette.divider}`,
+  boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
 }))
 
 const ResetPassword: React.FC = () => {
@@ -67,7 +69,11 @@ const ResetPassword: React.FC = () => {
   }
 
   return (
-    <Container component='main' maxWidth='xs' sx={{ marginTop: '150px' }}>
+    <Container
+      component='main'
+      maxWidth='xs'
+      sx={{ marginTop: { xs: '96px', md: '150px' } }}
+    >
       <StyledPaper elevation={3}>
         <Typography component='h1' variant='h5' gutterBottom>
           Restablecer Contraseña
@@ -120,14 +126,7 @@ const ResetPassword: React.FC = () => {
             type='submit'
             fullWidth
             variant='contained'
-            sx={{
-              mt: 3,
-              mb: 2,
-              bgcolor: '#ff6347',
-              '&:hover': {
-                bgcolor: '#e5533f',
-              },
-            }}
+            sx={{ mt: 3, mb: 2 }}
           >
             Restablecer Contraseña
           </Button>

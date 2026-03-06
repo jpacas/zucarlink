@@ -2,6 +2,7 @@ const Experiencia = require('../models/Experiencia')
 const Ingenio = require('../models/Ingenio')
 const Area = require('../models/Area')
 const Pais = require('../models/Pais')
+const { mapExperienciasToResponse } = require('../utils/mappers')
 
 // Obtener todas las experiencias de un usuario
 const getExperiencias = async (req, res) => {
@@ -11,6 +12,11 @@ const getExperiencias = async (req, res) => {
       return res
         .status(400)
         .json({ message: 'El ID del usuario es requerido.' })
+    }
+    if (String(req.params.userId) !== String(req.user?.id)) {
+      return res
+        .status(403)
+        .json({ message: 'No tienes permiso para ver estas experiencias.' })
     }
 
     const response = await Experiencia.findAll({
@@ -39,19 +45,17 @@ const getExperiencias = async (req, res) => {
       return res.json([])
     }
 
+    // Usar mapper centralizado (corrige bug de propiedades duplicadas)
     const experiencias = response.map((experiencia) => ({
       id: experiencia.id,
       fechaInicio: experiencia.fechaInicio,
       fechaFin: experiencia.fechaFin,
       cargo: experiencia.cargo,
-      area: experiencia.area.nombre,
-      ingenio: experiencia.ingenio.nombre,
-      pais: experiencia.pais.nombre,
       actualmenteTrabaja: experiencia.actualmenteTrabaja,
       acercaDe: experiencia.acercaDe,
-      ingenio: experiencia.ingenio.nombre,
-      area: experiencia.area.nombre,
-      pais: experiencia.pais.nombre,
+      ingenio: experiencia.ingenio?.nombre || null,
+      area: experiencia.area?.nombre || null,
+      pais: experiencia.pais?.nombre || null,
     }))
 
     res.json(experiencias)
@@ -77,6 +81,7 @@ const createExperiencia = async (req, res) => {
       pais,
     } = req.body
     const { userId } = req.params
+    const usuarioId = req.user?.id
 
     // Validación de entrada
     if (
@@ -91,6 +96,11 @@ const createExperiencia = async (req, res) => {
       return res.status(400).json({
         message: 'Todos los campos necesarios deben ser proporcionados.',
       })
+    }
+    if (String(userId) !== String(usuarioId)) {
+      return res
+        .status(403)
+        .json({ message: 'No tienes permiso para crear esta experiencia.' })
     }
 
     const ingenioObj = await Ingenio.findOne({ where: { nombre: ingenio } })
@@ -132,7 +142,6 @@ const createExperiencia = async (req, res) => {
 const updateExperiencia = async (req, res) => {
   const { expId } = req.params
   const {
-    usuarioId,
     ingenio,
     fechaInicio,
     fechaFin,
@@ -142,6 +151,7 @@ const updateExperiencia = async (req, res) => {
     actualmenteTrabaja,
     pais,
   } = req.body
+  const usuarioId = req.user?.id
 
   try {
     // Buscar la experiencia por ID
@@ -152,7 +162,7 @@ const updateExperiencia = async (req, res) => {
     }
 
     // Verificar que el usuario autenticado sea el dueño de la experiencia
-    if (experiencia.usuarioId !== usuarioId) {
+    if (String(experiencia.usuarioId) !== String(usuarioId)) {
       return res
         .status(403)
         .json({ message: 'No tienes permiso para editar esta experiencia' })
@@ -221,7 +231,7 @@ const updateExperiencia = async (req, res) => {
 
 const deleteExperience = async (req, res) => {
   const { expId } = req.params
-  const { usuarioId } = req.body
+  const usuarioId = req.user?.id
 
   try {
     const experience = await Experiencia.findOne({
@@ -233,7 +243,7 @@ const deleteExperience = async (req, res) => {
     }
 
     // Verifica que el usuario autenticado sea el dueño de la experiencia
-    if (experience.usuarioId !== usuarioId) {
+    if (String(experience.usuarioId) !== String(usuarioId)) {
       return res
         .status(403)
         .json({ message: 'No tienes permiso para eliminar esta experiencia' })

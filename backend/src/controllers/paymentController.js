@@ -222,6 +222,14 @@ const handleWebhook = async (req, res) => {
           where: { stripeSubscriptionId: canceledSubscription.id },
         })
 
+        if (!proveedor) {
+          console.error(
+            'No se encontró el proveedor para cancelar suscripción:',
+            canceledSubscription.id
+          )
+          return
+        }
+
         await proveedor.update({
           estado: 'inactivo',
           stripeSubscriptionId: null,

@@ -121,7 +121,7 @@ const Maquinarias: React.FC = () => {
     try {
       setLoading(true)
       const response = await axiosInstance.get('/maquinaria')
-      setMaquinarias(response.data)
+      setMaquinarias(response.data?.data || [])
     } catch (error) {
       console.error('Error al cargar maquinarias:', error)
       enqueueSnackbar('Error al cargar las maquinarias', { variant: 'error' })
@@ -353,7 +353,7 @@ const Maquinarias: React.FC = () => {
   return (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        backgroundColor: 'background.default',
         minHeight: '100vh',
         pt: 10,
         pb: 8,
@@ -373,22 +373,20 @@ const Maquinarias: React.FC = () => {
               elevation={0}
               sx={{
                 p: 3,
-                borderRadius: 2,
-                backgroundColor: '#fff',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                position: 'sticky',
-                top: '80px',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
-                },
+                borderRadius: '16px',
+                backgroundColor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'divider',
+                boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
+                position: { xs: 'static', md: 'sticky' },
+                top: { md: '80px' },
               }}
             >
               <Typography
                 variant='h5'
                 marginBottom={2}
                 sx={{
-                  color: '#1a1a1a',
+                  color: 'text.primary',
                   fontWeight: 700,
                   position: 'relative',
                   '&::after': {
@@ -396,7 +394,7 @@ const Maquinarias: React.FC = () => {
                     display: 'block',
                     width: '40px',
                     height: '3px',
-                    backgroundColor: '#ff6347',
+                    backgroundColor: 'primary.main',
                     marginTop: '8px',
                     borderRadius: '2px',
                   },
@@ -469,19 +467,6 @@ const Maquinarias: React.FC = () => {
                       label='País'
                       size='small'
                       fullWidth
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': {
-                            borderColor: '#ff6347',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#ff6347',
-                          },
-                        },
-                        '& .MuiInputLabel-root.Mui-focused': {
-                          color: '#ff6347',
-                        },
-                      }}
                     />
                   )}
                 />
@@ -496,16 +481,6 @@ const Maquinarias: React.FC = () => {
                     setFiltros({ ...filtros, ingenio: e.target.value })
                   }
                   disabled={!filtros.pais}
-                  sx={{
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      '&:hover': {
-                        borderColor: '#ff6347',
-                      },
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: '#ff6347',
-                    },
-                  }}
                 >
                   {ingeniosFiltrados.map((ingenio, i) => (
                     <MenuItem key={i} value={ingenio.nombre}>
@@ -529,22 +504,11 @@ const Maquinarias: React.FC = () => {
                 disabled={!user}
                 sx={{
                   mt: 2,
-                  py: 1.5,
-                  fontWeight: 'bold',
-                  bgcolor: '#ff6347',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                  '&:hover': {
-                    bgcolor: '#e5533f',
-                    boxShadow: '0 6px 25px rgba(0,0,0,0.15)',
-                    transform: 'translateY(-2px)',
-                    transition: 'all 0.2s ease',
-                  },
+                  py: 1.4,
+                  transition: 'transform 0.2s ease',
+                  '&:hover': { transform: 'translateY(-2px)' },
                   '&.Mui-disabled': {
-                    bgcolor: '#cccccc',
-                    color: '#666666',
                     '&:hover': {
-                      bgcolor: '#cccccc',
-                      boxShadow: 'none',
                       transform: 'none',
                     },
                   },
@@ -562,7 +526,7 @@ const Maquinarias: React.FC = () => {
           >
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-                <CircularProgress sx={{ color: '#ff6347' }} />
+                <CircularProgress sx={{ color: 'primary.main' }} />
               </Box>
             ) : maquinariasFiltradas.length === 0 ? (
               <Paper
@@ -570,15 +534,17 @@ const Maquinarias: React.FC = () => {
                 sx={{
                   p: 4,
                   textAlign: 'center',
-                  borderRadius: 2,
-                  backgroundColor: '#fff',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+                  borderRadius: '16px',
+                  backgroundColor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
                 }}
               >
                 <Typography
                   variant='h6'
                   sx={{
-                    color: '#4a4a4a',
+                    color: 'text.secondary',
                     fontWeight: 500,
                   }}
                 >
@@ -594,12 +560,15 @@ const Maquinarias: React.FC = () => {
                         height: '100%',
                         display: 'flex',
                         flexDirection: 'column',
-                        borderRadius: 2,
                         overflow: 'hidden',
                         transition: 'all 0.3s ease',
+                        backgroundColor: 'background.paper',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        boxShadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
                         '&:hover': {
                           transform: 'translateY(-5px)',
-                          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                          boxShadow: '0 12px 28px rgba(16, 24, 40, 0.12)',
                         },
                         position: 'relative',
                         cursor: 'pointer',
@@ -906,14 +875,14 @@ const Maquinarias: React.FC = () => {
         <DialogTitle
           sx={{
             fontWeight: 700,
-            color: '#1a1a1a',
+            color: 'text.primary',
             position: 'relative',
             '&::after': {
               content: '""',
               display: 'block',
               width: '40px',
               height: '3px',
-              backgroundColor: '#ff6347',
+              backgroundColor: 'primary.main',
               mt: 1,
               borderRadius: '2px',
             },

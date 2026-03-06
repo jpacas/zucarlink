@@ -27,3 +27,8 @@ dist-ssr
 .env.local
 .cursorrules
 .cursor
+CLAUDE.md
+
+# Database backups
+*.sql
+backup_*.sql

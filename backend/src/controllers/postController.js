@@ -6,6 +6,9 @@ const Comment = require('../models/Comment')
 const Archivo = require('../models/Archivo')
 const { uploadToS3 } = require('./serverFunctions')
 const { Op } = require('sequelize')
+const { safeParseJSON } = require('../utils/helpers')
+const { parsePaginationParams, buildPaginationResponse } = require('../utils/pagination')
+const sequelize = require('../config/database')
 
 ////////////////////////////////////////////////////////////
 ///// Obtener todos los posts ///////////////////////////////
@@ -14,6 +17,9 @@ const { Op } = require('sequelize')
 const getAllPosts = async (req, res) => {
   try {
     const { tema, area, autor, orden } = req.query
+
+    // Parsear parámetros de paginación
+    const { page, limit, offset } = parsePaginationParams(req.query)
 
     let orderConfig = [['createdAt', 'DESC']] // orden por defecto: más recientes
 
@@ -40,10 +46,11 @@ const getAllPosts = async (req, res) => {
       whereClause['$area.nombre$'] = area
     }
     if (autor) {
-      whereClause['$autor.nombre$'] = { [Op.iLike]: `%${autor}%` }
+      whereClause['$autor.nombre$'] = { [Op.like]: `%${autor}%` }
     }
 
-    const posts = await Post.findAll({
+    // Usar findAndCountAll para obtener total y datos paginados
+    const { count, rows: posts } = await Post.findAndCountAll({
       where: whereClause,
       include: [
         {
@@ -77,9 +84,15 @@ const getAllPosts = async (req, res) => {
         },
       ],
       order: orderConfig,
+      limit,
+      offset,
+      distinct: true, // Para contar correctamente con includes
     })
 
-    res.json(posts)
+    res.json({
+      data: posts,
+      pagination: buildPaginationResponse(count, page, limit),
+    })
   } catch (error) {
     console.error('Error al obtener los posts:', error)
     res.status(500).json({ message: 'Error al obtener los posts', error })
@@ -161,11 +174,16 @@ const getPostById = async (req, res) => {
 ////////////////////////////////////////////////////////////
 
 const createPost = async (req, res) => {
+  const transaction = await sequelize.transaction()
+  const uploadedUrls = [] // Para rastrear archivos subidos a S3
+
   try {
-    const { titulo, contenido, area, usuarioId } = req.body
+    const { titulo, contenido, area } = req.body
+    const usuarioId = req.user?.id
     const files = req.files // Array de archivos
 
     if (!titulo || !contenido || !area || !usuarioId) {
+      await transaction.rollback()
       return res
         .status(400)
         .json({ message: 'Todos los campos son obligatorios.' })
@@ -176,29 +194,31 @@ const createPost = async (req, res) => {
     })
 
     if (!areaFound) {
+      await transaction.rollback()
       return res
         .status(404)
         .json({ message: 'El área especificada no existe.' })
     }
 
-    // Crear el post
+    // Crear el post dentro de la transacción
     const newPost = await Post.create({
       titulo,
       contenido,
       areaId: areaFound.id,
       usuarioId,
-    })
+    }, { transaction })
 
     // Subir archivos a S3 si existen
     if (files && files.length > 0) {
       const uploadPromises = files.map(async (file) => {
         const url = await uploadToS3(file)
+        uploadedUrls.push(url) // Rastrear URL subida
         return Archivo.create({
           nombre: file.originalname,
           url,
           tipo: file.mimetype,
           postId: newPost.id,
-        })
+        }, { transaction })
       })
 
       await Promise.all(uploadPromises)
@@ -210,11 +230,21 @@ const createPost = async (req, res) => {
         { model: Archivo, as: 'archivos' },
         { model: Area, as: 'area' },
       ],
+      transaction,
     })
 
+    // Si todo salió bien, hacer commit
+    await transaction.commit()
     res.status(201).json(postWithFiles)
   } catch (error) {
     console.error('Error al crear el post:', error)
+    // Rollback de la transacción
+    await transaction.rollback()
+
+    // TODO: Implementar limpieza de archivos de S3 si es necesario
+    // Por ahora, los archivos quedarán huérfanos en S3 en caso de error
+    // Se recomienda implementar un job de limpieza periódica
+
     res.status(500).json({ message: 'Error al crear el post', error })
   }
 }
@@ -225,7 +255,7 @@ const createPost = async (req, res) => {
 
 const toggleLike = async (req, res) => {
   const { postId } = req.params
-  const { userId } = req.body
+  const userId = req.user?.id
 
   try {
     if (!userId) {
@@ -287,7 +317,12 @@ const toggleLike = async (req, res) => {
 const addComment = async (req, res) => {
   try {
     const { postId } = req.params
-    const { usuarioId, contenido } = req.body
+    const { contenido } = req.body
+    const usuarioId = req.user?.id
+
+    if (!usuarioId) {
+      return res.status(400).json({ message: 'Usuario no autenticado.' })
+    }
 
     // Verificar si el usuario existe
     const userExists = await User.findByPk(usuarioId, {
@@ -335,6 +370,7 @@ const addComment = async (req, res) => {
 
 const deleteComment = async (req, res) => {
   const { postId, commentId } = req.params
+  const usuarioId = req.user?.id
   try {
     const post = await Post.findByPk(postId)
     if (!post) return res.status(404).json({ message: 'Post no encontrado.' })
@@ -345,6 +381,11 @@ const deleteComment = async (req, res) => {
     })
     if (!commentToDelete) {
       return res.status(404).json({ message: 'Comentario no encontrado.' })
+    }
+
+    // Verificar que el usuario sea el propietario del comentario
+    if (String(commentToDelete.usuarioId) !== String(usuarioId)) {
+      return res.status(403).json({ message: 'No tienes permiso para eliminar este comentario.' })
     }
 
     await commentToDelete.destroy()
@@ -383,6 +424,24 @@ const incrementViews = async (postId) => {
   }
 }
 
+const incrementViewsHandler = async (req, res) => {
+  try {
+    const { postId } = req.params
+    const post = await Post.findByPk(postId)
+    if (!post) {
+      return res.status(404).json({ message: 'Post no encontrado.' })
+    }
+
+    post.views += 1
+    await post.save()
+
+    res.status(200).json({ message: 'Vista registrada.' })
+  } catch (error) {
+    console.error('Error al incrementar vistas:', error)
+    res.status(500).json({ message: 'Error al incrementar vistas.', error })
+  }
+}
+
 ////////////////////////////////////////////////////////////
 ///// Eliminar un post ////////////////////////////////////
 ////////////////////////////////////////////////////////////
@@ -390,7 +449,7 @@ const incrementViews = async (postId) => {
 const deletePost = async (req, res) => {
   try {
     const { id } = req.params
-    const { usuarioId } = req.body
+    const usuarioId = req.user?.id
 
     const post = await Post.findByPk(id)
 
@@ -417,17 +476,22 @@ const deletePost = async (req, res) => {
 ////////////////////////////////////////////////////////////
 
 const updatePost = async (req, res) => {
+  const transaction = await sequelize.transaction()
+
   try {
     const { id } = req.params
-    const { titulo, contenido, area, usuarioId, filesToDelete } = req.body
+    const { titulo, contenido, area, filesToDelete } = req.body
+    const usuarioId = req.user?.id
     const archivos = req.files
 
     const post = await Post.findByPk(id)
     if (!post) {
+      await transaction.rollback()
       return res.status(404).json({ message: 'Post no encontrado' })
     }
 
     if (post.usuarioId !== usuarioId) {
+      await transaction.rollback()
       return res.status(403).json({ message: 'No autorizado' })
     }
 
@@ -436,6 +500,7 @@ const updatePost = async (req, res) => {
     })
 
     if (!areaFound) {
+      await transaction.rollback()
       return res.status(404).json({ message: 'El área especificada no existe' })
     }
 
@@ -444,17 +509,17 @@ const updatePost = async (req, res) => {
       titulo,
       contenido,
       areaId: areaFound.id,
-    })
+    }, { transaction })
 
     // Eliminar archivos marcados
     if (filesToDelete) {
-      const idsToDelete = JSON.parse(filesToDelete)
+      const idsToDelete = safeParseJSON(filesToDelete, [])
       await Archivo.destroy({
         where: {
           id: idsToDelete,
           postId: id,
         },
-      })
+      }, { transaction })
     }
 
     // Agregar nuevos archivos
@@ -470,7 +535,7 @@ const updatePost = async (req, res) => {
       })
 
       const nuevosArchivos = await Promise.all(uploadPromises)
-      await Archivo.bulkCreate(nuevosArchivos)
+      await Archivo.bulkCreate(nuevosArchivos, { transaction })
     }
 
     // Obtener post actualizado con todos sus datos
@@ -504,11 +569,14 @@ const updatePost = async (req, res) => {
           ],
         },
       ],
+      transaction,
     })
 
+    await transaction.commit()
     res.json(postActualizado)
   } catch (error) {
     console.error('Error al actualizar el post:', error)
+    await transaction.rollback()
     res
       .status(500)
       .json({ message: 'Error al actualizar el post', error: error.message })
@@ -521,6 +589,7 @@ module.exports = {
   toggleLike,
   addComment,
   incrementViews,
+  incrementViewsHandler,
   deleteComment,
   getPostById,
   deletePost,

@@ -6,10 +6,16 @@ const Area = require('../models/Area')
 const Ingenio = require('../models/Ingenio')
 const s3 = require('../config/s3')
 const { v4: uuidv4 } = require('uuid')
+const { safeParseJSON } = require('../utils/helpers')
+const { parsePaginationParams, buildPaginationResponse } = require('../utils/pagination')
+const sequelize = require('../config/database')
 
 const getAllEmpleos = async (req, res) => {
   try {
-    const empleos = await Empleo.findAll({
+    // Parsear parámetros de paginación
+    const { page, limit, offset } = parsePaginationParams(req.query)
+
+    const { count, rows: empleos } = await Empleo.findAndCountAll({
       include: [
         {
           model: User,
@@ -38,9 +44,15 @@ const getAllEmpleos = async (req, res) => {
       ],
       attributes: { include: ['views'] },
       order: [['createdAt', 'DESC']],
+      limit,
+      offset,
+      distinct: true,
     })
 
-    res.json(empleos)
+    res.json({
+      data: empleos,
+      pagination: buildPaginationResponse(count, page, limit),
+    })
   } catch (error) {
     console.error('Error al obtener empleos:', error)
     res.status(500).json({ message: 'Error al obtener empleos', error })
@@ -95,9 +107,11 @@ const getEmpleoById = async (req, res) => {
 }
 
 const createEmpleo = async (req, res) => {
+  const transaction = await sequelize.transaction()
+
   try {
-    const { nombre, descripcion, ingenio, area, pais, contacto, usuarioId } =
-      req.body
+    const { nombre, descripcion, ingenio, area, pais, contacto } = req.body
+    const usuarioId = req.user?.id
     const archivos = req.files || []
 
     if (
@@ -109,6 +123,7 @@ const createEmpleo = async (req, res) => {
       !contacto ||
       !usuarioId
     ) {
+      await transaction.rollback()
       return res
         .status(400)
         .json({ message: 'Todos los campos son requeridos' })
@@ -120,15 +135,16 @@ const createEmpleo = async (req, res) => {
       Ingenio.findOne({ where: { nombre: ingenio } }),
     ])
 
-    const paisId = paisData.id
-    const areaId = areaData.id
-    const ingenioId = ingenioData.id
-
-    if (!paisId || !areaId || !ingenioId) {
+    if (!paisData || !areaData || !ingenioData) {
+      await transaction.rollback()
       return res
         .status(400)
         .json({ message: 'Pais, area o ingenio no encontrado' })
     }
+
+    const paisId = paisData.id
+    const areaId = areaData.id
+    const ingenioId = ingenioData.id
 
     const empleo = await Empleo.create({
       nombre,
@@ -139,7 +155,7 @@ const createEmpleo = async (req, res) => {
       contacto,
       usuarioId,
       vigente: true,
-    })
+    }, { transaction })
 
     // Subir archivos a S3 si existen
     if (archivos && archivos.length > 0) {
@@ -163,7 +179,7 @@ const createEmpleo = async (req, res) => {
               url: data.Location,
               tipo: archivo.mimetype,
               empleoId: empleo.id,
-            })
+            }, { transaction })
           })
       })
 
@@ -197,11 +213,14 @@ const createEmpleo = async (req, res) => {
           attributes: ['id', 'nombre'],
         },
       ],
+      transaction,
     })
 
+    await transaction.commit()
     res.status(201).json(empleoCreado)
   } catch (error) {
     console.error('Error al crear empleo:', error)
+    await transaction.rollback()
     res.status(500).json({ message: 'Error al crear empleo', error })
   }
 }
@@ -216,10 +235,10 @@ const updateEmpleo = async (req, res) => {
       area,
       pais,
       contacto,
-      usuarioId,
       vigente,
       filesToDelete,
     } = req.body
+    const usuarioId = req.user?.id
     const archivos = req.files || []
 
     // Verificar que el empleo existe
@@ -229,7 +248,7 @@ const updateEmpleo = async (req, res) => {
     }
 
     // Verificar que el usuario que actualiza es el creador
-    if (empleo.usuarioId !== usuarioId) {
+    if (String(empleo.usuarioId) !== String(usuarioId)) {
       return res
         .status(403)
         .json({ message: 'No tienes permiso para actualizar esta oferta' })
@@ -258,7 +277,7 @@ const updateEmpleo = async (req, res) => {
 
     // Eliminar archivos marcados para eliminación
     if (filesToDelete) {
-      const idsToDelete = JSON.parse(filesToDelete)
+      const idsToDelete = safeParseJSON(filesToDelete, [])
       await Archivo.destroy({
         where: {
           id: idsToDelete,
@@ -336,6 +355,7 @@ const updateEmpleo = async (req, res) => {
 const deleteEmpleo = async (req, res) => {
   try {
     const { id } = req.params
+    const usuarioId = req.user?.id
 
     // Verificar que el empleo existe
     const empleo = await Empleo.findByPk(id)
@@ -344,8 +364,11 @@ const deleteEmpleo = async (req, res) => {
     }
 
     // Verificar que el usuario que elimina es el creador
-    // Nota: Esta verificación se puede hacer aquí o en el frontend
-    // En este caso, lo dejamos como responsabilidad del frontend
+    if (String(empleo.usuarioId) !== String(usuarioId)) {
+      return res
+        .status(403)
+        .json({ message: 'No tienes permiso para eliminar esta oferta' })
+    }
 
     // Eliminar archivos asociados (Sequelize debería manejar esto con CASCADE, pero lo hacemos explícito)
     await Archivo.destroy({ where: { empleoId: id } })

@@ -1,0 +1,18 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: zucarlink-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: zucarlink...
+      MYSQL_DATABASE: zucarlink
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: zucarlink...
+    ports:
+      - "3001:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: ["mysqld", "--default-authentication-plugin=mysql_native_password"]
+
+volumes:
+  mysql_data:

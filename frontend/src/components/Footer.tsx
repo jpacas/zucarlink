@@ -19,8 +19,9 @@ const Footer: React.FC = () => {
     <Box
       component='footer'
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-        boxShadow: '0 -4px 20px rgba(0,0,0,0.05)',
+        backgroundColor: 'background.paper',
+        borderTop: '1px solid',
+        borderColor: 'divider',
         pt: 6,
         pb: 3,
         mt: 'auto',
@@ -33,7 +34,7 @@ const Footer: React.FC = () => {
             <Typography
               variant='h6'
               sx={{
-                color: '#1a1a1a',
+                color: 'text.primary',
                 fontWeight: 700,
                 mb: 2,
                 position: 'relative',
@@ -42,7 +43,7 @@ const Footer: React.FC = () => {
                   display: 'block',
                   width: '40px',
                   height: '3px',
-                  backgroundColor: '#ff6347',
+                  backgroundColor: 'primary.main',
                   mt: 1,
                   borderRadius: '2px',
                 },
@@ -53,11 +54,11 @@ const Footer: React.FC = () => {
             <Typography
               variant='body2'
               sx={{
-                color: '#4a4a4a',
+                color: 'text.secondary',
                 lineHeight: 1.7,
                 transition: 'color 0.3s ease',
                 '&:hover': {
-                  color: '#ff6347',
+                  color: 'primary.main',
                 },
               }}
             >
@@ -70,7 +71,7 @@ const Footer: React.FC = () => {
             <Typography
               variant='h6'
               sx={{
-                color: '#1a1a1a',
+                color: 'text.primary',
                 fontWeight: 700,
                 mb: 2,
                 position: 'relative',
@@ -79,7 +80,7 @@ const Footer: React.FC = () => {
                   display: 'block',
                   width: '40px',
                   height: '3px',
-                  backgroundColor: '#ff6347',
+                  backgroundColor: 'primary.main',
                   mt: 1,
                   borderRadius: '2px',
                 },
@@ -92,11 +93,11 @@ const Footer: React.FC = () => {
                 component={RouterLink}
                 to='/privacidad'
                 sx={{
-                  color: '#4a4a4a',
+                  color: 'text.secondary',
                   textDecoration: 'none',
                   transition: 'color 0.3s ease',
                   '&:hover': {
-                    color: '#ff6347',
+                    color: 'primary.main',
                   },
                 }}
               >
@@ -106,11 +107,11 @@ const Footer: React.FC = () => {
                 component={RouterLink}
                 to='/uso'
                 sx={{
-                  color: '#4a4a4a',
+                  color: 'text.secondary',
                   textDecoration: 'none',
                   transition: 'color 0.3s ease',
                   '&:hover': {
-                    color: '#ff6347',
+                    color: 'primary.main',
                   },
                 }}
               >
@@ -124,7 +125,7 @@ const Footer: React.FC = () => {
             <Typography
               variant='h6'
               sx={{
-                color: '#1a1a1a',
+                color: 'text.primary',
                 fontWeight: 700,
                 mb: 2,
                 position: 'relative',
@@ -133,7 +134,7 @@ const Footer: React.FC = () => {
                   display: 'block',
                   width: '40px',
                   height: '3px',
-                  backgroundColor: '#ff6347',
+                  backgroundColor: 'primary.main',
                   mt: 1,
                   borderRadius: '2px',
                 },
@@ -147,10 +148,10 @@ const Footer: React.FC = () => {
                 target='_blank'
                 rel='noopener noreferrer'
                 sx={{
-                  color: '#4a4a4a',
+                  color: 'text.secondary',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    color: '#ff6347',
+                    color: 'primary.main',
                     transform: 'translateY(-3px)',
                   },
                 }}
@@ -162,10 +163,10 @@ const Footer: React.FC = () => {
                 target='_blank'
                 rel='noopener noreferrer'
                 sx={{
-                  color: '#4a4a4a',
+                  color: 'text.secondary',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    color: '#ff6347',
+                    color: 'primary.main',
                     transform: 'translateY(-3px)',
                   },
                 }}
@@ -177,10 +178,10 @@ const Footer: React.FC = () => {
                 target='_blank'
                 rel='noopener noreferrer'
                 sx={{
-                  color: '#4a4a4a',
+                  color: 'text.secondary',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    color: '#ff6347',
+                    color: 'primary.main',
                     transform: 'translateY(-3px)',
                   },
                 }}
@@ -192,10 +193,10 @@ const Footer: React.FC = () => {
                 target='_blank'
                 rel='noopener noreferrer'
                 sx={{
-                  color: '#4a4a4a',
+                  color: 'text.secondary',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    color: '#ff6347',
+                    color: 'primary.main',
                     transform: 'translateY(-3px)',
                   },
                 }}
@@ -214,7 +215,7 @@ const Footer: React.FC = () => {
             mt: 4,
             pt: 3,
             borderTop: '1px solid rgba(0,0,0,0.1)',
-            color: '#4a4a4a',
+            color: 'text.secondary',
           }}
         >
           © {new Date().getFullYear()} Zucarlink. Todos los derechos reservados.

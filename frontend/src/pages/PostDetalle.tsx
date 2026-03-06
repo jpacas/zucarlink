@@ -287,7 +287,7 @@ const PostDetalle: React.FC = () => {
   return (
     <Box
       sx={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+        backgroundColor: 'background.default',
         minHeight: '100vh',
         padding: 3,
         marginTop: '64px',
@@ -298,10 +298,10 @@ const PostDetalle: React.FC = () => {
         onClick={() => navigate('/foro')}
         sx={{
           mb: 2,
-          color: '#4a4a4a',
+          color: 'text.secondary',
           '&:hover': {
-            backgroundColor: 'rgba(255, 99, 71, 0.1)',
-            color: '#ff6347',
+            backgroundColor: 'rgba(228, 93, 69, 0.08)',
+            color: 'primary.main',
           },
         }}
       >
