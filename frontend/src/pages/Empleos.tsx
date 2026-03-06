@@ -195,12 +195,8 @@ const Empleos: React.FC = () => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
 
-    // Si cambia el país, filtrar los ingenios correspondientes
+    // Si cambia el país, resetear el ingenio seleccionado
     if (name === 'pais') {
-      const ingeniosPorPais = ingenios.filter(
-        (ingenio) => ingenio.pais.toLowerCase() === value.toLowerCase()
-      )
-      setFormIngeniosFiltrados(ingeniosPorPais)
       // Resetear el ingenio seleccionado si el país cambia
       setFormData((prev) => ({ ...prev, ingenio: '' }))
     }
@@ -247,14 +243,7 @@ const Empleos: React.FC = () => {
       contacto: empleo.contacto || '',
     })
 
-    // Filtrar ingenios por el país del empleo que se está editando
-    if (empleo.pais?.nombre) {
-      const ingeniosPorPais = ingenios.filter(
-        (ingenio) =>
-          ingenio.pais.toLowerCase() === empleo.pais?.nombre?.toLowerCase()
-      )
-      setFormIngeniosFiltrados(ingeniosPorPais)
-    }
+    // Los ingenios se filtran automáticamente por el hook useFilteredIngenios
 
     setCurrentEmpleoId(empleo.id || null)
     setEditMode(true)
@@ -432,7 +421,6 @@ const Empleos: React.FC = () => {
         contacto: '',
       })
       setArchivos([])
-      setFormIngeniosFiltrados([])
       setEditMode(false)
       setCurrentEmpleoId(null)
     } catch (error) {
@@ -486,7 +474,6 @@ const Empleos: React.FC = () => {
       contacto: '',
     })
     setArchivos([])
-    setFormIngeniosFiltrados([])
     setEditMode(false)
     setCurrentEmpleoId(null)
   }
@@ -1069,16 +1056,8 @@ const Empleos: React.FC = () => {
                     ingenio: '',
                   }))
 
-                  if (value) {
-                    const ingeniosPorPais = ingenios.filter(
-                      (ingenio) =>
-                        ingenio.pais.toLowerCase() === value.toLowerCase()
-                    )
-                    setFormIngeniosFiltrados(ingeniosPorPais)
-                  } else {
-                    setFormIngeniosFiltrados([])
-                  }
                 }}
+
                 renderInput={(params) => (
                   <TextField
                     {...params}
