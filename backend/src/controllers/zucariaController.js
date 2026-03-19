@@ -1,6 +1,8 @@
 const ZucarIA = require('../models/ZucarIA')
 const axios = require('axios')
 
+const MAX_CONTEXT_MESSAGES = 20
+
 exports.chat = async (req, res) => {
   const { messages } = req.body
 
@@ -10,12 +12,25 @@ exports.chat = async (req, res) => {
     })
   }
 
+  // Apply sliding window context limiting to avoid token limit errors.
+  // Keep the system message (always first) and at most the last MAX_CONTEXT_MESSAGES
+  // user/assistant messages.
+  let windowedMessages
+  if (messages.length > 0 && messages[0].role === 'system') {
+    const systemMessage = messages[0]
+    const rest = messages.slice(1)
+    const limited = rest.slice(-MAX_CONTEXT_MESSAGES)
+    windowedMessages = [systemMessage, ...limited]
+  } else {
+    windowedMessages = messages.slice(-MAX_CONTEXT_MESSAGES)
+  }
+
   try {
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
         model: 'ft:gpt-3.5-turbo-0125:personal::Axk617ow',
-        messages,
+        messages: windowedMessages,
       },
       {
         headers: {
