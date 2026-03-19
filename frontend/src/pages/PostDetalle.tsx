@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { Helmet } from 'react-helmet-async'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import axiosInstance from '../utils/axiosConfig'
 import { formatDistanceToNow } from 'date-fns'
@@ -293,6 +294,15 @@ const PostDetalle: React.FC = () => {
         marginTop: '64px',
       }}
     >
+      {post && (
+        <Helmet>
+          <title>{post.titulo} | Zucarlink Foro</title>
+          <meta name="description" content={post.contenido?.substring(0, 160)} />
+          <meta property="og:title" content={post.titulo} />
+          <meta property="og:description" content={post.contenido?.substring(0, 160)} />
+          <meta property="og:type" content="article" />
+        </Helmet>
+      )}
       <Button
         startIcon={<ArrowBackIcon />}
         onClick={() => navigate('/foro')}

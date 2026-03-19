@@ -1,4 +1,5 @@
 const Post = require('../models/Post')
+const slugify = require('slugify')
 const User = require('../models/User')
 const Like = require('../models/Like')
 const Vote = require('../models/Vote')
@@ -209,12 +210,17 @@ const createPost = async (req, res) => {
         .json({ message: 'El área especificada no existe.' })
     }
 
+    // Generate slug from titulo
+    const baseSlug = slugify(titulo, { lower: true, strict: true, locale: 'es' })
+    const slug = `${baseSlug}-${Date.now()}`
+
     // Crear el post dentro de la transacción
     const newPost = await Post.create({
       titulo,
       contenido,
       areaId: areaFound.id,
       usuarioId,
+      slug,
     }, { transaction })
 
     // Subir archivos a S3 si existen

@@ -103,9 +103,43 @@ initializeDatabase()
 // Inicializar el programador de recordatorios
 scheduleReminderChecks()
 
+// Sitemap
+app.get('/sitemap.xml', async (req, res) => {
+  try {
+    const Post = require('./models/Post')
+    const posts = await Post.findAll({
+      attributes: ['slug', 'titulo', 'updatedAt'],
+      where: { slug: { [require('sequelize').Op.ne]: null } },
+      order: [['updatedAt', 'DESC']],
+      limit: 1000,
+    })
+
+    const baseUrl = process.env.FRONTEND_URL || 'https://zucarlink.com'
+    const urls = posts.map(p => `
+  <url>
+    <loc>${baseUrl}/foro/post/${p.slug}</loc>
+    <lastmod>${new Date(p.updatedAt).toISOString().split('T')[0]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>`).join('')
+
+    res.header('Content-Type', 'application/xml')
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>${urls}
+</urlset>`)
+  } catch (error) {
+    res.status(500).send('Error generating sitemap')
+  }
+})
+
 // Rutas
 app.use('/users', userRoutes)
-app.use('/posts', authMiddleware, postRoutes)
+app.use('/posts', postRoutes)
 app.use('/maquinaria', maquinariaRoutes)
 app.use('/empleos', empleoRoutes)
 app.use('/contact', contactRoutes)

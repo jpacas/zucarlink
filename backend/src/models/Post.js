@@ -16,6 +16,11 @@ const Post = sequelize.define(
       type: DataTypes.INTEGER, // Contador de vistas
       defaultValue: 0,
     },
+    slug: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
   },
   {
     timestamps: true,

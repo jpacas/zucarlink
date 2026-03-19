@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import { SnackbarProvider } from 'notistack'
+import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from './context/AuthContext'
 import { ChatProvider } from './context/ChatContext'
 import { ChatLayout } from './components/ChatLayout'
@@ -53,6 +54,7 @@ const PageLoader = () => (
 
 const App: React.FC = () => {
   return (
+    <HelmetProvider>
     <SnackbarProvider maxSnack={3} autoHideDuration={3000} preventDuplicate>
       <Router>
         <AuthProvider>
@@ -148,6 +150,7 @@ const App: React.FC = () => {
         </AuthProvider>
       </Router>
     </SnackbarProvider>
+    </HelmetProvider>
   )
 }
 
