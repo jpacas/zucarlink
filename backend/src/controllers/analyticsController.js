@@ -9,14 +9,22 @@ const trackView = async (req, res) => {
   try {
     const { tipo, id } = req.body
 
-    if (tipo === 'proveedor') {
-      await Proveedor.increment('vistas', { where: { id } })
-    } else if (tipo === 'maquinaria') {
-      await Maquinaria.increment('vistas', { where: { id } })
-    } else if (tipo === 'empleo') {
-      await Empleo.increment('vistas', { where: { id } })
-    } else {
+    const VALID_TIPOS = ['proveedor', 'maquinaria', 'empleo']
+    if (!VALID_TIPOS.includes(tipo)) {
       return res.status(400).json({ error: 'tipo inválido' })
+    }
+
+    const parsedId = parseInt(id, 10)
+    if (!parsedId || parsedId <= 0) {
+      return res.status(400).json({ error: 'id inválido' })
+    }
+
+    if (tipo === 'proveedor') {
+      await Proveedor.increment('vistas', { where: { id: parsedId } })
+    } else if (tipo === 'maquinaria') {
+      await Maquinaria.increment('vistas', { where: { id: parsedId } })
+    } else if (tipo === 'empleo') {
+      await Empleo.increment('views', { where: { id: parsedId } })
     }
 
     res.json({ tracked: true })
@@ -50,21 +58,21 @@ const getEmpresaAnalytics = async (req, res) => {
     })
 
     const empleos = await Empleo.findAll({
-      where: {
-        usuarioId: {
-          [Op.in]: (
-            await User.findAll({ where: { proveedorId }, attributes: ['id'] })
-          ).map((u) => u.id),
-        },
-      },
-      attributes: ['id', 'nombre', 'vistas', 'createdAt'],
-      order: [['vistas', 'DESC']],
+      include: [{
+        model: User,
+        as: 'autor',
+        where: { proveedorId },
+        attributes: [],
+        required: true,
+      }],
+      attributes: ['id', 'nombre', 'views', 'createdAt'],
+      order: [['views', 'DESC']],
     })
 
     const totalVistas =
       proveedor.vistas +
       maquinarias.reduce((sum, m) => sum + (m.vistas || 0), 0) +
-      empleos.reduce((sum, e) => sum + (e.vistas || 0), 0)
+      empleos.reduce((sum, e) => sum + (e.views || 0), 0)
 
     res.json({
       proveedor: {
@@ -80,7 +88,7 @@ const getEmpresaAnalytics = async (req, res) => {
       resumen: {
         vistasPerfil: proveedor.vistas,
         vistasMaquinarias: maquinarias.reduce((sum, m) => sum + (m.vistas || 0), 0),
-        vistasEmpleos: empleos.reduce((sum, e) => sum + (e.vistas || 0), 0),
+        vistasEmpleos: empleos.reduce((sum, e) => sum + (e.views || 0), 0),
       },
     })
   } catch (error) {

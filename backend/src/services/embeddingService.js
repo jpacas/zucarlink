@@ -62,8 +62,13 @@ async function indexAllPosts() {
 async function findRelevantPosts(query, topN = 5) {
   try {
     const queryEmbedding = await getEmbedding(query)
+    // Load most recent 500 embeddings for similarity search.
+    // TODO: upgrade to pgvector or Pinecone when post count exceeds 500
+    // for O(log n) similarity search instead of O(n) full scan.
     const allEmbeddings = await PostEmbedding.findAll({
       attributes: ['postId', 'contenido', 'embeddingVector'],
+      order: [['createdAt', 'DESC']],
+      limit: 500,
     })
 
     if (allEmbeddings.length === 0) return []

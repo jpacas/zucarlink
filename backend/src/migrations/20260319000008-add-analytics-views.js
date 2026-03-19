@@ -6,14 +6,8 @@ module.exports = {
       allowNull: false,
       defaultValue: 0,
     })
-    await queryInterface.addColumn('Empleos', 'vistas', {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-      defaultValue: 0,
-    })
   },
   async down(queryInterface) {
     await queryInterface.removeColumn('Proveedors', 'vistas')
-    await queryInterface.removeColumn('Empleos', 'vistas')
   },
 }

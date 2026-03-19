@@ -187,6 +187,13 @@ const registerUser = async (req, res) => {
     /**
      * 6. Crear el usuario
      */
+    // Generate username from email (part before @, slugified, + 4-char unique suffix)
+    const slugify = require('slugify')
+    const emailBase = email.split('@')[0]
+    const baseSlug = slugify(emailBase, { lower: true, strict: true })
+    const uniqueSuffix = Math.random().toString(36).substring(2, 6)
+    const generatedUsername = `${baseSlug}-${uniqueSuffix}`
+
     const user = await User.create({
       nombre,
       apellido,
@@ -198,6 +205,7 @@ const registerUser = async (req, res) => {
       areaId: hasIngenio ? foundArea.id : null,
       ingenioId: foundIngenio ? foundIngenio.id : null,
       proveedorId: foundProveedor ? foundProveedor.id : null,
+      username: generatedUsername,
     })
 
     // Enviar correo de bienvenida

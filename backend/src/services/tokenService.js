@@ -9,11 +9,11 @@ const generateAccessToken = (user) => {
     {
       id: user.id,
       email: user.email,
+      planType: user.planType || 'free',
+      reputacion: user.reputacion || 0,
     },
     process.env.JWT_SECRET,
-    {
-      expiresIn: '15m',
-    }
+    { expiresIn: '15m' }
   )
 }
 
