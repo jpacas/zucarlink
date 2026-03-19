@@ -24,6 +24,11 @@ const Empleo = sequelize.define(
       type: DataTypes.INTEGER,
       defaultValue: 0,
     },
+    vistas: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
     vigente: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,

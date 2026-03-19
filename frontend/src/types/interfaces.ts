@@ -8,6 +8,7 @@ export interface User {
   ingenio?: string | null
   area?: string | null
   proveedor?: string | null
+  proveedorId?: number | null
   acercaDe?: string | null
 }
 

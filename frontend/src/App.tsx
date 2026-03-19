@@ -41,6 +41,7 @@ const PerfilPublico = lazy(() => import('./pages/PerfilPublico'))
 const Wiki = lazy(() => import('./pages/Wiki'))
 const WikiArticuloPage = lazy(() => import('./pages/WikiArticulo'))
 const EditarWikiArticulo = lazy(() => import('./pages/EditarWikiArticulo'))
+const AnalyticsEmpresa = lazy(() => import('./pages/AnalyticsEmpresa'))
 
 // Componente de loading para Suspense
 const PageLoader = () => (
@@ -155,6 +156,14 @@ const App: React.FC = () => {
                     element={
                       <ProtectedRoute>
                         <EditarWikiArticulo />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path='/mi-empresa/analytics'
+                    element={
+                      <ProtectedRoute>
+                        <AnalyticsEmpresa />
                       </ProtectedRoute>
                     }
                   />

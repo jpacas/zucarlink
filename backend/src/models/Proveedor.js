@@ -59,6 +59,11 @@ const Proveedor = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    vistas: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
   },
   {
     timestamps: true,
