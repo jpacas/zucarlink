@@ -58,6 +58,20 @@ const User = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    planType: {
+      type: DataTypes.ENUM('free', 'pro'),
+      allowNull: false,
+      defaultValue: 'free',
+    },
+    especialidad: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    disponibilidadConsultoria: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
   },
   {
     timestamps: true,

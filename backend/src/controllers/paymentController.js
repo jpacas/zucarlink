@@ -244,6 +244,75 @@ const handleWebhook = async (req, res) => {
   res.json({ received: true })
 }
 
+const createProSubscription = async (req, res) => {
+  try {
+    const userId = req.user?.id
+    const email = req.user?.email
+
+    if (!userId || !email) {
+      return res.status(401).json({ error: 'No autenticado' })
+    }
+
+    const priceId = process.env.STRIPE_PRO_PRICE_ID
+    if (!priceId || priceId.trim() === '') {
+      return res.status(400).json({
+        error: 'ID de precio no configurado',
+        details: 'El ID de precio para el plan Pro no está configurado en las variables de entorno',
+        code: 'missing_price_id',
+      })
+    }
+
+    try {
+      const customer = await stripe.customers.create({
+        email: email,
+        metadata: { userId },
+      })
+
+      const subscription = await stripe.subscriptions.create({
+        customer: customer.id,
+        items: [{ price: priceId }],
+        payment_behavior: 'default_incomplete',
+        payment_settings: {
+          save_default_payment_method: 'on_subscription',
+          payment_method_types: ['card'],
+        },
+        expand: ['latest_invoice.payment_intent'],
+        metadata: { userId, customerId: customer.id },
+      })
+
+      if (!subscription.latest_invoice.payment_intent) {
+        throw new Error('No se pudo crear el payment intent')
+      }
+
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret: subscription.latest_invoice.payment_intent.client_secret,
+        paymentIntentId: subscription.latest_invoice.payment_intent.id,
+      })
+    } catch (stripeError) {
+      console.error('Error detallado de Stripe (Pro):', {
+        message: stripeError.message,
+        code: stripeError.code,
+        type: stripeError.type,
+        param: stripeError.param,
+      })
+
+      return res.status(400).json({
+        error: stripeError.message,
+        details: 'Error al procesar la solicitud en Stripe',
+        code: stripeError.code,
+        param: stripeError.param,
+      })
+    }
+  } catch (error) {
+    console.error('Error creating Pro subscription:', error)
+    res.status(500).json({
+      error: error.message,
+      details: 'Error al crear la suscripción Pro',
+    })
+  }
+}
+
 const createBillingPortal = async (req, res) => {
   try {
     const usuarioId = req.user?.id
@@ -277,4 +346,5 @@ module.exports = {
   createPaymentIntent,
   handleWebhook,
   createBillingPortal,
+  createProSubscription,
 }

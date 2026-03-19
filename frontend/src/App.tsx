@@ -35,6 +35,7 @@ const EmpleoDetalle = lazy(() => import('./pages/EmpleoDetalle'))
 const Maquinarias = lazy(() => import('./pages/Maquinarias'))
 const MaquinariaDetalle = lazy(() => import('./pages/MaquinariaDetalle'))
 const MiSuscripcion = lazy(() => import('./pages/MiSuscripcion'))
+const UpgradePro = lazy(() => import('./pages/UpgradePro'))
 
 // Componente de loading para Suspense
 const PageLoader = () => (
@@ -139,6 +140,7 @@ const App: React.FC = () => {
                       </ProtectedRoute>
                     }
                   />
+                  <Route path='/upgrade-pro' element={<UpgradePro />} />
                 </Routes>
               </Suspense>
             </ChatLayout>
