@@ -46,7 +46,7 @@ const getArticulo = async (req, res) => {
   }
 }
 
-// POST /wiki — create article (requires auth + reputacion >= 100 or pro)
+// POST /wiki — create article (requires auth)
 const createArticulo = async (req, res) => {
   try {
     const { titulo, contenidoMarkdown, resumen, categoria } = req.body
