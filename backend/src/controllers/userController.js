@@ -683,6 +683,46 @@ const resetPassword = async (req, res) => {
   }
 }
 
+////////////////////////////////////////////////////////////
+///// Perfil público por username /////////////////////////
+///////////////////////////////////////////////////////////
+
+const getPublicProfile = async (req, res) => {
+  try {
+    const { username } = req.params
+
+    const user = await User.findOne({
+      where: { username },
+      attributes: ['id', 'nombre', 'apellido', 'username', 'avatarUrl', 'acercaDe', 'especialidad', 'disponibilidadConsultoria', 'reputacion', 'planType', 'createdAt'],
+      include: [
+        { model: Area, as: 'area', attributes: ['nombre'] },
+        { model: Pais, as: 'pais', attributes: ['nombre'] },
+        {
+          model: Ingenio, as: 'ingenio', attributes: ['nombre'],
+        },
+      ],
+    })
+
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado' })
+    }
+
+    // Get user's top posts (last 5, ordered by views)
+    const Post = require('../models/Post')
+    const posts = await Post.findAll({
+      where: { usuarioId: user.id },
+      attributes: ['id', 'titulo', 'slug', 'views', 'createdAt'],
+      order: [['views', 'DESC']],
+      limit: 5,
+    })
+
+    res.json({ ...user.toJSON(), posts })
+  } catch (error) {
+    console.error('Error al obtener perfil público:', error)
+    res.status(500).json({ message: 'Error al obtener el perfil' })
+  }
+}
+
 module.exports = {
   getAllUsers,
   registerUser,
@@ -696,4 +736,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   refreshUserToken,
+  getPublicProfile,
 }

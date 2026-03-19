@@ -12,6 +12,7 @@ const {
   forgotPassword,
   resetPassword,
   refreshUserToken,
+  getPublicProfile,
 } = require('../controllers/userController')
 const upload = require('../middleware/multer')
 const router = express.Router()
@@ -30,6 +31,7 @@ const {
   changePasswordValidators,
 } = require('../middleware/validators/userValidators')
 
+router.get('/public/:username', getPublicProfile)
 router.post('/register', registerLimiter, upload.single('avatar'), registerUser)
 router.post('/login', loginLimiter, loginValidators, loginUser)
 router.post('/logout', logout)

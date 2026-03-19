@@ -77,6 +77,11 @@ const User = sequelize.define(
       allowNull: false,
       defaultValue: 0,
     },
+    username: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
   },
   {
     timestamps: true,
