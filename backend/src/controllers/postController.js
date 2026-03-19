@@ -1,6 +1,7 @@
 const Post = require('../models/Post')
 const User = require('../models/User')
 const Like = require('../models/Like')
+const Vote = require('../models/Vote')
 const Area = require('../models/Area')
 const Comment = require('../models/Comment')
 const Archivo = require('../models/Archivo')
@@ -82,6 +83,10 @@ const getAllPosts = async (req, res) => {
           as: 'archivos',
           attributes: ['id', 'nombre', 'url', 'tipo'],
         },
+        {
+          model: Vote,
+          as: 'votes',
+        },
       ],
       order: orderConfig,
       limit,
@@ -152,6 +157,10 @@ const getPostById = async (req, res) => {
           model: Archivo,
           as: 'archivos',
           attributes: ['id', 'nombre', 'url', 'tipo'],
+        },
+        {
+          model: Vote,
+          as: 'votes',
         },
       ],
     })
@@ -594,6 +603,69 @@ const updatePost = async (req, res) => {
   }
 }
 
+////////////////////////////////////////////////////////////
+///// Votar un post ///////////////////////////////////////
+////////////////////////////////////////////////////////////
+
+const votePost = async (req, res) => {
+  const { postId } = req.params
+  const userId = req.user?.id
+
+  try {
+    const post = await Post.findByPk(postId)
+    if (!post) return res.status(404).json({ message: 'Post no encontrado' })
+    if (String(post.usuarioId) === String(userId)) {
+      return res.status(400).json({ message: 'No puedes votar tu propio post' })
+    }
+
+    // Check if already voted
+    const existing = await Vote.findOne({ where: { postId, usuarioId: userId } })
+    if (existing) return res.status(400).json({ message: 'Ya votaste este post' })
+
+    await Vote.create({ postId, usuarioId: userId })
+
+    // Add reputation to post author (+10 points)
+    await User.increment('reputacion', { by: 10, where: { id: post.usuarioId } })
+
+    const voteCount = await Vote.count({ where: { postId } })
+    res.json({ message: 'Voto registrado', votes: voteCount })
+  } catch (error) {
+    console.error('Error al votar:', error)
+    res.status(500).json({ message: 'Error al votar' })
+  }
+}
+
+////////////////////////////////////////////////////////////
+///// Quitar voto de un post //////////////////////////////
+////////////////////////////////////////////////////////////
+
+const unvotePost = async (req, res) => {
+  const { postId } = req.params
+  const userId = req.user?.id
+
+  try {
+    const post = await Post.findByPk(postId)
+    if (!post) return res.status(404).json({ message: 'Post no encontrado' })
+
+    const vote = await Vote.findOne({ where: { postId, usuarioId: userId } })
+    if (!vote) return res.status(400).json({ message: 'No has votado este post' })
+
+    await vote.destroy()
+
+    // Remove reputation from post author (-10 points, min 0)
+    const author = await User.findByPk(post.usuarioId)
+    if (author && author.reputacion >= 10) {
+      await User.decrement('reputacion', { by: 10, where: { id: post.usuarioId } })
+    }
+
+    const voteCount = await Vote.count({ where: { postId } })
+    res.json({ message: 'Voto eliminado', votes: voteCount })
+  } catch (error) {
+    console.error('Error al quitar voto:', error)
+    res.status(500).json({ message: 'Error al quitar voto' })
+  }
+}
+
 module.exports = {
   getAllPosts,
   createPost,
@@ -605,4 +677,6 @@ module.exports = {
   getPostById,
   deletePost,
   updatePost,
+  votePost,
+  unvotePost,
 }

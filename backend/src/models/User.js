@@ -72,6 +72,11 @@ const User = sequelize.define(
       allowNull: false,
       defaultValue: false,
     },
+    reputacion: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
   },
   {
     timestamps: true,

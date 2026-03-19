@@ -7,6 +7,7 @@ const Proveedor = require('./Proveedor')
 const Post = require('./Post')
 const Comment = require('./Comment')
 const Like = require('./Like')
+const Vote = require('./Vote')
 const Experiencia = require('./Experiencia')
 const Empleo = require('./Empleo')
 const Archivo = require('./Archivo')
@@ -177,6 +178,12 @@ const setupAssociations = () => {
   // Relaciones de RefreshToken
   RefreshToken.belongsTo(User, { foreignKey: 'userId', as: 'user' })
   User.hasMany(RefreshToken, { foreignKey: 'userId', as: 'refreshTokens' })
+
+  // Relaciones de Vote
+  Vote.belongsTo(Post, { foreignKey: 'postId', as: 'post' })
+  Post.hasMany(Vote, { foreignKey: 'postId', as: 'votes' })
+  Vote.belongsTo(User, { foreignKey: 'usuarioId', as: 'votante' })
+  User.hasMany(Vote, { foreignKey: 'usuarioId', as: 'votes' })
 }
 
 module.exports = setupAssociations
