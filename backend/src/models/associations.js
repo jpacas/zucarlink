@@ -1,5 +1,7 @@
 // Importar todos los modelos
 const User = require('./User')
+const WikiArticulo = require('./WikiArticulo')
+const WikiRevision = require('./WikiRevision')
 const Pais = require('./Pais')
 const Area = require('./Area')
 const Ingenio = require('./Ingenio')
@@ -189,6 +191,14 @@ const setupAssociations = () => {
   // Relaciones de PostEmbedding
   PostEmbedding.belongsTo(Post, { foreignKey: 'postId', as: 'post' })
   Post.hasOne(PostEmbedding, { foreignKey: 'postId', as: 'embedding' })
+
+  // Relaciones de Wiki
+  WikiArticulo.belongsTo(User, { foreignKey: 'autorId', as: 'autor' })
+  User.hasMany(WikiArticulo, { foreignKey: 'autorId', as: 'articulos' })
+  WikiRevision.belongsTo(WikiArticulo, { foreignKey: 'articuloId', as: 'articulo' })
+  WikiArticulo.hasMany(WikiRevision, { foreignKey: 'articuloId', as: 'revisiones' })
+  WikiRevision.belongsTo(User, { foreignKey: 'usuarioId', as: 'editor' })
+  User.hasMany(WikiRevision, { foreignKey: 'usuarioId', as: 'revisiones' })
 }
 
 module.exports = setupAssociations

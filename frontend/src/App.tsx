@@ -38,6 +38,9 @@ const MaquinariaDetalle = lazy(() => import('./pages/MaquinariaDetalle'))
 const MiSuscripcion = lazy(() => import('./pages/MiSuscripcion'))
 const UpgradePro = lazy(() => import('./pages/UpgradePro'))
 const PerfilPublico = lazy(() => import('./pages/PerfilPublico'))
+const Wiki = lazy(() => import('./pages/Wiki'))
+const WikiArticuloPage = lazy(() => import('./pages/WikiArticulo'))
+const EditarWikiArticulo = lazy(() => import('./pages/EditarWikiArticulo'))
 
 // Componente de loading para Suspense
 const PageLoader = () => (
@@ -145,6 +148,16 @@ const App: React.FC = () => {
                   />
                   <Route path='/upgrade-pro' element={<UpgradePro />} />
                   <Route path='/ingenieros/:username' element={<PerfilPublico />} />
+                  <Route path='/wiki' element={<Wiki />} />
+                  <Route path='/wiki/:slug' element={<WikiArticuloPage />} />
+                  <Route
+                    path='/wiki/:slug/editar'
+                    element={
+                      <ProtectedRoute>
+                        <EditarWikiArticulo />
+                      </ProtectedRoute>
+                    }
+                  />
                 </Routes>
               </Suspense>
             </ChatLayout>
