@@ -1,5 +1,6 @@
 const ZucarIA = require('../models/ZucarIA')
 const axios = require('axios')
+const { findRelevantPosts } = require('../services/embeddingService')
 
 const MAX_CONTEXT_MESSAGES = 20
 
@@ -12,12 +13,26 @@ exports.chat = async (req, res) => {
     })
   }
 
+  // Get the last user message for RAG
+  const lastUserMessage = messages.filter(m => m.role === 'user').pop()
+  let ragContext = ''
+
+  if (lastUserMessage) {
+    const relevantPosts = await findRelevantPosts(lastUserMessage.content, 5)
+    if (relevantPosts.length > 0) {
+      ragContext = '\n\nInformación relevante de la comunidad Zucarlink:\n' +
+        relevantPosts.map((p, i) => `[${i + 1}] ${p.contenido.substring(0, 500)}`).join('\n\n')
+    }
+  }
+
   // Apply sliding window context limiting to avoid token limit errors.
   // Keep the system message (always first) and at most the last MAX_CONTEXT_MESSAGES
   // user/assistant messages.
   let windowedMessages
   if (messages.length > 0 && messages[0].role === 'system') {
-    const systemMessage = messages[0]
+    const systemMessage = ragContext
+      ? { ...messages[0], content: messages[0].content + ragContext }
+      : messages[0]
     const rest = messages.slice(1)
     const limited = rest.slice(-MAX_CONTEXT_MESSAGES)
     windowedMessages = [systemMessage, ...limited]

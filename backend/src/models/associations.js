@@ -17,6 +17,7 @@ const ZucarIA = require('./ZucarIA')
 const Conversation = require('./Conversation')
 const Message = require('./Message')
 const RefreshToken = require('./RefreshToken')
+const PostEmbedding = require('./PostEmbedding')
 
 const setupAssociations = () => {
   // Relaciones de User
@@ -184,6 +185,10 @@ const setupAssociations = () => {
   Post.hasMany(Vote, { foreignKey: 'postId', as: 'votes' })
   Vote.belongsTo(User, { foreignKey: 'usuarioId', as: 'votante' })
   User.hasMany(Vote, { foreignKey: 'usuarioId', as: 'votes' })
+
+  // Relaciones de PostEmbedding
+  PostEmbedding.belongsTo(Post, { foreignKey: 'postId', as: 'post' })
+  Post.hasOne(PostEmbedding, { foreignKey: 'postId', as: 'embedding' })
 }
 
 module.exports = setupAssociations

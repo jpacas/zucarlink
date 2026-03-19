@@ -3,6 +3,7 @@ const {
   checkUnreadMessagesAndSendReminders,
   checkNewPostsAndSendNotifications,
 } = require('./emailService')
+const { indexAllPosts } = require('./embeddingService')
 const Message = require('../models/Message')
 const User = require('../models/User')
 const Post = require('../models/Post')
@@ -27,6 +28,17 @@ const scheduleReminderChecks = () => {
       await checkNewPostsAndSendNotifications(Post, User, Area)
     } catch (error) {
       console.error('Error al ejecutar verificación de nuevos posts:', error)
+    }
+  })
+
+  // Indexar posts para ZucarIA RAG a las 2:00 AM
+  cron.schedule('0 2 * * *', async () => {
+    console.log('Indexando posts para ZucarIA RAG...')
+    try {
+      const count = await indexAllPosts()
+      console.log(`RAG: ${count} posts indexados`)
+    } catch (error) {
+      console.error('Error al indexar posts:', error)
     }
   })
 }
