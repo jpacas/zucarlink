@@ -244,7 +244,37 @@ const handleWebhook = async (req, res) => {
   res.json({ received: true })
 }
 
+const createBillingPortal = async (req, res) => {
+  try {
+    const usuarioId = req.user?.id
+    if (!usuarioId) {
+      return res.status(401).json({ error: 'No autenticado' })
+    }
+
+    // Find the user's proveedor
+    const User = require('../models/User')
+    const user = await User.findByPk(usuarioId, {
+      include: [{ model: Proveedor, as: 'proveedor' }],
+    })
+
+    if (!user?.proveedor?.stripeCustomerId) {
+      return res.status(400).json({ error: 'No se encontró suscripción activa' })
+    }
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: user.proveedor.stripeCustomerId,
+      return_url: `${process.env.FRONTEND_URL}/mi-suscripcion`,
+    })
+
+    res.json({ url: session.url })
+  } catch (error) {
+    console.error('Error creating billing portal:', error)
+    res.status(500).json({ error: 'Error al crear sesión del portal' })
+  }
+}
+
 module.exports = {
   createPaymentIntent,
   handleWebhook,
+  createBillingPortal,
 }

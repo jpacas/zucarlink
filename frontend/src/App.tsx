@@ -34,6 +34,7 @@ const Empleos = lazy(() => import('./pages/Empleos'))
 const EmpleoDetalle = lazy(() => import('./pages/EmpleoDetalle'))
 const Maquinarias = lazy(() => import('./pages/Maquinarias'))
 const MaquinariaDetalle = lazy(() => import('./pages/MaquinariaDetalle'))
+const MiSuscripcion = lazy(() => import('./pages/MiSuscripcion'))
 
 // Componente de loading para Suspense
 const PageLoader = () => (
@@ -130,6 +131,14 @@ const App: React.FC = () => {
                     }
                   />
                   <Route path='/foro/post/:postId' element={<PostDetalle />} />
+                  <Route
+                    path='/mi-suscripcion'
+                    element={
+                      <ProtectedRoute>
+                        <MiSuscripcion />
+                      </ProtectedRoute>
+                    }
+                  />
                 </Routes>
               </Suspense>
             </ChatLayout>
