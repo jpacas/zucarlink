@@ -4,7 +4,7 @@ const Like = require('../models/Like')
 const Area = require('../models/Area')
 const Comment = require('../models/Comment')
 const Archivo = require('../models/Archivo')
-const { uploadToS3 } = require('./serverFunctions')
+const { uploadToS3, deleteFromS3 } = require('./serverFunctions')
 const { Op } = require('sequelize')
 const { safeParseJSON } = require('../utils/helpers')
 const { parsePaginationParams, buildPaginationResponse } = require('../utils/pagination')
@@ -462,6 +462,17 @@ const deletePost = async (req, res) => {
         .status(403)
         .json({ message: 'No tienes permiso para eliminar este post' })
     }
+
+    // Eliminar archivos asociados de S3
+    const archivos = await Archivo.findAll({ where: { postId: id } })
+    for (const archivo of archivos) {
+      try {
+        await deleteFromS3(archivo.url)
+      } catch (s3Error) {
+        console.error('Error al eliminar archivo de S3:', archivo.url, s3Error)
+      }
+    }
+    await Archivo.destroy({ where: { postId: id } })
 
     await post.destroy()
     res.json({ message: 'Post eliminado correctamente' })

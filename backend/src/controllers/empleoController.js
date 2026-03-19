@@ -5,6 +5,7 @@ const Pais = require('../models/Pais')
 const Area = require('../models/Area')
 const Ingenio = require('../models/Ingenio')
 const s3 = require('../config/s3')
+const { deleteFromS3 } = require('./serverFunctions')
 const { v4: uuidv4 } = require('uuid')
 const { safeParseJSON } = require('../utils/helpers')
 const { parsePaginationParams, buildPaginationResponse } = require('../utils/pagination')
@@ -368,6 +369,16 @@ const deleteEmpleo = async (req, res) => {
       return res
         .status(403)
         .json({ message: 'No tienes permiso para eliminar esta oferta' })
+    }
+
+    // Eliminar archivos asociados de S3 antes de borrarlos de la BD
+    const archivos = await Archivo.findAll({ where: { empleoId: id } })
+    for (const archivo of archivos) {
+      try {
+        await deleteFromS3(archivo.url)
+      } catch (s3Error) {
+        console.error('Error al eliminar archivo de S3:', archivo.url, s3Error)
+      }
     }
 
     // Eliminar archivos asociados (Sequelize debería manejar esto con CASCADE, pero lo hacemos explícito)
