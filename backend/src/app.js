@@ -34,7 +34,7 @@ app.use((req, res, next) => {
   }
 })
 
-// Lista blanca de origenes permitidos (sin regex para mayor seguridad)
+// Lista blanca de origenes permitidos
 const allowedOrigins = [
   'https://zucarlink.com',
   'https://www.zucarlink.com',
@@ -46,6 +46,9 @@ if (process.env.NODE_ENV !== 'production') {
   allowedOrigins.push('http://localhost:3000')
 }
 
+// Vercel preview URLs (e.g. zucarlink-git-feature-*-jpacas.vercel.app)
+const VERCEL_PREVIEW_PATTERN = /^https:\/\/zucarlink-.*\.vercel\.app$/
+
 // Configuración de CORS con lista blanca explícita
 app.use(
   cors({
@@ -55,6 +58,10 @@ app.use(
         return callback(null, true)
       }
       if (allowedOrigins.includes(origin)) {
+        return callback(null, true)
+      }
+      // Permitir previews de Vercel para ramas de desarrollo
+      if (origin && VERCEL_PREVIEW_PATTERN.test(origin)) {
         return callback(null, true)
       }
       return callback(new Error('No permitido por CORS'))
